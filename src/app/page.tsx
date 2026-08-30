@@ -28,11 +28,13 @@ interface TrackedSet {
   weight: string;
   actualReps: string;
   completed: boolean;
+  restSeconds?: number;
 }
 
 interface TrackedExercise {
   name: string;
   trackedSets: TrackedSet[];
+  interExerciseRestSeconds?: number;
 }
 
 interface WorkoutTemplate {
@@ -906,7 +908,7 @@ function ActiveWorkout({
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   const updateSet = useCallback(
-    (exIdx: number, setIdx: number, field: keyof TrackedSet, value: string | boolean) => {
+    (exIdx: number, setIdx: number, field: keyof TrackedSet, value: string | boolean | number) => {
       setTracked((prev) =>
         prev.map((ex, ei) =>
           ei !== exIdx
@@ -922,6 +924,12 @@ function ActiveWorkout({
     },
     [setTracked]
   );
+
+  const updateExerciseRest = useCallback((exIdx: number, seconds: number) => {
+    setTracked((prev) =>
+      prev.map((ex, ei) => (ei === exIdx ? { ...ex, interExerciseRestSeconds: seconds } : ex))
+    );
+  }, [setTracked]);
 
   const addSetToExercise = useCallback((exIdx: number) => {
     setTracked((prev) =>
@@ -1224,60 +1232,122 @@ function ActiveWorkout({
                     <span className="text-center">Done</span>
                   </div>
 
-                  {ex.trackedSets.map((set, si) => (
-                    <div key={si} className="transition-colors">
-                      <div
-                        className={`grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2.5 transition-colors ${
-                          set.completed ? "bg-cyan-500/[0.06]" : "hover:bg-white/[0.02]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className={`text-xs font-bold tabular-nums ${set.completed ? "text-cyan-300" : "text-slate-400"}`}>
-                            {si + 1}
-                          </span>
-                          {ex.trackedSets.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeSetFromExercise(exIdx, si)}
-                              className="text-slate-600 hover:text-red-400 opacity-60 hover:opacity-100 transition-opacity text-[9px] p-0.5"
-                              title="Delete this set"
-                            >
-                              ✕
-                            </button>
-                          )}
+                  {ex.trackedSets.map((set, si) => {
+                    const isThisSetTimerActive = Boolean(
+                      restTimer &&
+                      restTimer.type === "set" &&
+                      restTimer.targetExIdx === exIdx &&
+                      restTimer.targetSetIdx === si
+                    );
+
+                    return (
+                      <div key={si} className="transition-colors">
+                        <div
+                          className={`grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2.5 transition-colors ${
+                            set.completed ? "bg-cyan-500/[0.06]" : "hover:bg-white/[0.02]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className={`text-xs font-bold tabular-nums ${set.completed ? "text-cyan-300" : "text-slate-400"}`}>
+                              {si + 1}
+                            </span>
+                            {ex.trackedSets.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeSetFromExercise(exIdx, si)}
+                                className="text-slate-600 hover:text-red-400 opacity-60 hover:opacity-100 transition-opacity text-[9px] p-0.5"
+                                title="Delete this set"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            placeholder="—"
+                            value={set.weight}
+                            onChange={(e) => updateSet(exIdx, si, "weight", e.target.value)}
+                            className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
+                              set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
+                            }`}
+                          />
+
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder={set.targetReps}
+                            value={set.actualReps}
+                            onChange={(e) => updateSet(exIdx, si, "actualReps", e.target.value)}
+                            className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
+                              set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
+                            }`}
+                          />
+
+                          <div className="flex justify-center">
+                            <SetCheckbox
+                              checked={set.completed}
+                              onChange={() => handleToggleSetDone(exIdx, si)}
+                            />
+                          </div>
                         </div>
 
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          placeholder="—"
-                          value={set.weight}
-                          onChange={(e) => updateSet(exIdx, si, "weight", e.target.value)}
-                          className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
-                            set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
-                          }`}
-                        />
+                        {/* Minimalist Set Rest Timer Row */}
+                        <div className="flex items-center justify-between px-4 py-1.5 bg-white/[0.015] border-t border-white/[0.03] text-[10px]">
+                          <span className="font-semibold text-slate-400 flex items-center gap-1.5">
+                            <svg className="h-3 w-3 text-cyan-400/80" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            Set {si + 1} Rest:
+                          </span>
 
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          placeholder={set.targetReps}
-                          value={set.actualReps}
-                          onChange={(e) => updateSet(exIdx, si, "actualReps", e.target.value)}
-                          className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
-                            set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
-                          }`}
-                        />
-
-                        <div className="flex justify-center">
-                          <SetCheckbox
-                            checked={set.completed}
-                            onChange={() => handleToggleSetDone(exIdx, si)}
-                          />
+                          <div className="flex items-center gap-1.5">
+                            {isThisSetTimerActive && restTimer ? (
+                              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.2)] animate-scale-in">
+                                <span className="font-mono text-xs font-black tabular-nums text-cyan-200">
+                                  {formatTime(restTimer.remainingSeconds)}
+                                </span>
+                                <div className="flex items-center gap-1 ml-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => adjustRestTimer(-30)}
+                                    className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                                    title="Lessen rest by 30 seconds"
+                                  >
+                                    -30s
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => adjustRestTimer(30)}
+                                    className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                                    title="Add 30 seconds to rest"
+                                  >
+                                    +30s
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min={5}
+                                  max={600}
+                                  step={5}
+                                  value={set.restSeconds ?? (customRestSeconds || 60)}
+                                  onChange={(e) => updateSet(exIdx, si, "restSeconds", parseInt(e.target.value) || 0)}
+                                  className="liquid-input w-12 text-center rounded-lg px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none"
+                                  placeholder="60"
+                                  title="Custom rest time in seconds for this set"
+                                />
+                                <span className="text-[10px] text-slate-500 font-semibold">sec</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* ── Bottom of Exercise Card: + Add Another Set Button ── */}
@@ -1299,7 +1369,7 @@ function ActiveWorkout({
                 </div>
               </div>
 
-              {/* ── Minimal Inter-Exercise Divider with Timer on the Right ── */}
+              {/* ── Minimal Inter-Exercise Divider with Customizable Timer ── */}
               {isNextExerciseAvailable && (
                 <div className="flex items-center justify-center gap-3 py-2 text-slate-500">
                   <span className="h-px flex-1 bg-white/[0.06]" />
@@ -1309,7 +1379,7 @@ function ActiveWorkout({
                     </span>
 
                     {/* Inline Rest Timer on Right Side after Exercise Name */}
-                    {isThisInterExTimerActive && restTimer && (
+                    {isThisInterExTimerActive && restTimer ? (
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shadow-[0_0_12px_rgba(56,189,248,0.25)] animate-scale-in">
                         <svg className="h-3.5 w-3.5 text-cyan-400 animate-pulse" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -1335,6 +1405,22 @@ function ActiveWorkout({
                             +30s
                           </button>
                         </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 liquid-pill px-2 py-0.5 rounded-lg border-white/10">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Rest:</span>
+                        <input
+                          type="number"
+                          min={5}
+                          max={600}
+                          step={5}
+                          value={ex.interExerciseRestSeconds ?? (customRestSeconds || 60)}
+                          onChange={(e) => updateExerciseRest(exIdx, parseInt(e.target.value) || 0)}
+                          className="liquid-input w-12 text-center rounded-md px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none"
+                          placeholder="60"
+                          title="Custom recovery time in seconds before next exercise"
+                        />
+                        <span className="text-[9px] text-slate-500 font-semibold">sec</span>
                       </div>
                     )}
                   </div>
