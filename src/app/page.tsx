@@ -2629,7 +2629,7 @@ export default function Home() {
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition-all ${
                     active
                       ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25 border border-white/20"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                      : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
                   } ${sidebarCollapsed ? "justify-center px-2" : ""}`}
                   title={item.label}
                 >
@@ -2639,12 +2639,20 @@ export default function Home() {
                       <div className="flex items-center justify-between">
                         <span className="truncate">{item.label}</span>
                         {item.badge && (
-                          <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-semibold text-sky-300 rounded">
+                          <span
+                            className={`liquid-pill px-1.5 py-0.2 text-[9px] font-semibold rounded ${
+                              active ? "bg-white/20 text-white" : "text-sky-300"
+                            }`}
+                          >
                             {item.badge}
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] font-normal text-slate-400 block truncate">
+                      <span
+                        className={`text-[10px] block truncate mt-0.5 ${
+                          active ? "text-sky-100 font-medium" : "text-slate-400 font-normal"
+                        }`}
+                      >
                         {item.sub}
                       </span>
                     </div>
@@ -2736,24 +2744,33 @@ export default function Home() {
                   <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                     Navigation Menu
                   </p>
-                  {NAV_ITEMS.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => navigateToTab(item.key)}
-                      className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-xs font-bold transition-all ${
-                        tab === item.key && phase === "home"
-                          ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md"
-                          : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <span className="text-sky-400">{item.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <span className="block truncate">{item.label}</span>
-                        <span className="text-[10px] font-normal text-slate-400 block truncate">{item.sub}</span>
-                      </div>
-                    </button>
-                  ))}
+                  {NAV_ITEMS.map((item) => {
+                    const active = tab === item.key && phase === "home";
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => navigateToTab(item.key)}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-xs font-bold transition-all ${
+                          active
+                            ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md"
+                            : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <span className={`${active ? "text-white" : "text-sky-400"}`}>{item.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate">{item.label}</span>
+                          <span
+                            className={`text-[10px] block truncate mt-0.5 ${
+                              active ? "text-sky-100 font-medium" : "text-slate-400 font-normal"
+                            }`}
+                          >
+                            {item.sub}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
