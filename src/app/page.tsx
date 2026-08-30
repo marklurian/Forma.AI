@@ -777,7 +777,43 @@ function AddExerciseInline({ onAdd }: { onAdd: (ex: Exercise) => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Active Workout Tracker (Ocean Theme with Back Button)
+   Rest Timer Audio Chime (Web Audio API Synthesizer)
+   ═══════════════════════════════════════════════════════════════ */
+function playTimerChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+  } catch {
+    // Ignore audio errors if blocked
+  }
+}
+
+interface ActiveRestTimerState {
+  id: string;
+  label: string;
+  totalSeconds: number;
+  remainingSeconds: number;
+  isRunning: boolean;
+  type: "set" | "exercise";
+  targetExIdx?: number;
+  targetSetIdx?: number;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Active Workout Tracker (with Per-Set & Inter-Exercise Rest Timers)
    ═══════════════════════════════════════════════════════════════ */
 function ActiveWorkout({
   dayTitle,
@@ -798,6 +834,69 @@ function ActiveWorkout({
   unit: "lbs" | "kg";
   onSetUnit: (u: "lbs" | "kg") => void;
 }) {
+  const [restTimer, setRestTimer] = useState<ActiveRestTimerState | null>(null);
+
+  // Countdown timer interval effect
+  useEffect(() => {
+    if (!restTimer || !restTimer.isRunning) return;
+
+    if (restTimer.remainingSeconds <= 0) {
+      playTimerChime();
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRestTimer((prev) => {
+        if (!prev || !prev.isRunning) return prev;
+        if (prev.remainingSeconds <= 1) {
+          playTimerChime();
+          return { ...prev, remainingSeconds: 0, isRunning: false };
+        }
+        return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [restTimer?.isRunning, restTimer?.remainingSeconds]);
+
+  const startRestTimer = useCallback(
+    (id: string, label: string, seconds: number, type: "set" | "exercise", targetExIdx?: number, targetSetIdx?: number) => {
+      setRestTimer({
+        id,
+        label,
+        totalSeconds: seconds,
+        remainingSeconds: seconds,
+        isRunning: true,
+        type,
+        targetExIdx,
+        targetSetIdx,
+      });
+    },
+    []
+  );
+
+  const adjustRestTimer = useCallback((deltaSeconds: number) => {
+    setRestTimer((prev) => {
+      if (!prev) return null;
+      const nextRemaining = Math.max(0, prev.remainingSeconds + deltaSeconds);
+      const nextTotal = Math.max(nextRemaining, prev.totalSeconds + (deltaSeconds > 0 ? deltaSeconds : 0));
+      return {
+        ...prev,
+        remainingSeconds: nextRemaining,
+        totalSeconds: nextTotal,
+        isRunning: nextRemaining > 0 ? true : false,
+      };
+    });
+  }, []);
+
+  const toggleRestTimerPause = useCallback(() => {
+    setRestTimer((prev) => (prev ? { ...prev, isRunning: !prev.isRunning } : null));
+  }, []);
+
+  const stopRestTimer = useCallback(() => {
+    setRestTimer(null);
+  }, []);
+
   const totalSets = tracked.reduce((sum, ex) => sum + ex.trackedSets.length, 0);
   const completedSets = tracked.reduce((sum, ex) => sum + ex.trackedSets.filter((s) => s.completed).length, 0);
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
@@ -820,11 +919,43 @@ function ActiveWorkout({
     [setTracked]
   );
 
-  function removeExercise(exIdx: number) {
-    setTracked((prev) => prev.filter((_, i) => i !== exIdx));
-  }
+  const addSetToExercise = useCallback((exIdx: number) => {
+    setTracked((prev) =>
+      prev.map((ex, ei) => {
+        if (ei !== exIdx) return ex;
+        const lastSet = ex.trackedSets[ex.trackedSets.length - 1];
+        const newSet: TrackedSet = {
+          targetReps: lastSet?.targetReps || "10",
+          weight: lastSet?.weight || "",
+          actualReps: "",
+          completed: false,
+        };
+        return {
+          ...ex,
+          trackedSets: [...ex.trackedSets, newSet],
+        };
+      })
+    );
+  }, [setTracked]);
 
-  function addExercise(ex: Exercise) {
+  const removeSetFromExercise = useCallback((exIdx: number, setIdx: number) => {
+    setTracked((prev) =>
+      prev.map((ex, ei) => {
+        if (ei !== exIdx) return ex;
+        if (ex.trackedSets.length <= 1) return ex; // Keep at least 1 set
+        return {
+          ...ex,
+          trackedSets: ex.trackedSets.filter((_, si) => si !== setIdx),
+        };
+      })
+    );
+  }, [setTracked]);
+
+  const removeExercise = useCallback((exIdx: number) => {
+    setTracked((prev) => prev.filter((_, i) => i !== exIdx));
+  }, [setTracked]);
+
+  const addExercise = useCallback((ex: Exercise) => {
     const newTracked: TrackedExercise = {
       name: ex.name,
       trackedSets: Array.from({ length: ex.sets }, () => ({
@@ -835,24 +966,67 @@ function ActiveWorkout({
       })),
     };
     setTracked((prev) => [...prev, newTracked]);
+  }, [setTracked]);
+
+  function handleToggleSetDone(exIdx: number, si: number) {
+    const currentCompleted = tracked[exIdx].trackedSets[si].completed;
+    const isNowDone = !currentCompleted;
+    updateSet(exIdx, si, "completed", isNowDone);
+
+    if (isNowDone) {
+      // Check if this completes all sets of the exercise
+      const allOtherSetsDone = tracked[exIdx].trackedSets.every((s, idx) =>
+        idx === si ? true : s.completed
+      );
+      const hasNextExercise = exIdx < tracked.length - 1;
+
+      if (allOtherSetsDone && hasNextExercise) {
+        const nextExName = tracked[exIdx + 1].name;
+        startRestTimer(
+          `inter-ex-${exIdx}`,
+          `Rest before ${nextExName}`,
+          120, // 2 minutes between exercises
+          "exercise",
+          exIdx + 1
+        );
+      } else {
+        startRestTimer(
+          `set-rest-${exIdx}-${si}`,
+          `${tracked[exIdx].name} • Set ${si + 1} Rest`,
+          60, // 60s default rest
+          "set",
+          exIdx,
+          si
+        );
+      }
+    } else {
+      // If unchecking, stop active timer if related
+      if (restTimer?.id === `set-rest-${exIdx}-${si}`) {
+        stopRestTimer();
+      }
+    }
   }
+
+  const restPercent = restTimer && restTimer.totalSeconds > 0
+    ? Math.min(100, Math.max(0, ((restTimer.totalSeconds - restTimer.remainingSeconds) / restTimer.totalSeconds) * 100))
+    : 0;
 
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-4">
-      {/* Sticky top metrics bar */}
-      <div className="liquid-glass sticky top-16 z-40 rounded-2xl p-4">
+      {/* ── Sticky Top Metrics & Workout Status Bar ── */}
+      <div className="liquid-glass sticky top-16 z-40 rounded-2xl p-4 border-white/10 shadow-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-center gap-3">
             <button
               type="button"
               onClick={onBack}
-              className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:border-sky-400/40 transition-all group shrink-0"
+              className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:border-sky-400/40 transition-all button-press shrink-0"
               title="Return to Dashboard"
             >
               <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
-              <span>Back to Dashboard</span>
+              <span>Back</span>
             </button>
 
             <div className="min-w-0">
@@ -864,7 +1038,7 @@ function ActiveWorkout({
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
             <div className="text-right">
               <p className="font-mono text-base font-bold tabular-nums text-slate-100">{formatTime(elapsedSeconds)}</p>
@@ -879,107 +1053,383 @@ function ActiveWorkout({
             </div>
           </div>
         </div>
+
+        {/* Workout Progress Bar */}
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5">
           <div
             className="h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-teal-300 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        {/* ── Active Rest Timer Floating Banner (When running) ── */}
+        {restTimer && (
+          <div className="mt-3 pt-3 border-t border-white/[0.08] animate-fade-in">
+            <div className={`liquid-glass rounded-xl p-3 border transition-all ${
+              restTimer.remainingSeconds === 0
+                ? "border-emerald-400/80 bg-emerald-950/30 shadow-[0_0_20px_rgba(16,185,129,0.25)] animate-subtle-pulse"
+                : "border-cyan-400/50 bg-cyan-950/30 shadow-[0_0_15px_rgba(56,189,248,0.15)]"
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                    restTimer.remainingSeconds === 0
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "bg-cyan-500/20 text-cyan-300 animate-pulse"
+                  }`}>
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      {restTimer.type === "exercise" ? "Inter-Exercise Recovery" : "Set Rest Timer"}
+                    </p>
+                    <p className="text-xs font-extrabold text-white truncate">{restTimer.label}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                  {/* Digital Clock Display */}
+                  <span className={`font-mono text-lg sm:text-xl font-black tabular-nums ${
+                    restTimer.remainingSeconds === 0 ? "text-emerald-300" : "text-cyan-300"
+                  }`}>
+                    {formatTime(restTimer.remainingSeconds)}
+                  </span>
+
+                  {/* Timer Controls */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => adjustRestTimer(15)}
+                      className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+                      title="Add 15 seconds"
+                    >
+                      +15s
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => adjustRestTimer(30)}
+                      className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+                      title="Add 30 seconds"
+                    >
+                      +30s
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleRestTimerPause}
+                      className="liquid-pill px-2.5 py-1 text-[10px] font-bold text-slate-300 hover:text-white rounded-lg button-press"
+                    >
+                      {restTimer.isRunning ? "Pause" : "Resume"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopRestTimer}
+                      className="liquid-pill px-2.5 py-1 text-[10px] font-bold text-red-300 hover:text-red-100 rounded-lg button-press"
+                    >
+                      {restTimer.remainingSeconds === 0 ? "Dismiss" : "Skip"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini Rest Progress Bar */}
+              <div className="mt-2 h-1 w-full rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 rounded-full ${
+                    restTimer.remainingSeconds === 0
+                      ? "bg-emerald-400"
+                      : "bg-gradient-to-r from-cyan-400 via-sky-400 to-teal-300"
+                  }`}
+                  style={{ width: `${restPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-3.5">
+      {/* ── Exercises List with Per-Set Rest & Inter-Exercise Rest ── */}
+      <div className="space-y-5">
         {tracked.map((ex, exIdx) => {
           const exDone = ex.trackedSets.length > 0 && ex.trackedSets.every((s) => s.completed);
+          const isNextExerciseAvailable = exIdx < tracked.length - 1;
+          const isInterExTimerActive = restTimer?.id === `inter-ex-${exIdx}`;
+
           return (
-            <div
-              key={exIdx}
-              className={`liquid-glass overflow-hidden rounded-2xl transition-all duration-300 ${
-                exDone ? "border-cyan-500/40 bg-cyan-950/15" : ""
-              }`}
-            >
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
-                      exDone
-                        ? "bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.3)]"
-                        : "bg-sky-500/15 text-sky-300"
-                    }`}
-                  >
-                    {exDone ? (
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            <div key={exIdx} className="space-y-3.5">
+              {/* Exercise Card */}
+              <div
+                className={`liquid-glass overflow-hidden rounded-3xl border transition-all duration-300 ${
+                  exDone
+                    ? "border-cyan-500/50 bg-cyan-950/15 shadow-lg shadow-cyan-500/5"
+                    : "border-white/10"
+                }`}
+              >
+                {/* Exercise Header */}
+                <div className="flex items-center justify-between border-b border-white/[0.06] px-4 sm:px-5 py-3.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                        exDone
+                          ? "bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.3)] animate-check-pop"
+                          : "bg-sky-500/15 text-sky-300"
+                      }`}
+                    >
+                      {exDone ? (
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                      ) : (
+                        exIdx + 1
+                      )}
+                    </span>
+                    <h3 className={`truncate text-sm font-extrabold ${exDone ? "text-cyan-200" : "text-white"}`}>
+                      {ex.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="liquid-pill rounded-lg px-2.5 py-0.5 text-[10px] font-bold text-slate-300">
+                      {ex.trackedSets.filter((s) => s.completed).length}/{ex.trackedSets.length} sets
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeExercise(exIdx)}
+                      className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                      title="Remove Exercise"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                       </svg>
-                    ) : (
-                      exIdx + 1
-                    )}
-                  </span>
-                  <h3 className={`truncate text-sm font-semibold ${exDone ? "text-cyan-200" : "text-white"}`}>
-                    {ex.name}
-                  </h3>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="liquid-pill rounded-lg px-2 py-0.5 text-[10px] font-semibold text-slate-300">
-                    {ex.trackedSets.filter((s) => s.completed).length}/{ex.trackedSets.length} sets
-                  </span>
+
+                {/* Sets Table */}
+                <div className="divide-y divide-white/[0.04]">
+                  <div className="grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    <span>Set</span>
+                    <span>Weight ({unit})</span>
+                    <span>Reps</span>
+                    <span className="text-center">Done</span>
+                  </div>
+
+                  {ex.trackedSets.map((set, si) => {
+                    const isSetTimerActive = restTimer?.id === `set-rest-${exIdx}-${si}`;
+
+                    return (
+                      <div key={si} className="transition-colors">
+                        <div
+                          className={`grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2.5 transition-colors ${
+                            set.completed ? "bg-cyan-500/[0.06]" : "hover:bg-white/[0.02]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className={`text-xs font-bold tabular-nums ${set.completed ? "text-cyan-300" : "text-slate-400"}`}>
+                              {si + 1}
+                            </span>
+                            {ex.trackedSets.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeSetFromExercise(exIdx, si)}
+                                className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] p-0.5"
+                                title="Delete this set"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            placeholder="—"
+                            value={set.weight}
+                            onChange={(e) => updateSet(exIdx, si, "weight", e.target.value)}
+                            className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
+                              set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
+                            }`}
+                          />
+
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder={set.targetReps}
+                            value={set.actualReps}
+                            onChange={(e) => updateSet(exIdx, si, "actualReps", e.target.value)}
+                            className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
+                              set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
+                            }`}
+                          />
+
+                          <div className="flex justify-center">
+                            <SetCheckbox
+                              checked={set.completed}
+                              onChange={() => handleToggleSetDone(exIdx, si)}
+                            />
+                          </div>
+                        </div>
+
+                        {/* ── Set-Level Rest Timer Strip (Under Every Rep / Set) ── */}
+                        <div className="px-4 py-1.5 bg-white/[0.015] border-t border-white/[0.03] flex items-center justify-between text-[10px]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400 font-medium">Set {si + 1} Rest:</span>
+                            {isSetTimerActive ? (
+                              <span className="font-mono font-bold text-cyan-300 animate-pulse">
+                                ⏱️ {formatTime(restTimer.remainingSeconds)}
+                              </span>
+                            ) : set.completed ? (
+                              <span className="text-teal-300 font-semibold">Completed</span>
+                            ) : (
+                              <span className="text-slate-500">Ready</span>
+                            )}
+                          </div>
+
+                          {/* Quick Duration Buttons for this Set */}
+                          <div className="flex items-center gap-1">
+                            {[30, 60, 90, 120].map((sec) => (
+                              <button
+                                key={sec}
+                                type="button"
+                                onClick={() =>
+                                  startRestTimer(
+                                    `set-rest-${exIdx}-${si}`,
+                                    `${ex.name} • Set ${si + 1} Rest`,
+                                    sec,
+                                    "set",
+                                    exIdx,
+                                    si
+                                  )
+                                }
+                                className={`px-2 py-0.5 rounded-md text-[9px] font-bold button-press transition-all ${
+                                  isSetTimerActive && restTimer?.totalSeconds === sec
+                                    ? "bg-cyan-500 text-slate-950 shadow-sm"
+                                    : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                                }`}
+                              >
+                                {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
+                              </button>
+                            ))}
+                            {isSetTimerActive && (
+                              <button
+                                type="button"
+                                onClick={stopRestTimer}
+                                className="px-1.5 py-0.5 rounded text-[9px] font-bold text-red-400 hover:text-red-300"
+                              >
+                                Skip
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* ── Bottom of Exercise Card: + Add Another Set Button ── */}
+                <div className="p-3 border-t border-white/[0.06] bg-white/[0.01] flex items-center justify-between">
                   <button
                     type="button"
-                    onClick={() => removeExercise(exIdx)}
-                    className="text-slate-500 hover:text-red-400 transition-colors p-1"
-                    title="Remove"
+                    onClick={() => addSetToExercise(exIdx)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sky-300 hover:text-white text-xs font-bold transition-all button-press active:scale-95"
                   >
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
+                    <span>+ Add Another Set</span>
                   </button>
+
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {ex.trackedSets.length} sets planned
+                  </span>
                 </div>
               </div>
 
-              <div className="divide-y divide-white/[0.04]">
-                <div className="grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                  <span>Set</span>
-                  <span>Weight ({unit})</span>
-                  <span>Reps</span>
-                  <span className="text-center">Done</span>
-                </div>
-                {ex.trackedSets.map((set, si) => (
+              {/* ── Inter-Exercise Rest Timer Widget (Between Each Exercise) ── */}
+              {isNextExerciseAvailable && (
+                <div className="py-1">
                   <div
-                    key={si}
-                    className={`grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2 transition-colors ${
-                      set.completed ? "bg-cyan-500/[0.06]" : "hover:bg-white/[0.02]"
+                    className={`liquid-glass card-hover-lift rounded-2xl p-3.5 border transition-all ${
+                      isInterExTimerActive
+                        ? "border-cyan-400/60 bg-gradient-to-r from-cyan-950/40 via-sky-950/30 to-slate-900/50 shadow-md shadow-cyan-500/10"
+                        : "border-white/10 hover:border-cyan-400/30"
                     }`}
                   >
-                    <span className={`text-xs font-bold tabular-nums ${set.completed ? "text-cyan-300" : "text-slate-400"}`}>
-                      {si + 1}
-                    </span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      placeholder="—"
-                      value={set.weight}
-                      onChange={(e) => updateSet(exIdx, si, "weight", e.target.value)}
-                      className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
-                        set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
-                      }`}
-                    />
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        placeholder={set.targetReps}
-                        value={set.actualReps}
-                        onChange={(e) => updateSet(exIdx, si, "actualReps", e.target.value)}
-                        className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
-                          set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
-                        }`}
-                      />
-                    </div>
-                    <div className="flex justify-center">
-                      <SetCheckbox checked={set.completed} onChange={() => updateSet(exIdx, si, "completed", !set.completed)} />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="liquid-pill flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                          </svg>
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                              Inter-Exercise Recovery
+                            </span>
+                            {isInterExTimerActive && (
+                              <span className="liquid-pill px-1.5 py-0.2 rounded text-[9px] font-bold text-sky-300 animate-pulse">
+                                Resting
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-extrabold text-white mt-0.5">
+                            Next Up: <span className="text-sky-300">{tracked[exIdx + 1].name}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Timer controls between exercises */}
+                      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                        {isInterExTimerActive ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-base font-black text-cyan-300 tabular-nums">
+                              {formatTime(restTimer.remainingSeconds)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => adjustRestTimer(30)}
+                              className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+                            >
+                              +30s
+                            </button>
+                            <button
+                              type="button"
+                              onClick={stopRestTimer}
+                              className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white text-[10px] font-bold button-press"
+                            >
+                              Start {tracked[exIdx + 1].name} →
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-400 hidden sm:inline">Rest:</span>
+                            {[60, 90, 120, 180].map((sec) => (
+                              <button
+                                key={sec}
+                                type="button"
+                                onClick={() =>
+                                  startRestTimer(
+                                    `inter-ex-${exIdx}`,
+                                    `Rest before ${tracked[exIdx + 1].name}`,
+                                    sec,
+                                    "exercise",
+                                    exIdx + 1
+                                  )
+                                }
+                                className="liquid-pill px-2.5 py-1 text-[10px] font-bold text-slate-300 hover:text-white hover:border-cyan-400/40 rounded-lg button-press"
+                              >
+                                {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
