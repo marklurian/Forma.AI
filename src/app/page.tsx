@@ -1158,6 +1158,12 @@ function ActiveWorkout({
         {tracked.map((ex, exIdx) => {
           const exDone = ex.trackedSets.length > 0 && ex.trackedSets.every((s) => s.completed);
           const isNextExerciseAvailable = exIdx < tracked.length - 1;
+          const isThisInterExTimerActive = Boolean(
+            restTimer && (
+              restTimer.id === `inter-ex-${exIdx}` ||
+              (restTimer.type === "exercise" && restTimer.targetExIdx === exIdx + 1)
+            )
+          );
 
           return (
             <div key={exIdx} className="space-y-3.5">
@@ -1269,43 +1275,75 @@ function ActiveWorkout({
                             onChange={() => handleToggleSetDone(exIdx, si)}
                           />
                         </div>
-                        </div>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* ── Bottom of Exercise Card: + Add Another Set Button ── */}
-                  <div className="p-3 border-t border-white/[0.06] bg-white/[0.01] flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => addSetToExercise(exIdx)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sky-300 hover:text-white text-xs font-bold transition-all button-press active:scale-95"
-                    >
-                      <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      <span>+ Add Another Set</span>
-                    </button>
-
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {ex.trackedSets.length} sets planned
-                    </span>
-                  </div>
+                    </div>
+                  ))}
                 </div>
 
-                {/* ── Minimal Inter-Exercise Divider ── */}
-                {isNextExerciseAvailable && (
-                  <div className="flex items-center justify-center gap-3 py-1 text-slate-500">
-                    <span className="h-px flex-1 bg-white/[0.06]" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      Next Movement: <span className="text-sky-300">{tracked[exIdx + 1].name}</span>
-                    </span>
-                    <span className="h-px flex-1 bg-white/[0.06]" />
-                  </div>
-                )}
+                {/* ── Bottom of Exercise Card: + Add Another Set Button ── */}
+                <div className="p-3 border-t border-white/[0.06] bg-white/[0.01] flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => addSetToExercise(exIdx)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sky-300 hover:text-white text-xs font-bold transition-all button-press active:scale-95"
+                  >
+                    <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span>+ Add Another Set</span>
+                  </button>
+
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {ex.trackedSets.length} sets planned
+                  </span>
+                </div>
               </div>
-            );
-          })}
+
+              {/* ── Minimal Inter-Exercise Divider with Timer on the Right ── */}
+              {isNextExerciseAvailable && (
+                <div className="flex items-center justify-center gap-3 py-2 text-slate-500">
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                  <div className="flex items-center gap-3 flex-wrap justify-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Next Movement: <span className="text-sky-300 font-extrabold">{tracked[exIdx + 1].name}</span>
+                    </span>
+
+                    {/* Inline Rest Timer on Right Side after Exercise Name */}
+                    {isThisInterExTimerActive && restTimer && (
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shadow-[0_0_12px_rgba(56,189,248,0.25)] animate-scale-in">
+                        <svg className="h-3.5 w-3.5 text-cyan-400 animate-pulse" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <span className="font-mono text-xs font-black tabular-nums text-cyan-200">
+                          {formatTime(restTimer.remainingSeconds)}
+                        </span>
+                        <div className="flex items-center gap-1 ml-0.5">
+                          <button
+                            type="button"
+                            onClick={() => adjustRestTimer(-30)}
+                            className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                            title="Lessen rest by 30 seconds"
+                          >
+                            -30s
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => adjustRestTimer(30)}
+                            className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                            title="Add 30 seconds to rest"
+                          >
+                            +30s
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         <AddExerciseInline onAdd={addExercise} />
       </div>
