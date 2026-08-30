@@ -444,7 +444,7 @@ function FitnessGoalSelector({
               key={g.id}
               type="button"
               onClick={() => onChange(g.id)}
-              className={`text-left p-3 rounded-2xl border transition-all ${
+              className={`text-left p-3 rounded-2xl border card-hover-lift button-press transition-all ${
                 selected
                   ? "border-sky-400/60 bg-gradient-to-r from-sky-600/30 to-cyan-600/30 shadow-md shadow-sky-500/20 ring-1 ring-sky-400/50"
                   : "liquid-glass border-white/10 hover:border-sky-400/30 hover:bg-white/[0.04]"
@@ -455,7 +455,7 @@ function FitnessGoalSelector({
                   {g.title}
                 </span>
                 {selected && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-cyan-400 text-slate-950 text-[10px] font-black">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-cyan-400 text-slate-950 text-[10px] font-black animate-check-pop">
                     ✓
                   </span>
                 )}
@@ -500,7 +500,7 @@ function ExperienceLevelSelector({
               key={exp.id}
               type="button"
               onClick={() => onChange(exp.id)}
-              className={`text-left p-2.5 rounded-2xl border transition-all ${
+              className={`text-left p-2.5 rounded-2xl border card-hover-lift button-press transition-all ${
                 selected
                   ? "border-cyan-400/60 bg-gradient-to-r from-sky-600/30 to-cyan-600/30 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400/50"
                   : "liquid-glass border-white/10 hover:border-cyan-400/30 hover:bg-white/[0.04]"
@@ -511,7 +511,7 @@ function ExperienceLevelSelector({
                   {exp.title}
                 </span>
                 {selected && (
-                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-400 text-slate-950 text-[9px] font-black">
+                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-400 text-slate-950 text-[9px] font-black animate-check-pop">
                     ✓
                   </span>
                 )}
@@ -602,7 +602,7 @@ function EquipmentMixSelector({
                 key={preset.label}
                 type="button"
                 onClick={() => applyPreset(preset.items)}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-xl transition-all ${
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-xl card-hover-lift button-press transition-all ${
                   isMatch
                     ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20"
                     : "liquid-pill text-slate-300 hover:text-white hover:border-sky-400/40"
@@ -626,7 +626,7 @@ function EquipmentMixSelector({
                 key={item.id}
                 type="button"
                 onClick={() => toggleItem(item.id)}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold border transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold border card-hover-lift button-press transition-all ${
                   isSelected
                     ? "border-sky-400/60 bg-sky-950/40 text-white shadow-sm shadow-sky-500/20 ring-1 ring-sky-400/40"
                     : "liquid-glass border-white/10 text-slate-300 hover:text-white hover:border-white/20"
@@ -634,8 +634,8 @@ function EquipmentMixSelector({
               >
                 <span className="truncate">{item.label}</span>
                 <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md text-[9px] font-black transition-colors ${
-                    isSelected ? "bg-cyan-400 text-slate-950" : "border border-white/20 text-transparent"
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md text-[9px] font-black transition-all ${
+                    isSelected ? "bg-cyan-400 text-slate-950 animate-check-pop" : "border border-white/20 text-transparent"
                   }`}
                 >
                   ✓
@@ -680,14 +680,14 @@ function SetCheckbox({ checked, onChange }: { checked: boolean; onChange: () => 
     <button
       type="button"
       onClick={onChange}
-      className={`group flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-all duration-300 ${
+      className={`group flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border button-press transition-all duration-200 ${
         checked
           ? "border-cyan-400/90 bg-cyan-500/25 shadow-[0_0_14px_rgba(56,189,248,0.4)]"
           : "border-white/15 bg-white/[0.03] hover:border-white/30"
       }`}
     >
       {checked && (
-        <svg className="h-4 w-4 text-cyan-300" style={{ animation: "checkPop 0.25s ease-out" }} fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+        <svg className="h-4 w-4 text-cyan-300 animate-check-pop" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
         </svg>
       )}
@@ -2352,7 +2352,7 @@ function ExerciseLibraryTab({
                 key={letter}
                 type="button"
                 onClick={() => setSelectedLetter(letter)}
-                className={`min-w-[28px] h-7 px-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`min-w-[28px] h-7 px-1.5 text-xs font-bold rounded-lg button-press transition-all ${
                   selectedLetter === letter
                     ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/25"
                     : "liquid-glass text-slate-400 hover:text-white"
@@ -2373,7 +2373,7 @@ function ExerciseLibraryTab({
                 key={bp}
                 type="button"
                 onClick={() => setSelectedBodyPart(bp)}
-                className={`px-3 py-1 text-xs font-bold rounded-xl transition-all ${
+                className={`px-3 py-1 text-xs font-bold rounded-xl button-press transition-all ${
                   selectedBodyPart === bp
                     ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
                     : "liquid-glass text-slate-400 hover:text-white"
@@ -2391,7 +2391,7 @@ function ExerciseLibraryTab({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-xl transition-all ${
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-xl button-press transition-all ${
                   selectedCategory === cat
                     ? "bg-cyan-600 text-white shadow-md shadow-cyan-500/20"
                     : "liquid-glass text-slate-400 hover:text-white"
@@ -2422,7 +2422,7 @@ function ExerciseLibraryTab({
               setSelectedBodyPart("All");
               setSelectedCategory("All");
             }}
-            className="mt-4 liquid-glass px-4 py-2 text-xs font-bold text-sky-300 hover:text-white rounded-xl"
+            className="mt-4 liquid-glass px-4 py-2 text-xs font-bold text-sky-300 hover:text-white rounded-xl button-press"
           >
             Reset Filters
           </button>
@@ -2433,7 +2433,7 @@ function ExerciseLibraryTab({
             <div
               key={ex.id}
               onClick={() => onSelectExercise(ex)}
-              className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group"
+              className="liquid-glass card-hover-lift cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
@@ -2600,10 +2600,10 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* ── 2. Unified Streamlined 4-Stat Strip ── */}
+      {/* ── 2. Unified Streamlined 4-Stat Strip (Staggered Animation) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Streak */}
-        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between">
+        <div className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Consistency</span>
             <span className="text-[10px] font-bold text-sky-400">92%</span>
@@ -2618,7 +2618,7 @@ function DashboardTab({
         {/* Weight */}
         <div
           onClick={() => onNavigateTab("metrics")}
-          className="liquid-glass liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between"
+          className="liquid-glass card-hover-lift liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Weight</span>
@@ -2634,7 +2634,7 @@ function DashboardTab({
         </div>
 
         {/* Volume Time */}
-        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between">
+        <div className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Volume Time</span>
             <span className="text-[10px] font-bold text-cyan-300">93%</span>
@@ -2647,7 +2647,7 @@ function DashboardTab({
         </div>
 
         {/* Split */}
-        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between">
+        <div className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Muscle Split</span>
             <span className="text-[10px] font-bold text-emerald-400">Optimal</span>
@@ -2660,7 +2660,7 @@ function DashboardTab({
       </div>
 
       {/* ── 3. Combined Microcycle Tracker & AI Training Cue ── */}
-      <div className="liquid-glass rounded-2xl p-4 border border-white/10 space-y-3">
+      <div className="liquid-glass rounded-2xl p-4 border border-white/10 space-y-3 animate-fade-in-up stagger-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-extrabold text-white">Weekly Microcycle</span>
@@ -2669,7 +2669,7 @@ function DashboardTab({
           <button
             type="button"
             onClick={onQuickStart}
-            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1"
+            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1 button-press"
           >
             <span>Start Today&apos;s Workout</span>
             <span>→</span>
@@ -2681,9 +2681,9 @@ function DashboardTab({
           {weeklySchedule.map((item, idx) => (
             <div
               key={idx}
-              className={`rounded-xl p-2 sm:p-2.5 text-center border transition-all ${
+              className={`rounded-xl p-2 sm:p-2.5 text-center border card-hover-lift ${
                 item.status === "today"
-                  ? "border-cyan-400/70 bg-cyan-950/40 ring-1 ring-cyan-400/40 shadow-sm"
+                  ? "border-cyan-400/70 bg-cyan-950/40 ring-1 ring-cyan-400/40 shadow-sm shadow-cyan-500/20"
                   : item.status === "completed"
                   ? "border-sky-500/30 bg-sky-950/20"
                   : "border-white/5 bg-white/[0.02]"
@@ -2692,10 +2692,10 @@ function DashboardTab({
               <div className="flex items-center justify-center gap-1">
                 <span className="text-[11px] font-bold text-white">{item.day}</span>
                 {item.status === "completed" && (
-                  <span className="text-cyan-400 text-[9px] font-black">✓</span>
+                  <span className="text-cyan-400 text-[9px] font-black animate-check-pop">✓</span>
                 )}
                 {item.status === "today" && (
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#38bdf8]" />
                 )}
               </div>
               <p className={`text-[10px] font-bold mt-1 truncate ${item.status === "today" ? "text-cyan-300 font-extrabold" : "text-slate-400"}`}>
@@ -2718,7 +2718,7 @@ function DashboardTab({
           <button
             type="button"
             onClick={() => onNavigateTab("ai")}
-            className="text-[10px] font-bold text-sky-400 hover:text-white shrink-0 ml-2"
+            className="text-[10px] font-bold text-sky-400 hover:text-white shrink-0 ml-2 button-press"
           >
             Custom Routine →
           </button>
@@ -2726,7 +2726,7 @@ function DashboardTab({
       </div>
 
       {/* ── 4. Main Two-Column Hub (Workouts on Left, Telemetry on Right) ── */}
-      <div className="grid gap-5 lg:grid-cols-12 items-start">
+      <div className="grid gap-5 lg:grid-cols-12 items-start animate-fade-in-up stagger-3">
         {/* Left Column (7 cols): Quick Launch Blueprints */}
         <div className="lg:col-span-7 space-y-3">
           <div className="flex items-center justify-between">
@@ -2744,7 +2744,7 @@ function DashboardTab({
             {topTemplates.map((tmpl) => (
               <div
                 key={tmpl.id}
-                className="liquid-glass rounded-2xl p-3.5 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
+                className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -2764,7 +2764,7 @@ function DashboardTab({
                 <button
                   type="button"
                   onClick={() => onStartTemplate(tmpl)}
-                  className="mt-3 w-full py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1"
+                  className="mt-3 w-full py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-xs font-bold transition-all button-press flex items-center justify-center gap-1"
                 >
                   <span>Start Workout</span>
                   <span>→</span>
@@ -2798,7 +2798,7 @@ function DashboardTab({
                 allSessions.map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/5 px-2.5 py-2 text-xs"
+                    className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/5 px-2.5 py-2 text-xs card-hover-lift"
                   >
                     <div>
                       <p className="font-bold text-white text-[11px]">{s.exName}</p>
@@ -2834,7 +2834,7 @@ function DashboardTab({
                 <div
                   key={ex.id}
                   onClick={() => onSelectExercise(ex)}
-                  className="liquid-glass liquid-glass-interactive cursor-pointer rounded-xl p-2 border border-white/10 text-center hover:border-cyan-400/40 transition-all group"
+                  className="liquid-glass card-hover-lift cursor-pointer rounded-xl p-2 border border-white/10 text-center hover:border-cyan-400/40 transition-all group button-press"
                 >
                   <p className="text-[11px] font-extrabold text-white group-hover:text-cyan-300 truncate transition-colors">
                     {ex.name}
