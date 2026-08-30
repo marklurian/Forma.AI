@@ -813,7 +813,7 @@ interface ActiveRestTimerState {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Centered Set-Level Rest Timer Widget with Custom Input
+   Minimalist Centered Set-Level Rest Timer (Pure Custom Input)
    ═══════════════════════════════════════════════════════════════ */
 function SetRestTimerWidget({
   setNum,
@@ -830,7 +830,7 @@ function SetRestTimerWidget({
   exerciseName: string;
   exIdx: number;
   setIdx: number;
-  isCompleted: boolean;
+  isCompleted?: boolean;
   activeTimer: ActiveRestTimerState | null;
   onStartTimer: (
     id: string,
@@ -846,13 +846,14 @@ function SetRestTimerWidget({
   const [customSec, setCustomSec] = useState("");
   const isThisActive = activeTimer?.id === `set-rest-${exIdx}-${setIdx}`;
 
-  function handleStartCustom() {
+  function handleStart(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     const val = parseInt(customSec, 10);
-    if (isNaN(val) || val <= 0) return;
+    const targetSeconds = !isNaN(val) && val > 0 ? val : 60;
     onStartTimer(
       `set-rest-${exIdx}-${setIdx}`,
       `${exerciseName} • Set ${setNum} Rest`,
-      val,
+      targetSeconds,
       "set",
       exIdx,
       setIdx
@@ -862,114 +863,60 @@ function SetRestTimerWidget({
 
   return (
     <div
-      className={`px-3 py-2 border-t border-white/[0.04] transition-all flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-center ${
-        isThisActive
-          ? "bg-cyan-950/30 border-cyan-400/30 shadow-inner"
-          : "bg-white/[0.015]"
+      className={`px-3 py-1.5 border-t border-white/[0.03] transition-all flex items-center justify-center gap-2 text-center ${
+        isThisActive ? "bg-cyan-950/30 border-cyan-400/30" : "bg-white/[0.01]"
       }`}
     >
-      {/* Centered Status & Label */}
-      <div className="flex items-center justify-center gap-2 shrink-0">
-        <span className="text-[11px] font-bold text-slate-300">Set {setNum} Rest:</span>
-        {isThisActive ? (
-          <span className="liquid-pill px-2.5 py-0.5 rounded-full text-xs font-mono font-black text-cyan-300 animate-pulse border-cyan-400/40 shadow-[0_0_10px_rgba(56,189,248,0.3)]">
+      {isThisActive ? (
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-[11px] font-bold text-slate-300">Set {setNum} Rest:</span>
+          <span className="font-mono text-xs font-black text-cyan-300 animate-pulse tabular-nums">
             ⏱️ {formatTime(activeTimer.remainingSeconds)}
           </span>
-        ) : isCompleted ? (
-          <span className="liquid-pill px-2 py-0.5 rounded text-[10px] font-bold text-teal-300">
-            Completed
-          </span>
-        ) : (
-          <span className="liquid-pill px-2 py-0.5 rounded text-[10px] font-medium text-slate-400">
-            Ready
-          </span>
-        )}
-      </div>
-
-      {/* Centered Action Controls or Preset/Custom Pickers */}
-      {isThisActive ? (
-        <div className="flex items-center justify-center gap-1.5 shrink-0">
           <button
             type="button"
             onClick={() => onAdjustTimer(15)}
-            className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+            className="liquid-pill px-2 py-0.5 text-[10px] font-bold text-sky-300 hover:text-white rounded-md button-press"
           >
             +15s
           </button>
           <button
             type="button"
-            onClick={() => onAdjustTimer(30)}
-            className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
-          >
-            +30s
-          </button>
-          <button
-            type="button"
             onClick={onStopTimer}
-            className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 hover:text-white text-[10px] font-bold button-press"
+            className="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 hover:text-white text-[10px] font-bold button-press"
           >
-            Skip Rest
+            Skip
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-center gap-1.5 shrink-0">
-          {/* Quick Preset Buttons */}
+        <form onSubmit={handleStart} className="flex items-center justify-center gap-2">
+          <span className="text-[11px] font-medium text-slate-400">Set {setNum} Rest:</span>
           <div className="flex items-center gap-1">
-            {[30, 45, 60, 90, 120].map((sec) => (
-              <button
-                key={sec}
-                type="button"
-                onClick={() =>
-                  onStartTimer(
-                    `set-rest-${exIdx}-${setIdx}`,
-                    `${exerciseName} • Set ${setNum} Rest`,
-                    sec,
-                    "set",
-                    exIdx,
-                    setIdx
-                  )
-                }
-                className="liquid-pill px-2 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white hover:border-cyan-400/50 button-press"
-              >
-                {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom Duration Input */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleStartCustom();
-            }}
-            className="flex items-center gap-1"
-          >
             <input
               type="number"
               min="5"
               max="900"
-              step="5"
-              placeholder="Custom s"
+              placeholder="60"
               value={customSec}
               onChange={(e) => setCustomSec(e.target.value)}
-              className="liquid-input w-20 px-2 py-1 text-[10px] rounded-lg text-center font-mono text-white placeholder:text-slate-500 focus:outline-none"
+              className="liquid-input w-14 px-2 py-0.5 text-[11px] rounded-md text-center font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
             />
-            <button
-              type="submit"
-              disabled={!customSec || parseInt(customSec) <= 0}
-              className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 disabled:opacity-30 text-[10px] font-bold button-press border border-cyan-500/30"
-            >
-              Start
-            </button>
-          </form>
-        </div>
+            <span className="text-[10px] text-slate-400">sec</span>
+          </div>
+          <button
+            type="submit"
+            className="px-2.5 py-0.5 rounded-md bg-white/5 hover:bg-cyan-500/20 text-sky-300 hover:text-cyan-200 border border-white/10 hover:border-cyan-400/40 text-[10px] font-bold button-press transition-all"
+          >
+            Start
+          </button>
+        </form>
       )}
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Centered Inter-Exercise Recovery Widget with Custom Input
+   Minimalist Inter-Exercise Recovery Widget (Pure Custom Input)
    ═══════════════════════════════════════════════════════════════ */
 function InterExerciseRestCard({
   exIdx,
@@ -997,118 +944,76 @@ function InterExerciseRestCard({
   const [customSec, setCustomSec] = useState("");
   const isThisActive = activeTimer?.id === `inter-ex-${exIdx}`;
 
-  function handleStartCustom() {
+  function handleStart(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     const val = parseInt(customSec, 10);
-    if (isNaN(val) || val <= 0) return;
-    onStartTimer(`inter-ex-${exIdx}`, `Rest before ${nextExName}`, val, "exercise", exIdx + 1);
+    const targetSeconds = !isNaN(val) && val > 0 ? val : 120;
+    onStartTimer(`inter-ex-${exIdx}`, `Rest before ${nextExName}`, targetSeconds, "exercise", exIdx + 1);
     setCustomSec("");
   }
 
   return (
-    <div className="py-2">
+    <div className="py-1">
       <div
-        className={`liquid-glass card-hover-lift rounded-2xl p-4 border transition-all text-center space-y-3 ${
+        className={`liquid-glass card-hover-lift rounded-xl px-4 py-2.5 border transition-all flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left ${
           isThisActive
-            ? "border-cyan-400/70 bg-gradient-to-b from-cyan-950/50 via-sky-950/40 to-slate-900/60 shadow-lg shadow-cyan-500/15"
-            : "border-white/10 hover:border-cyan-400/40"
+            ? "border-cyan-400/60 bg-cyan-950/30 shadow-md shadow-cyan-500/10"
+            : "border-white/10 hover:border-cyan-400/30"
         }`}
       >
-        {/* Centered Header Details */}
-        <div className="flex flex-col items-center justify-center gap-1 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-cyan-300">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-              </svg>
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">
-              Inter-Exercise Recovery
-            </span>
-            {isThisActive && (
-              <span className="liquid-pill px-2 py-0.2 rounded-full text-[9px] font-bold text-sky-300 animate-pulse">
-                Active Rest
-              </span>
-            )}
-          </div>
-          <p className="text-sm font-extrabold text-white">
-            Next Movement: <span className="text-cyan-300">{nextExName}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-cyan-500/15 text-cyan-300">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </span>
+          <p className="text-xs font-semibold text-slate-300 truncate">
+            Next: <span className="font-bold text-white">{nextExName}</span>
           </p>
         </div>
 
-        {/* Centered Timer or Custom Pickers */}
         {isThisActive ? (
-          <div className="flex flex-col items-center justify-center gap-2 pt-1">
-            <span className="font-mono text-3xl font-black text-cyan-300 tabular-nums animate-pulse">
-              {formatTime(activeTimer.remainingSeconds)}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="font-mono text-sm font-black text-cyan-300 tabular-nums animate-pulse">
+              ⏱️ {formatTime(activeTimer.remainingSeconds)}
             </span>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => onAdjustTimer(30)}
-                className="liquid-pill px-3 py-1.5 text-xs font-bold text-sky-300 hover:text-white rounded-xl button-press"
-              >
-                +30s
-              </button>
-              <button
-                type="button"
-                onClick={onStopTimer}
-                className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 hover:opacity-90 text-white text-xs font-bold button-press shadow-md"
-              >
-                Start {nextExName} →
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => onAdjustTimer(30)}
+              className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+            >
+              +30s
+            </button>
+            <button
+              type="button"
+              onClick={onStopTimer}
+              className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white text-[10px] font-bold button-press"
+            >
+              Start {nextExName} →
+            </button>
           </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-            {/* Quick Presets */}
-            <div className="flex items-center gap-1.5">
-              {[60, 90, 120, 180].map((sec) => (
-                <button
-                  key={sec}
-                  type="button"
-                  onClick={() =>
-                    onStartTimer(
-                      `inter-ex-${exIdx}`,
-                      `Rest before ${nextExName}`,
-                      sec,
-                      "exercise",
-                      exIdx + 1
-                    )
-                  }
-                  className="liquid-pill px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white hover:border-cyan-400/40 rounded-xl button-press"
-                >
-                  {sec >= 60 ? `${sec / 60}m` : `${sec}s`}
-                </button>
-              ))}
-            </div>
-
-            {/* Custom Input */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleStartCustom();
-              }}
-              className="flex items-center gap-1.5"
-            >
+          <form onSubmit={handleStart} className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] text-slate-400">Rest:</span>
+            <div className="flex items-center gap-1">
               <input
                 type="number"
                 min="10"
-                max="1200"
-                step="10"
-                placeholder="Custom sec"
+                max="900"
+                placeholder="120"
                 value={customSec}
                 onChange={(e) => setCustomSec(e.target.value)}
-                className="liquid-input w-24 px-2.5 py-1.5 text-xs rounded-xl text-center font-mono text-white placeholder:text-slate-500 focus:outline-none"
+                className="liquid-input w-16 px-2 py-0.5 text-xs rounded-md text-center font-mono text-white placeholder:text-slate-500 focus:outline-none"
               />
-              <button
-                type="submit"
-                disabled={!customSec || parseInt(customSec) <= 0}
-                className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 disabled:opacity-30 text-xs font-bold button-press border border-cyan-500/30"
-              >
-                Start Rest
-              </button>
-            </form>
-          </div>
+              <span className="text-[10px] text-slate-400">sec</span>
+            </div>
+            <button
+              type="submit"
+              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-sky-300 hover:text-cyan-200 border border-white/10 hover:border-cyan-400/40 text-xs font-bold button-press transition-all"
+            >
+              Start Rest
+            </button>
+          </form>
         )}
       </div>
     </div>
