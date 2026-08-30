@@ -69,8 +69,8 @@ interface ExerciseLibraryItem {
     tips: string[];
     commonMistakes: string[];
   };
-  videoEmbedId: string; // YouTube embed ID for demonstration
-  defaultBarWeightLbs: number; // 45 for standard barbell, 0 for dumbbell/bodyweight
+  videoEmbedId: string;
+  defaultBarWeightLbs: number;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -179,7 +179,6 @@ const SEEDED_METRICS: MetricEntry[] = [
   { id: "m-11", date: "2026-08-30", weight: 170.4, bodyFat: 14.2, calories: 2180 },
 ];
 
-/* Comprehensive Exercise Library Dataset */
 const EXERCISE_LIBRARY: ExerciseLibraryItem[] = [
   {
     id: "lib-bench",
@@ -584,6 +583,47 @@ function saveExerciseHistory(h: Record<string, ExerciseHistoryItem[]>) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Segmented Unit Selector Component [ LBS | KG ]
+   ═══════════════════════════════════════════════════════════════ */
+function UnitTogglePill({
+  unit,
+  onChange,
+  size = "md",
+}: {
+  unit: "lbs" | "kg";
+  onChange: (u: "lbs" | "kg") => void;
+  size?: "sm" | "md";
+}) {
+  const pad = size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-3 py-1 text-xs";
+  return (
+    <div className="liquid-pill flex items-center rounded-xl p-0.5 border-white/10 shrink-0 select-none">
+      <button
+        type="button"
+        onClick={() => onChange("lbs")}
+        className={`${pad} font-extrabold rounded-lg transition-all ${
+          unit === "lbs"
+            ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-500/25"
+            : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+        }`}
+      >
+        LBS
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("kg")}
+        className={`${pad} font-extrabold rounded-lg transition-all ${
+          unit === "kg"
+            ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-500/25"
+            : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+        }`}
+      >
+        KG
+      </button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    Liquid Background with Ambient Fluid Orbs
    ═══════════════════════════════════════════════════════════════ */
 function LiquidBackground() {
@@ -802,19 +842,21 @@ function AddExerciseInline({ onAdd }: { onAdd: (ex: Exercise) => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Active Workout Tracker
+   Active Workout Tracker (with prominent Back/Exit navigation)
    ═══════════════════════════════════════════════════════════════ */
 function ActiveWorkout({
   dayTitle,
   tracked,
   setTracked,
   onFinish,
+  onBack,
   elapsedSeconds,
 }: {
   dayTitle: string;
   tracked: TrackedExercise[];
   setTracked: React.Dispatch<React.SetStateAction<TrackedExercise[]>>;
   onFinish: () => void;
+  onBack: () => void;
   elapsedSeconds: number;
 }) {
   const totalSets = tracked.reduce((sum, ex) => sum + ex.trackedSets.length, 0);
@@ -858,15 +900,31 @@ function ActiveWorkout({
 
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-4">
+      {/* Sticky top metrics bar with Back/Exit button */}
       <div className="liquid-glass sticky top-16 z-40 rounded-2xl p-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Active Session</p>
+          <div className="min-w-0 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:border-purple-400/40 transition-all group shrink-0"
+              title="Return to Dashboard"
+            >
+              <svg className="h-4 w-4 text-purple-300 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              </svg>
+              <span>Back</span>
+            </button>
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Active Session</p>
+              </div>
+              <h2 className="truncate text-base font-extrabold tracking-tight text-white mt-0.5">{dayTitle}</h2>
             </div>
-            <h2 className="truncate text-base font-extrabold tracking-tight text-white mt-0.5">{dayTitle}</h2>
           </div>
+
           <div className="flex items-center gap-4 shrink-0">
             <div className="text-right">
               <p className="font-mono text-base font-bold tabular-nums text-slate-100">{formatTime(elapsedSeconds)}</p>
@@ -940,7 +998,7 @@ function ActiveWorkout({
               <div className="divide-y divide-white/[0.04]">
                 <div className="grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
                   <span>Set</span>
-                  <span>Weight (lbs)</span>
+                  <span>Weight</span>
                   <span>Reps</span>
                   <span className="text-center">Done</span>
                 </div>
@@ -1815,22 +1873,33 @@ function WeightAndPlateCalculator({
   category,
   defaultBarWeightLbs,
   unit,
+  onSetUnit,
   onLogSet,
 }: {
   category: EquipmentCategory;
   defaultBarWeightLbs: number;
   unit: "lbs" | "kg";
+  onSetUnit: (u: "lbs" | "kg") => void;
   onLogSet: (weight: number, reps: number) => void;
 }) {
   const [barWeight, setBarWeight] = useState(defaultBarWeightLbs || (unit === "kg" ? 20 : 45));
   const [targetWeight, setTargetWeight] = useState(unit === "kg" ? 60 : 135);
   const [repsInput, setRepsInput] = useState(10);
 
-  // Convert for unit change if needed
+  // Sync default weights if unit changes
+  useEffect(() => {
+    if (unit === "kg") {
+      setBarWeight((bw) => (bw === 45 ? 20 : bw === 35 ? 15 : bw === 25 ? 10 : 20));
+      setTargetWeight((tw) => (tw > 100 ? Math.round(tw * 0.453592 * 2) / 2 : tw));
+    } else {
+      setBarWeight((bw) => (bw === 20 ? 45 : bw === 15 ? 35 : bw === 10 ? 25 : 45));
+      setTargetWeight((tw) => (tw < 100 ? Math.round(tw * 2.20462 * 2) / 2 : tw));
+    }
+  }, [unit]);
+
   const isBarbell = category === "Barbell";
   const isDumbbell = category === "Dumbbell";
 
-  // Calculate plate distribution per side (standard Olympic plate breakdown)
   const plateBreakdown = useMemo(() => {
     if (!isBarbell) return [];
     const availablePlates = unit === "lbs" ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25];
@@ -1860,21 +1929,21 @@ function WeightAndPlateCalculator({
             {isBarbell ? "Barbell & Plate Setup" : isDumbbell ? "Dumbbell Weight Setup" : "Weight / Resistance Input"}
           </h4>
         </div>
-        <span className="liquid-pill px-2 py-0.5 text-[10px] font-bold text-slate-300 rounded-md uppercase">
-          {unit}
-        </span>
+
+        {/* Segmented Unit Selector */}
+        <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
       </div>
 
       {/* Target Weight & Reps inputs */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            {isDumbbell ? `Each Dumbbell (${unit})` : `Total Lift Weight (${unit})`}
+            {isDumbbell ? `Each Dumbbell (${unit.toUpperCase()})` : `Total Lift Weight (${unit.toUpperCase()})`}
           </label>
           <div className="relative mt-1">
             <input
               type="number"
-              step="2.5"
+              step={unit === "kg" ? "1" : "2.5"}
               value={targetWeight}
               onChange={(e) => setTargetWeight(parseFloat(e.target.value) || 0)}
               className="liquid-input w-full rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none"
@@ -1896,7 +1965,7 @@ function WeightAndPlateCalculator({
 
       {/* Quick increments */}
       <div className="flex flex-wrap gap-1.5">
-        {[2.5, 5, 10, 25].map((inc) => (
+        {(unit === "lbs" ? [2.5, 5, 10, 25] : [1, 2.5, 5, 10]).map((inc) => (
           <button
             key={inc}
             type="button"
@@ -1908,10 +1977,10 @@ function WeightAndPlateCalculator({
         ))}
         <button
           type="button"
-          onClick={() => setTargetWeight((w) => Math.max(0, w - 5))}
+          onClick={() => setTargetWeight((w) => Math.max(0, w - (unit === "lbs" ? 5 : 2.5)))}
           className="liquid-glass text-[10px] font-bold px-2 py-1 rounded-lg text-slate-400 hover:text-red-300 transition-all"
         >
-          -5 {unit}
+          -{unit === "lbs" ? 5 : 2.5} {unit}
         </button>
       </div>
 
@@ -1921,7 +1990,7 @@ function WeightAndPlateCalculator({
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-slate-400">Barbell: <strong className="text-white">{barWeight} {unit}</strong></span>
             <div className="flex gap-1.5 text-[9px] font-bold">
-              {[45, 35, 25].map((bw) => (
+              {(unit === "lbs" ? [45, 35, 25] : [20, 15, 10]).map((bw) => (
                 <button
                   key={bw}
                   type="button"
@@ -1954,7 +2023,6 @@ function WeightAndPlateCalculator({
         </div>
       )}
 
-      {/* Log set button */}
       <button
         type="button"
         onClick={() => onLogSet(targetWeight, repsInput)}
@@ -1975,14 +2043,14 @@ function WeightAndPlateCalculator({
 function ExerciseDetailModal({
   exercise,
   unit,
-  onToggleUnit,
+  onSetUnit,
   history,
   onAddHistorySet,
   onClose,
 }: {
   exercise: ExerciseLibraryItem;
   unit: "lbs" | "kg";
-  onToggleUnit: () => void;
+  onSetUnit: (u: "lbs" | "kg") => void;
   history: ExerciseHistoryItem[];
   onAddHistorySet: (exId: string, weight: number, reps: number, unit: "lbs" | "kg") => void;
   onClose: () => void;
@@ -2002,7 +2070,7 @@ function ExerciseDetailModal({
       >
         <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
 
-        {/* Top Header */}
+        {/* Top Header with Segmented Unit Switch & Close */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -2019,20 +2087,15 @@ function ExerciseDetailModal({
             <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">{exercise.name}</h2>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Unit toggle */}
-            <button
-              type="button"
-              onClick={onToggleUnit}
-              className="liquid-pill px-2.5 py-1 text-xs font-bold text-purple-300 rounded-lg hover:border-purple-400 transition-all"
-              title="Toggle preferred unit"
-            >
-              {unit.toUpperCase()}
-            </button>
+          <div className="flex items-center gap-3">
+            {/* Clear segmented unit switch */}
+            <UnitTogglePill unit={unit} onChange={onSetUnit} size="md" />
+
             <button
               type="button"
               onClick={onClose}
               className="liquid-pill h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-white"
+              title="Close modal"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -2075,7 +2138,6 @@ function ExerciseDetailModal({
         {/* ─── TAB: GUIDE (Video + Instructions) ─── */}
         {activeTab === "guide" && (
           <div className="space-y-4 animate-[fadeIn_0.2s_ease-out]">
-            {/* Video demonstration embed */}
             <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-xl">
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${exercise.videoEmbedId}?rel=0&modestbranding=1`}
@@ -2086,7 +2148,6 @@ function ExerciseDetailModal({
               />
             </div>
 
-            {/* Targeted Muscles */}
             <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Anatomy</h4>
               <div className="space-y-1 text-xs">
@@ -2101,7 +2162,6 @@ function ExerciseDetailModal({
               </div>
             </div>
 
-            {/* Step-by-step instructions */}
             <div className="space-y-3">
               <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">1. Setup</h4>
@@ -2158,6 +2218,7 @@ function ExerciseDetailModal({
               category={exercise.category}
               defaultBarWeightLbs={exercise.defaultBarWeightLbs}
               unit={unit}
+              onSetUnit={onSetUnit}
               onLogSet={handleLogSet}
             />
           </div>
@@ -2223,9 +2284,11 @@ function ExerciseDetailModal({
 function ExerciseLibraryTab({
   onSelectExercise,
   unit,
+  onSetUnit,
 }: {
   onSelectExercise: (ex: ExerciseLibraryItem) => void;
   unit: "lbs" | "kg";
+  onSetUnit: (u: "lbs" | "kg") => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>("All");
@@ -2246,24 +2309,30 @@ function ExerciseLibraryTab({
 
   return (
     <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
-      {/* Top Search & Filter Bar */}
+      {/* Top Search, Filter & Unit Switch Bar */}
       <div className="liquid-glass rounded-3xl p-5 border-white/10 space-y-4">
-        <div className="relative">
-          <svg className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search exercises by name or muscle (e.g. Bench, Quads, Lat)…"
-            className="liquid-input w-full rounded-2xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:outline-none"
-          />
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <svg className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search exercises by name or muscle (e.g. Bench, Quads, Lat)…"
+              className="liquid-input w-full rounded-2xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit:</span>
+            <UnitTogglePill unit={unit} onChange={onSetUnit} size="md" />
+          </div>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Body Part pills */}
           <div className="flex flex-wrap gap-1">
             {bodyParts.map((bp) => (
               <button
@@ -2281,7 +2350,6 @@ function ExerciseLibraryTab({
             ))}
           </div>
 
-          {/* Category pills */}
           <div className="flex flex-wrap gap-1">
             {categories.map((cat) => (
               <button
@@ -2334,7 +2402,7 @@ function ExerciseLibraryTab({
 
             <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[11px] text-slate-400">
               <span>{ex.difficulty}</span>
-              <span className="text-purple-300 font-semibold">Video + Steps</span>
+              <span className="text-purple-300 font-semibold">Video + Plates ({unit.toUpperCase()})</span>
             </div>
           </div>
         ))}
@@ -2608,12 +2676,24 @@ export default function Home() {
               <LiveDateTime />
             </div>
             {phase === "tracking" ? (
-              <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-emerald-400 border-emerald-500/30">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-                <span className="text-[11px] font-bold uppercase tracking-wider">Tracking</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={resetHome}
+                  className="liquid-pill flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-slate-300 hover:text-white transition-all rounded-full"
+                >
+                  <svg className="h-3.5 w-3.5 text-purple-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                  </svg>
+                  <span>Dashboard</span>
+                </button>
+                <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-emerald-400 border-emerald-500/30">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Tracking</span>
+                </div>
               </div>
             ) : (
               <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-slate-300">
@@ -2697,7 +2777,7 @@ export default function Home() {
                       ) : (
                         <>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455 2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                           </svg>
                           Build 3-Day Plan
                         </>
@@ -2948,6 +3028,7 @@ export default function Home() {
               <ExerciseLibraryTab
                 onSelectExercise={(ex) => setSelectedExercise(ex)}
                 unit={preferredUnit}
+                onSetUnit={(u) => setPreferredUnit(u)}
               />
             )}
 
@@ -3014,7 +3095,7 @@ export default function Home() {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Intake</span>
                       <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-amber-300">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3.09 2.48Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
                         </svg>
                       </span>
                     </div>
@@ -3123,6 +3204,7 @@ export default function Home() {
               tracked={trackedExercises}
               setTracked={setTrackedExercises}
               onFinish={finishWorkout}
+              onBack={resetHome}
               elapsedSeconds={elapsedSeconds}
             />
           </div>
@@ -3134,7 +3216,7 @@ export default function Home() {
         <ExerciseDetailModal
           exercise={selectedExercise}
           unit={preferredUnit}
-          onToggleUnit={() => setPreferredUnit((u) => (u === "lbs" ? "kg" : "lbs"))}
+          onSetUnit={(u) => setPreferredUnit(u)}
           history={exerciseHistory[selectedExercise.id] || []}
           onAddHistorySet={addExerciseHistorySet}
           onClose={() => setSelectedExercise(null)}
