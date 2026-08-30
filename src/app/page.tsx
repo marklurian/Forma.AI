@@ -835,6 +835,7 @@ function ActiveWorkout({
   onSetUnit: (u: "lbs" | "kg") => void;
 }) {
   const [restTimer, setRestTimer] = useState<ActiveRestTimerState | null>(null);
+  const [customRestSeconds, setCustomRestSeconds] = useState<number>(60);
 
   // Countdown timer interval effect
   useEffect(() => {
@@ -985,7 +986,7 @@ function ActiveWorkout({
         startRestTimer(
           `inter-ex-${exIdx}`,
           `Rest before ${nextExName}`,
-          120, // 2 minutes between exercises
+          customRestSeconds, // User configured rest time
           "exercise",
           exIdx + 1
         );
@@ -993,7 +994,7 @@ function ActiveWorkout({
         startRestTimer(
           `set-rest-${exIdx}-${si}`,
           `${tracked[exIdx].name} • Set ${si + 1} Rest`,
-          60, // 60s default rest
+          customRestSeconds, // User configured rest time
           "set",
           exIdx,
           si
@@ -1001,7 +1002,7 @@ function ActiveWorkout({
       }
     } else {
       // If unchecking, stop active timer if related
-      if (restTimer?.id === `set-rest-${exIdx}-${si}`) {
+      if (restTimer?.id === `set-rest-${exIdx}-${si}` || restTimer?.id === `inter-ex-${exIdx}`) {
         stopRestTimer();
       }
     }
@@ -1038,7 +1039,31 @@ function ActiveWorkout({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
+            {/* User Custom Rest Duration Setter */}
+            <div className="liquid-pill flex items-center gap-1 px-2.5 py-1 rounded-xl border-white/10" title="Set default rest countdown duration">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Rest:</span>
+              <button
+                type="button"
+                onClick={() => setCustomRestSeconds((prev) => Math.max(15, prev - 30))}
+                className="text-[10px] font-black text-sky-300 hover:text-white px-1 py-0.5 rounded hover:bg-white/10 button-press"
+                title="Lessen rest time by 30 seconds"
+              >
+                -30s
+              </button>
+              <span className="font-mono text-xs font-black text-cyan-300 min-w-[32px] text-center">
+                {formatTime(customRestSeconds)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCustomRestSeconds((prev) => Math.min(600, prev + 30))}
+                className="text-[10px] font-black text-sky-300 hover:text-white px-1 py-0.5 rounded hover:bg-white/10 button-press"
+                title="Add 30 seconds to rest time"
+              >
+                +30s
+              </button>
+            </div>
+
             <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
             <div className="text-right">
               <p className="font-mono text-base font-bold tabular-nums text-slate-100">{formatTime(elapsedSeconds)}</p>
@@ -1101,17 +1126,17 @@ function ActiveWorkout({
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => adjustRestTimer(15)}
+                      onClick={() => adjustRestTimer(-30)}
                       className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
-                      title="Add 15 seconds"
+                      title="Lessen rest timer by 30 seconds"
                     >
-                      +15s
+                      -30s
                     </button>
                     <button
                       type="button"
                       onClick={() => adjustRestTimer(30)}
                       className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
-                      title="Add 30 seconds"
+                      title="Add 30 seconds to rest timer"
                     >
                       +30s
                     </button>
