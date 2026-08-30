@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "Forma.AI — Your AI Fitness Coach",
   description:
     "Generate a personalized workout schedule powered by AI. Input your goals, experience level, and available equipment to get a custom plan in seconds.",
+  icons: {
+    icon: "/forma-logo.png",
+    apple: "/forma-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

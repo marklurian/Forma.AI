@@ -2539,11 +2539,11 @@ export default function Home() {
             >
               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-sky-400/30 bg-sky-950/40 shadow-lg shadow-sky-500/20 group-hover:border-sky-400/60 transition-all p-1">
                 <Image
-                  src="/forma-logo.jpg"
+                  src="/forma-logo.png"
                   alt="Forma.AI Logo"
                   width={36}
                   height={36}
-                  className="h-full w-full object-contain rounded-lg"
+                  className="h-full w-full object-contain drop-shadow-[0_2px_8px_rgba(56,189,248,0.35)]"
                   priority
                 />
               </div>
@@ -2706,13 +2706,13 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <button type="button" onClick={resetHome} className="flex items-center gap-2.5">
-                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-sky-400/30 bg-sky-950/40 p-0.5">
+                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-sky-400/30 bg-sky-950/40 p-0.5 shadow-md shadow-sky-500/20">
                       <Image
-                        src="/forma-logo.jpg"
+                        src="/forma-logo.png"
                         alt="Forma.AI Logo"
                         width={30}
                         height={30}
-                        className="h-full w-full object-contain rounded-lg"
+                        className="h-full w-full object-contain drop-shadow-[0_2px_6px_rgba(56,189,248,0.35)]"
                       />
                     </div>
                     <span className="text-base font-black text-white">Forma.AI</span>
