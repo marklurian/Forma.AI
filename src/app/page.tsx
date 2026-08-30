@@ -576,6 +576,8 @@ function ActiveWorkout({
   onFinish,
   onBack,
   elapsedSeconds,
+  unit,
+  onSetUnit,
 }: {
   dayTitle: string;
   tracked: TrackedExercise[];
@@ -583,6 +585,8 @@ function ActiveWorkout({
   onFinish: () => void;
   onBack: () => void;
   elapsedSeconds: number;
+  unit: "lbs" | "kg";
+  onSetUnit: (u: "lbs" | "kg") => void;
 }) {
   const totalSets = tracked.reduce((sum, ex) => sum + ex.trackedSets.length, 0);
   const completedSets = tracked.reduce((sum, ex) => sum + ex.trackedSets.filter((s) => s.completed).length, 0);
@@ -650,7 +654,8 @@ function ActiveWorkout({
             </div>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-3.5 shrink-0">
+            <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
             <div className="text-right">
               <p className="font-mono text-base font-bold tabular-nums text-slate-100">{formatTime(elapsedSeconds)}</p>
               <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Duration</p>
@@ -723,7 +728,7 @@ function ActiveWorkout({
               <div className="divide-y divide-white/[0.04]">
                 <div className="grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
                   <span>Set</span>
-                  <span>Weight</span>
+                  <span>Weight ({unit})</span>
                   <span>Reps</span>
                   <span className="text-center">Done</span>
                 </div>
@@ -2681,13 +2686,6 @@ export default function Home() {
 
           {/* Sidebar Footer */}
           <div className="pt-3 border-t border-white/[0.06] space-y-2">
-            {!sidebarCollapsed && (
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit:</span>
-                <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
-              </div>
-            )}
-
             <button
               type="button"
               onClick={() => setShowTipJar(true)}
@@ -2775,11 +2773,6 @@ export default function Home() {
               </div>
 
               <div className="pt-4 border-t border-white/10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400">Weight Unit:</span>
-                  <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
-                </div>
-
                 <button
                   type="button"
                   onClick={() => {
@@ -2854,9 +2847,6 @@ export default function Home() {
 
               {/* Right: Actions */}
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex">
-                  <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
-                </div>
 
                 {phase === "tracking" ? (
                   <div className="flex items-center gap-2">
@@ -3417,6 +3407,8 @@ export default function Home() {
                   onFinish={finishWorkout}
                   onBack={resetHome}
                   elapsedSeconds={elapsedSeconds}
+                  unit={preferredUnit}
+                  onSetUnit={setPreferredUnit}
                 />
               </div>
             )}
