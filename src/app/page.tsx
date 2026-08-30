@@ -622,7 +622,7 @@ function ActiveWorkout({
               <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
-              <span>Back</span>
+              <span>Back to Dashboard</span>
             </button>
 
             <div className="min-w-0">
@@ -905,6 +905,45 @@ function WorkoutSummary({
           className="liquid-glass liquid-glass-interactive mt-6 flex w-full items-center justify-center rounded-xl py-3 text-xs font-bold text-white transition-all active:scale-[0.98]"
         >
           Return to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Donation / Tip Jar Modal
+   ═══════════════════════════════════════════════════════════════ */
+function TipJarModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fadeIn 0.25s ease-out" }}>
+      <div className="absolute inset-0 bg-[#020713]/85 backdrop-blur-md" onClick={onClose} />
+      <div
+        className="liquid-glass relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-3xl p-6 shadow-2xl text-center"
+        style={{ animation: "scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)" }}
+      >
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/20 text-sky-300">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+          </svg>
+        </div>
+
+        <h3 className="text-base font-extrabold text-white">Support Forma.AI</h3>
+        <p className="text-xs text-slate-400 mt-1">If this workout studio helps your fitness journey, consider supporting the developers!</p>
+
+        <div className="mx-auto mt-4 w-44 overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+          <Image src="/qr-code.jpg" alt="QR code for donations" width={176} height={176} className="h-auto w-full" />
+        </div>
+        <p className="mt-2.5 text-[11px] text-slate-400">Scan with GCash, Maya, or banking app</p>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="liquid-glass liquid-glass-interactive mt-5 w-full rounded-xl py-2.5 text-xs font-bold text-white hover:border-sky-400/40"
+        >
+          Close
         </button>
       </div>
     </div>
@@ -1983,10 +2022,12 @@ function ExerciseLibraryTab({
   onSelectExercise,
   unit,
   onSetUnit,
+  onBack,
 }: {
   onSelectExercise: (ex: ExerciseLibraryItem) => void;
   unit: "lbs" | "kg";
   onSetUnit: (u: "lbs" | "kg") => void;
+  onBack: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string>("All");
@@ -2024,27 +2065,46 @@ function ExerciseLibraryTab({
   }, [searchQuery, selectedLetter, selectedBodyPart, selectedCategory]);
 
   return (
-    <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+    <div className="space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+      {/* Top Header Strip with Back Button */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="liquid-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:border-sky-400/40 transition-all group shrink-0"
+            title="Return to Dashboard"
+          >
+            <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            <span>Back to Dashboard</span>
+          </button>
+          <div>
+            <h2 className="text-lg font-extrabold text-white">Exercise Directory</h2>
+            <p className="text-[11px] text-slate-400">Comprehensive guides & plate calculators (A to Z)</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit:</span>
+          <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
+        </div>
+      </div>
+
       {/* Search & Filter Header Bar */}
       <div className="liquid-glass rounded-3xl p-5 sm:p-6 border-white/10 space-y-4.5">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3.5">
-          <div className="relative flex-1 w-full">
-            <svg className="absolute left-3.5 top-3.5 h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 40+ exercises from A to Z (e.g. Bench, Squat, Curl, Obliques)…"
-              className="liquid-input w-full rounded-2xl pl-10 pr-4 py-3 text-sm text-foreground focus:outline-none placeholder:text-slate-500"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 self-end sm:self-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit:</span>
-            <UnitTogglePill unit={unit} onChange={onSetUnit} size="md" />
-          </div>
+        <div className="relative flex-1 w-full">
+          <svg className="absolute left-3.5 top-3.5 h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search exercises by name or muscle (e.g. Bench, Squat, Deltoids, Lats)…"
+            className="liquid-input w-full rounded-2xl pl-10 pr-4 py-3 text-sm text-foreground focus:outline-none placeholder:text-slate-500"
+          />
         </div>
 
         {/* Alphabet A-Z Quick Jump Filter */}
@@ -2182,12 +2242,17 @@ function ExerciseLibraryTab({
 /* ═══════════════════════════════════════════════════════════════
    ╔═══════════════════════════════════════════════════════════╗
    ║                      MAIN DASHBOARD                      ║
-   ╚═══════════════════════════════════════════════════════════╝
+   ╚═══════════════════════════════════════════════════════════════╝
    ═══════════════════════════════════════════════════════════════ */
 type AppPhase = "home" | "tracking" | "summary";
 type HomeTab = "ai" | "quick" | "templates" | "exercises" | "metrics";
 
 export default function Home() {
+  /* ── Sidebar & Navigation state ───────── */
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showTipJar, setShowTipJar] = useState(false);
+
   /* ── Tab & Form state ─────────────────── */
   const [tab, setTab] = useState<HomeTab>("ai");
   const [preferredUnit, setPreferredUnit] = useState<"lbs" | "kg">("lbs");
@@ -2240,6 +2305,9 @@ export default function Home() {
     setMetrics(updated);
     saveUserMetrics(updated);
   }
+
+  const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
+  const initialMetric = metrics.length > 0 ? metrics[0] : null;
 
   /* ── Exercise Library & History state ─── */
   const [exerciseHistory, setExerciseHistory] = useState<Record<string, ExerciseHistoryItem[]>>({});
@@ -2326,6 +2394,7 @@ export default function Home() {
     setWorkoutTitle(day.day);
     setTrackedExercises(exercisesToTracked(day.exercises));
     setPhase("tracking");
+    setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -2333,6 +2402,7 @@ export default function Home() {
     setWorkoutTitle(template.name);
     setTrackedExercises(exercisesToTracked(template.exercises));
     setPhase("tracking");
+    setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -2340,6 +2410,7 @@ export default function Home() {
     setWorkoutTitle("Quick Session");
     setTrackedExercises([]);
     setPhase("tracking");
+    setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -2356,18 +2427,28 @@ export default function Home() {
     setGoal("");
     setExperience("");
     setEquipment("");
+    setTab("ai");
+    setMobileDrawerOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function navigateToTab(targetTab: HomeTab) {
+    setTab(targetTab);
+    if (phase !== "home") setPhase("home");
+    setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     Tabs Configuration (Ocean Serenity Icons)
+     Sidebar / Tabs Navigation Items
      ═══════════════════════════════════════════════════════════════ */
-  const TABS: { key: HomeTab; label: string; icon: React.ReactNode }[] = [
+  const NAV_ITEMS: { key: HomeTab; label: string; sub: string; badge?: string; icon: React.ReactNode }[] = [
     {
       key: "ai",
       label: "AI Studio",
+      sub: "Smart Routine Generator",
       icon: (
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
         </svg>
       ),
@@ -2375,8 +2456,9 @@ export default function Home() {
     {
       key: "quick",
       label: "Quick Start",
+      sub: "Freeform & Presets",
       icon: (
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
         </svg>
       ),
@@ -2384,8 +2466,10 @@ export default function Home() {
     {
       key: "templates",
       label: "Templates",
+      sub: "Saved Blueprints",
+      badge: `${userTemplates.length + EXAMPLE_TEMPLATES.length}`,
       icon: (
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
         </svg>
       ),
@@ -2393,8 +2477,10 @@ export default function Home() {
     {
       key: "exercises",
       label: "Exercise Library",
+      sub: "A to Z Catalog & Videos",
+      badge: `${EXERCISE_LIBRARY.length}`,
       icon: (
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
         </svg>
       ),
@@ -2402,582 +2488,905 @@ export default function Home() {
     {
       key: "metrics",
       label: "Body & Metrics",
+      sub: "Weight, Fat, Calories, BMI",
+      badge: "Graphs",
       icon: (
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
         </svg>
       ),
     },
   ];
 
-  const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
-  const initialMetric = metrics.length > 0 ? metrics[0] : null;
-  const weightDiff = latestMetric && initialMetric ? Math.round((latestMetric.weight - initialMetric.weight) * 10) / 10 : 0;
+  const currentTabInfo = NAV_ITEMS.find((n) => n.key === tab) || NAV_ITEMS[0];
 
   return (
     <>
       <LiquidBackground />
 
-      {/* ── Top Navigation with Live Clock ──── */}
-      <nav className="sticky top-0 z-50 border-b border-sky-400/[0.12] bg-[#040914]/80 backdrop-blur-2xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <button
-            onClick={phase !== "home" ? resetHome : undefined}
-            className="flex items-center gap-2.5 text-base font-extrabold tracking-tight group"
-          >
-            <span className="liquid-pill flex h-8 w-8 items-center justify-center rounded-xl text-sky-400 transition-transform group-hover:scale-105">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
-              </svg>
-            </span>
-            <span className="text-white">
-              Forma<span className="text-sky-400 font-black">.AI</span>
-            </span>
-          </button>
+      <div className="flex min-h-screen">
+        {/* ═══════════════════════════════════════════════════════════
+            COLLAPSIBLE SIDEBAR (Desktop)
+           ═══════════════════════════════════════════════════════════ */}
+        <aside
+          className={`hidden lg:flex flex-col border-r border-sky-400/[0.12] bg-[#040914]/90 backdrop-blur-2xl transition-all duration-300 z-40 sticky top-0 h-screen ${
+            sidebarCollapsed ? "w-20 p-3" : "w-64 p-5"
+          }`}
+        >
+          {/* Logo & Toggle Header */}
+          <div className="flex items-center justify-between gap-2 pb-5 border-b border-white/[0.06]">
+            <button
+              type="button"
+              onClick={resetHome}
+              className={`flex items-center gap-2.5 text-left group overflow-hidden ${sidebarCollapsed ? "justify-center w-full" : ""}`}
+              title="Return to AI Studio / Home"
+            >
+              <span className="liquid-pill flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sky-400 transition-transform group-hover:scale-105">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
+                </svg>
+              </span>
+              {!sidebarCollapsed && (
+                <div className="min-w-0">
+                  <span className="text-base font-black tracking-tight text-white block">
+                    Forma<span className="text-sky-400 font-black">.AI</span>
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-sky-400 block -mt-1">
+                    Studio v2.4
+                  </span>
+                </div>
+              )}
+            </button>
 
-          <div className="hidden md:flex items-center">
-            <LiveDateTime />
+            {!sidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                className="liquid-pill h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white transition-all shrink-0"
+                title="Collapse sidebar"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="md:hidden">
-              <LiveDateTime />
+          {/* If Collapsed, quick expand toggle icon */}
+          {sidebarCollapsed && (
+            <div className="py-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(false)}
+                className="liquid-pill h-7 w-7 flex items-center justify-center rounded-lg text-sky-400 hover:text-white transition-all"
+                title="Expand sidebar"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
             </div>
-            {phase === "tracking" ? (
-              <div className="flex items-center gap-2">
+          )}
+
+          {/* Quick Workout Button */}
+          <div className="pt-4 pb-2">
+            <button
+              type="button"
+              onClick={quickStart}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98] ${
+                sidebarCollapsed ? "px-2 text-[10px]" : "px-4"
+              }`}
+              title="Start workout session"
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+              </svg>
+              {!sidebarCollapsed && <span>Quick Workout</span>}
+            </button>
+          </div>
+
+          {/* Navigation Items */}
+          <div className="flex-1 space-y-1.5 py-4 overflow-y-auto">
+            {!sidebarCollapsed && (
+              <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+                Navigation
+              </p>
+            )}
+
+            {NAV_ITEMS.map((item) => {
+              const active = tab === item.key && phase === "home";
+              return (
                 <button
+                  key={item.key}
                   type="button"
-                  onClick={resetHome}
-                  className="liquid-pill flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-slate-300 hover:text-white transition-all rounded-full"
+                  onClick={() => navigateToTab(item.key)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition-all ${
+                    active
+                      ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25 border border-white/20"
+                      : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                  } ${sidebarCollapsed ? "justify-center px-2" : ""}`}
+                  title={item.label}
                 >
-                  <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-                  </svg>
-                  <span>Dashboard</span>
+                  <span className={`${active ? "text-white" : "text-sky-400"}`}>{item.icon}</span>
+                  {!sidebarCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="truncate">{item.label}</span>
+                        {item.badge && (
+                          <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-semibold text-sky-300 rounded">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-normal text-slate-400 block truncate">
+                        {item.sub}
+                      </span>
+                    </div>
+                  )}
                 </button>
-                <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-cyan-400 border-cyan-500/30">
+              );
+            })}
+          </div>
+
+          {/* Active Workout Widget in Sidebar (if active) */}
+          {phase === "tracking" && !sidebarCollapsed && (
+            <div className="mb-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-3 animate-[pulse-glow_3s_ease-in-out_infinite]">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
                   </span>
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Tracking</span>
-                </div>
+                  Workout In Progress
+                </span>
+                <span className="font-mono text-xs font-bold text-white">{formatTime(elapsedSeconds)}</span>
               </div>
-            ) : (
-              <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
-                <span className="text-[11px] font-semibold text-slate-300">Ready</span>
+              <p className="mt-1 truncate text-xs font-extrabold text-white">{workoutTitle}</p>
+            </div>
+          )}
+
+          {/* Sidebar Footer */}
+          <div className="pt-3 border-t border-white/[0.06] space-y-2">
+            {!sidebarCollapsed && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit:</span>
+                <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
               </div>
             )}
-          </div>
-        </div>
-      </nav>
 
-      {/* ── Main Content ────────────────────── */}
-      <main className="mx-auto flex max-w-6xl flex-1 flex-col px-4 pb-16 pt-6 sm:px-6">
-        {phase === "home" && (
-          <>
-            {/* Header / Hero */}
-            <div className="flex flex-col items-center justify-between gap-4 py-2 sm:flex-row sm:py-4">
-              <div>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300 mb-2">
-                  <span>Intelligent Performance</span>
+            <button
+              type="button"
+              onClick={() => setShowTipJar(true)}
+              className={`liquid-glass flex w-full items-center gap-2 rounded-xl py-2 text-xs font-semibold text-slate-300 hover:text-white transition-all ${
+                sidebarCollapsed ? "justify-center px-1" : "px-3"
+              }`}
+              title="Support developer"
+            >
+              <svg className="h-4 w-4 text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+              {!sidebarCollapsed && <span>Tip Jar / Support</span>}
+            </button>
+          </div>
+        </aside>
+
+        {/* ═══════════════════════════════════════════════════════════
+            MOBILE DRAWER OVERLAY
+           ═══════════════════════════════════════════════════════════ */}
+        {mobileDrawerOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden" style={{ animation: "fadeIn 0.2s ease-out" }}>
+            <div className="absolute inset-0 bg-[#020713]/85 backdrop-blur-md" onClick={() => setMobileDrawerOpen(false)} />
+            <div className="liquid-glass absolute left-0 top-0 bottom-0 w-72 p-5 flex flex-col justify-between shadow-2xl z-10 border-r border-sky-400/20">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <button type="button" onClick={resetHome} className="flex items-center gap-2.5">
+                    <span className="liquid-pill flex h-8 w-8 items-center justify-center rounded-xl text-sky-400">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
+                      </svg>
+                    </span>
+                    <span className="text-base font-black text-white">Forma.AI</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="liquid-pill h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
-                  Forma <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Workout Studio</span>
-                </h1>
+
+                <div className="space-y-1.5">
+                  <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+                    Navigation Menu
+                  </p>
+                  {NAV_ITEMS.map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => navigateToTab(item.key)}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-xs font-bold transition-all ${
+                        tab === item.key && phase === "home"
+                          ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md"
+                          : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span className="text-sky-400">{item.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="block truncate">{item.label}</span>
+                        <span className="text-[10px] font-normal text-slate-400 block truncate">{item.sub}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Liquid Glass Tab Switcher */}
-              <div className="liquid-glass rounded-2xl p-1.5 flex flex-wrap gap-1 border-white/10">
-                {TABS.map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => setTab(t.key)}
-                    className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-200 ${
-                      tab === t.key
-                        ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-lg shadow-sky-500/25 border border-white/20"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
-                    }`}
-                  >
-                    {t.icon}
-                    {t.label}
-                  </button>
-                ))}
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-400">Weight Unit:</span>
+                  <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    setShowTipJar(true);
+                  }}
+                  className="liquid-glass flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold text-white"
+                >
+                  <svg className="h-4 w-4 text-rose-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                  </svg>
+                  Tip Jar / Donations
+                </button>
               </div>
             </div>
-
-            {/* ─── TAB 1: AI GENERATOR ─── */}
-            {tab === "ai" && (
-              <div className="mt-6 grid gap-6 lg:grid-cols-12 items-start">
-                <form id="workout-form" onSubmit={handleGenerate} className="lg:col-span-5">
-                  <div className="liquid-glass relative overflow-hidden rounded-3xl p-6 shadow-2xl">
-                    <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
-
-                    <div className="mb-5 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-300">
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
-                          </svg>
-                        </span>
-                        <h2 className="text-sm font-extrabold text-white">Generate Routine</h2>
-                      </div>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Groq LLM</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      <SelectField id="fitness-goal" label="Target Goal" value={goal} onChange={setGoal} options={FITNESS_GOALS} placeholder="Select fitness goal…" />
-                      <SelectField id="experience-level" label="Experience Level" value={experience} onChange={setExperience} options={EXPERIENCE_LEVELS} placeholder="Select experience…" />
-                      <SelectField id="equipment" label="Equipment Available" value={equipment} onChange={setEquipment} options={EQUIPMENT_OPTIONS} placeholder="Select equipment…" />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={!isReady || loading}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40 active:scale-[0.98]"
-                      style={isReady && !loading ? { animation: "pulse-glow 3s ease-in-out infinite" } : undefined}
-                    >
-                      {loading ? (
-                        <>
-                          <Spinner className="h-4 w-4" /> Synthesizing Plan…
-                        </>
-                      ) : (
-                        <>
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455 2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
-                          </svg>
-                          Build 3-Day Plan
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-                <div className="lg:col-span-7 space-y-4">
-                  {error && (
-                    <div className="liquid-glass flex items-start gap-3 rounded-2xl border-red-500/30 bg-red-950/20 p-4 text-xs">
-                      <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                      </svg>
-                      <p className="text-red-300 leading-relaxed">{error}</p>
-                      <button onClick={() => setError(null)} className="ml-auto text-red-400/60 hover:text-red-200">
-                        ✕
-                      </button>
-                    </div>
-                  )}
-
-                  {loading && (
-                    <div className="liquid-glass rounded-3xl p-8">
-                      <div className="flex items-center gap-3">
-                        <Spinner className="h-5 w-5 text-sky-400" />
-                        <div>
-                          <p className="text-sm font-bold text-white">AI Coach is calculating routine…</p>
-                          <p className="text-xs text-slate-400">Optimizing volume, rest intervals, and exercises</p>
-                        </div>
-                      </div>
-                      <div className="mt-6 space-y-3">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="h-4 animate-pulse rounded-lg bg-white/5" style={{ width: `${88 - i * 15}%` }} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {plan && !loading && (
-                    <div className="space-y-3 animate-[fadeInUp_0.3s_ease-out_both]">
-                      <div className="flex items-center justify-between px-1">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400">Custom 3-Day Plan Generated</p>
-                        <span className="text-[10px] text-slate-400">Tap a day to begin</span>
-                      </div>
-                      {plan.map((day, i) => (
-                        <button
-                          key={i}
-                          onClick={() => startFromPlan(i)}
-                          className="liquid-glass liquid-glass-interactive group w-full overflow-hidden rounded-2xl p-5 text-left transition-all"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="liquid-pill rounded-lg px-2.5 py-1 text-xs font-bold text-sky-300 border-sky-500/30">
-                              {day.day}
-                            </span>
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-sky-300 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
-                              <span>Start Workout</span>
-                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                              </svg>
-                            </div>
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-1.5">
-                            {day.exercises.map((ex, j) => (
-                              <span key={j} className="rounded-lg bg-white/[0.04] border border-white/[0.05] px-2.5 py-1 text-xs text-slate-300">
-                                {ex.name}
-                              </span>
-                            ))}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {!plan && !loading && !error && (
-                    <div className="liquid-glass flex flex-col items-center justify-center rounded-3xl p-10 text-center">
-                      <div className="liquid-pill flex h-14 w-14 items-center justify-center rounded-2xl text-sky-300 mb-3">
-                        <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-sm font-bold text-white">Generated Plan Area</h3>
-                      <p className="mt-1 max-w-xs text-xs text-slate-400">
-                        Configure your target parameters on the left to synthesize an adaptive 3-day schedule.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ─── TAB 2: QUICK START ─── */}
-            {tab === "quick" && (
-              <div className="mt-8 flex flex-col items-center animate-[fadeInUp_0.3s_ease-out_both]">
-                <div className="w-full max-w-lg space-y-6">
-                  <button
-                    onClick={quickStart}
-                    className="liquid-glass liquid-glass-interactive group flex w-full items-center gap-5 rounded-3xl p-6 text-left"
-                  >
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 shadow-xl shadow-sky-500/25 transition-transform group-hover:scale-105">
-                      <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-white">Start Empty Workout</h3>
-                      <p className="mt-0.5 text-xs text-slate-400">Freely add and track exercises as you train</p>
-                    </div>
-                    <svg className="ml-auto h-5 w-5 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                    </svg>
-                  </button>
-
-                  <div>
-                    <div className="mb-3 flex items-center justify-between px-1">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Quick Preset Routines</p>
-                      <span className="text-[10px] text-slate-500">Popular</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {EXAMPLE_TEMPLATES.slice(0, 4).map((t) => (
-                        <button
-                          key={t.id}
-                          onClick={() => startFromTemplate(t)}
-                          className="liquid-glass liquid-glass-interactive rounded-2xl p-4 text-left group"
-                        >
-                          <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 mb-2">
-                            {t.category}
-                          </span>
-                          <p className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{t.name}</p>
-                          <p className="mt-1 text-[10px] text-slate-400">{t.exercises.length} exercises</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ─── TAB 3: TEMPLATES ─── */}
-            {tab === "templates" && (
-              <div className="mt-6 space-y-8 animate-[fadeInUp_0.3s_ease-out_both]">
-                <div>
-                  <div className="mb-3 flex items-center justify-between px-1">
-                    <div>
-                      <h3 className="text-sm font-extrabold text-white">My Saved Templates</h3>
-                      <p className="text-xs text-slate-400">Custom workout routines stored in your browser</p>
-                    </div>
-                    <button
-                      onClick={() => setShowCreateModal(true)}
-                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-2 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98]"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      Create Template
-                    </button>
-                  </div>
-
-                  {userTemplates.length === 0 ? (
-                    <div className="liquid-glass flex items-center gap-4 rounded-3xl p-6">
-                      <div className="liquid-pill flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sky-300">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">No custom templates yet</p>
-                        <p className="text-xs text-slate-400">Click &quot;Create Template&quot; to design your own exercise blueprint.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {userTemplates.map((t) => (
-                        <div key={t.id} className="liquid-glass liquid-glass-interactive group relative overflow-hidden rounded-2xl">
-                          <button onClick={() => startFromTemplate(t)} className="w-full p-4 text-left">
-                            <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 mb-1.5">
-                              {t.category}
-                            </span>
-                            <p className="text-sm font-extrabold text-white">{t.name}</p>
-                            <p className="mt-0.5 text-[10px] text-slate-400">
-                              {t.exercises.length} exercises • {t.exercises.reduce((s, e) => s + e.sets, 0)} total sets
-                            </p>
-                            <div className="mt-2.5 flex flex-wrap gap-1">
-                              {t.exercises.slice(0, 3).map((e, i) => (
-                                <span key={i} className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
-                                  {e.name}
-                                </span>
-                              ))}
-                              {t.exercises.length > 3 && (
-                                <span className="text-[10px] text-slate-500 font-semibold">+{t.exercises.length - 3}</span>
-                              )}
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => deleteTemplate(t.id)}
-                            className="absolute right-2.5 top-2.5 rounded-lg p-1 text-slate-500 opacity-0 transition-all hover:bg-red-500/20 hover:text-red-300 group-hover:opacity-100"
-                            title="Delete"
-                          >
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <div className="mb-3 px-1">
-                    <h3 className="text-sm font-extrabold text-white">Preset Templates</h3>
-                    <p className="text-xs text-slate-400">Battle-tested routines ready to track</p>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {EXAMPLE_TEMPLATES.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => startFromTemplate(t)}
-                        className="liquid-glass liquid-glass-interactive group overflow-hidden rounded-2xl p-4 text-left transition-all"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300">
-                            {t.category}
-                          </span>
-                          <span className="text-[10px] font-bold text-sky-300 opacity-0 transition-opacity group-hover:opacity-100">
-                            Start →
-                          </span>
-                        </div>
-                        <p className="mt-2 text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{t.name}</p>
-                        <p className="text-[10px] text-slate-400">
-                          {t.exercises.length} exercises • {t.exercises.reduce((s, e) => s + e.sets, 0)} total sets
-                        </p>
-                        <div className="mt-2.5 flex flex-wrap gap-1">
-                          {t.exercises.map((e, i) => (
-                            <span key={i} className="rounded-md bg-white/[0.04] border border-white/[0.05] px-1.5 py-0.5 text-[10px] text-slate-300">
-                              {e.name}
-                            </span>
-                          ))}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ─── TAB 4: EXERCISE LIBRARY (40+ Exercises A to Z) ─── */}
-            {tab === "exercises" && (
-              <ExerciseLibraryTab
-                onSelectExercise={(ex) => setSelectedExercise(ex)}
-                unit={preferredUnit}
-                onSetUnit={(u) => setPreferredUnit(u)}
-              />
-            )}
-
-            {/* ─── TAB 5: BODY & METRICS ─── */}
-            {tab === "metrics" && (
-              <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div
-                    onClick={() => setActiveMetric("weight")}
-                    className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
-                      activeMetric === "weight"
-                        ? "border-sky-400/60 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/40"
-                        : "border-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Weight</span>
-                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-sky-300">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <p className="mt-2 text-2xl font-black tracking-tight text-white">
-                      {latestMetric ? `${latestMetric.weight} lbs` : "—"}
-                    </p>
-                    <p className="mt-1 text-[11px] font-semibold text-sky-300">
-                      {weightDiff <= 0 ? `${weightDiff} lbs` : `+${weightDiff} lbs`} overall
-                    </p>
-                  </div>
-
-                  <div
-                    onClick={() => setActiveMetric("bodyFat")}
-                    className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
-                      activeMetric === "bodyFat"
-                        ? "border-teal-400/60 shadow-lg shadow-teal-500/20 ring-1 ring-teal-400/40"
-                        : "border-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Fat</span>
-                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-teal-300">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <p className="mt-2 text-2xl font-black tracking-tight text-white">
-                      {latestMetric ? `${latestMetric.bodyFat}%` : "—"}
-                    </p>
-                    <p className="mt-1 text-[11px] font-semibold text-teal-300">Composition tracking</p>
-                  </div>
-
-                  <div
-                    onClick={() => setActiveMetric("calories")}
-                    className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
-                      activeMetric === "calories"
-                        ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400/40"
-                        : "border-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Intake</span>
-                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-cyan-300">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <p className="mt-2 text-2xl font-black tracking-tight text-white">
-                      {latestMetric ? `${latestMetric.calories.toLocaleString()} kcal` : "—"}
-                    </p>
-                    <p className="mt-1 text-[11px] font-semibold text-cyan-300">Target intake</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-6 lg:grid-cols-12 items-start">
-                  <div className="liquid-glass rounded-3xl p-6 shadow-2xl lg:col-span-7 space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
-                          <h3 className="text-sm font-extrabold text-white">
-                            {activeMetric === "weight" ? "Weight Progression" : activeMetric === "bodyFat" ? "Body Fat Percentage" : "Caloric Intake Log"}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5">Timeline trends & historical measurements</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="liquid-pill flex rounded-xl p-0.5 border-white/10">
-                          <button
-                            type="button"
-                            onClick={() => setTimelineFilter("days")}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                              timelineFilter === "days" ? "bg-white/15 text-white shadow-sm" : "text-slate-400 hover:text-white"
-                            }`}
-                          >
-                            Days
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setTimelineFilter("months")}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                              timelineFilter === "months" ? "bg-white/15 text-white shadow-sm" : "text-slate-400 hover:text-white"
-                            }`}
-                          >
-                            Months
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setShowLogModal(true)}
-                          className="flex items-center gap-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1 text-[10px] font-bold transition-all hover:bg-cyan-500/30"
-                        >
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                          </svg>
-                          Log
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <MetricsChart metrics={metrics} activeMetric={activeMetric} timelineFilter={timelineFilter} />
-                    </div>
-
-                    <div className="pt-4 border-t border-white/[0.06]">
-                      <div className="flex items-center justify-between mb-2.5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Logs</p>
-                        <span className="text-[10px] text-slate-500">{metrics.length} recorded</span>
-                      </div>
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                        {[...metrics].reverse().slice(0, 5).map((m) => (
-                          <div key={m.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
-                            <span className="font-mono text-slate-400">{m.date}</span>
-                            <div className="flex items-center gap-3">
-                              <span className="font-bold text-white">{m.weight} lbs</span>
-                              {m.bodyFat > 0 && <span className="text-teal-300">{m.bodyFat}%</span>}
-                              {m.calories > 0 && <span className="text-cyan-300">{m.calories} kcal</span>}
-                              <button
-                                onClick={() => deleteMetricEntry(m.id)}
-                                className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
-                                title="Delete"
-                              >
-                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="lg:col-span-5">
-                    <BmiCalculator />
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ══════════════ TRACKING VIEW ══════════════ */}
-        {phase === "tracking" && (
-          <div className="mx-auto w-full max-w-2xl">
-            <ActiveWorkout
-              dayTitle={workoutTitle}
-              tracked={trackedExercises}
-              setTracked={setTrackedExercises}
-              onFinish={finishWorkout}
-              onBack={resetHome}
-              elapsedSeconds={elapsedSeconds}
-            />
           </div>
         )}
-      </main>
+
+        {/* ═══════════════════════════════════════════════════════════
+            MAIN BODY / APP CONTENT WRAPPER
+           ═══════════════════════════════════════════════════════════ */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+          {/* Top Sticky App Header */}
+          <header className="sticky top-0 z-40 border-b border-sky-400/[0.12] bg-[#040914]/85 backdrop-blur-2xl">
+            <div className="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6">
+              {/* Left: Sidebar Toggle & Breadcrumb Navigation */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileDrawerOpen(true)}
+                  className="lg:hidden liquid-pill flex h-9 w-9 items-center justify-center rounded-xl text-sky-400 hover:text-white"
+                  title="Open Navigation Menu"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  className="hidden lg:flex liquid-pill h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-sky-300 transition-colors"
+                  title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                </button>
+
+                {/* Breadcrumbs / Back button */}
+                <div className="flex items-center gap-2">
+                  {tab !== "ai" && phase === "home" ? (
+                    <button
+                      type="button"
+                      onClick={() => navigateToTab("ai")}
+                      className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-sky-300 hover:text-white hover:border-sky-400/50 transition-all group"
+                      title="Return to Dashboard / AI Studio"
+                    >
+                      <svg className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                      </svg>
+                      <span>Dashboard</span>
+                    </button>
+                  ) : null}
+
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="font-semibold text-slate-500">/</span>
+                    <span className="font-bold text-white">{currentTabInfo.label}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Center: Live Date Time */}
+              <div className="hidden md:flex items-center">
+                <LiveDateTime />
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-3">
+                <div className="md:hidden">
+                  <LiveDateTime />
+                </div>
+
+                <div className="hidden sm:flex">
+                  <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
+                </div>
+
+                {phase === "tracking" ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={resetHome}
+                      className="liquid-pill flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-300 hover:text-white transition-all rounded-full"
+                    >
+                      <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                      </svg>
+                      <span>Back</span>
+                    </button>
+                    <div className="liquid-pill flex items-center gap-1.5 rounded-full px-3 py-1 text-cyan-400 border-cyan-500/30">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
+                      </span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">{formatTime(elapsedSeconds)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
+                    <span className="text-[11px] font-semibold text-slate-300">Studio Ready</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content Area */}
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-6 sm:px-6">
+            {phase === "home" && (
+              <>
+                {/* ─── TAB 1: AI GENERATOR ─── */}
+                {tab === "ai" && (
+                  <div className="space-y-6">
+                    {/* Hero Intro */}
+                    <div className="py-2">
+                      <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300 mb-2">
+                        <span>Intelligent Performance</span>
+                      </div>
+                      <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+                        Forma <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Workout Studio</span>
+                      </h1>
+                      <p className="mt-1 text-xs text-slate-400 max-w-lg">
+                        Synthesize customized 3-day workout routines or browse exercises, track live sessions, and measure progression.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-6 lg:grid-cols-12 items-start">
+                      <form id="workout-form" onSubmit={handleGenerate} className="lg:col-span-5">
+                        <div className="liquid-glass relative overflow-hidden rounded-3xl p-6 shadow-2xl">
+                          <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+
+                          <div className="mb-5 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-300">
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                                </svg>
+                              </span>
+                              <h2 className="text-sm font-extrabold text-white">Generate Routine</h2>
+                            </div>
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Groq LLM</span>
+                          </div>
+
+                          <div className="space-y-4">
+                            <SelectField id="fitness-goal" label="Target Goal" value={goal} onChange={setGoal} options={FITNESS_GOALS} placeholder="Select fitness goal…" />
+                            <SelectField id="experience-level" label="Experience Level" value={experience} onChange={setExperience} options={EXPERIENCE_LEVELS} placeholder="Select experience…" />
+                            <SelectField id="equipment" label="Equipment Available" value={equipment} onChange={setEquipment} options={EQUIPMENT_OPTIONS} placeholder="Select equipment…" />
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={!isReady || loading}
+                            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40 active:scale-[0.98]"
+                            style={isReady && !loading ? { animation: "pulse-glow 3s ease-in-out infinite" } : undefined}
+                          >
+                            {loading ? (
+                              <>
+                                <Spinner className="h-4 w-4" /> Synthesizing Plan…
+                              </>
+                            ) : (
+                              <>
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                                </svg>
+                                Build 3-Day Plan
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+
+                      <div className="lg:col-span-7 space-y-4">
+                        {error && (
+                          <div className="liquid-glass flex items-start gap-3 rounded-2xl border-red-500/30 bg-red-950/20 p-4 text-xs">
+                            <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                            </svg>
+                            <p className="text-red-300 leading-relaxed">{error}</p>
+                            <button onClick={() => setError(null)} className="ml-auto text-red-400/60 hover:text-red-200">
+                              ✕
+                            </button>
+                          </div>
+                        )}
+
+                        {loading && (
+                          <div className="liquid-glass rounded-3xl p-8">
+                            <div className="flex items-center gap-3">
+                              <Spinner className="h-5 w-5 text-sky-400" />
+                              <div>
+                                <p className="text-sm font-bold text-white">AI Coach is calculating routine…</p>
+                                <p className="text-xs text-slate-400">Optimizing volume, rest intervals, and exercises</p>
+                              </div>
+                            </div>
+                            <div className="mt-6 space-y-3">
+                              {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-4 animate-pulse rounded-lg bg-white/5" style={{ width: `${88 - i * 15}%` }} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {plan && !loading && (
+                          <div className="space-y-3 animate-[fadeInUp_0.3s_ease-out_both]">
+                            <div className="flex items-center justify-between px-1">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400">Custom 3-Day Plan Generated</p>
+                              <span className="text-[10px] text-slate-400">Tap a day to begin</span>
+                            </div>
+                            {plan.map((day, i) => (
+                              <button
+                                key={i}
+                                onClick={() => startFromPlan(i)}
+                                className="liquid-glass liquid-glass-interactive group w-full overflow-hidden rounded-2xl p-5 text-left transition-all"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="liquid-pill rounded-lg px-2.5 py-1 text-xs font-bold text-sky-300 border-sky-500/30">
+                                    {day.day}
+                                  </span>
+                                  <div className="flex items-center gap-1.5 text-xs font-bold text-sky-300 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+                                    <span>Start Workout</span>
+                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                    </svg>
+                                  </div>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  {day.exercises.map((ex, j) => (
+                                    <span key={j} className="rounded-lg bg-white/[0.04] border border-white/[0.05] px-2.5 py-1 text-xs text-slate-300">
+                                      {ex.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {!plan && !loading && !error && (
+                          <div className="liquid-glass flex flex-col items-center justify-center rounded-3xl p-10 text-center">
+                            <div className="liquid-pill flex h-14 w-14 items-center justify-center rounded-2xl text-sky-300 mb-3">
+                              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+                              </svg>
+                            </div>
+                            <h3 className="text-sm font-bold text-white">Generated Plan Area</h3>
+                            <p className="mt-1 max-w-xs text-xs text-slate-400">
+                              Configure your target parameters on the left to synthesize an adaptive 3-day schedule.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─── TAB 2: QUICK START ─── */}
+                {tab === "quick" && (
+                  <div className="space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => navigateToTab("ai")}
+                        className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white group"
+                      >
+                        <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                        </svg>
+                        <span>Dashboard</span>
+                      </button>
+                      <h2 className="text-lg font-extrabold text-white">Quick Start Workouts</h2>
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                      <div className="w-full max-w-lg space-y-6">
+                        <button
+                          onClick={quickStart}
+                          className="liquid-glass liquid-glass-interactive group flex w-full items-center gap-5 rounded-3xl p-6 text-left"
+                        >
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 shadow-xl shadow-sky-500/25 transition-transform group-hover:scale-105">
+                            <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-base font-extrabold text-white">Start Empty Workout</h3>
+                            <p className="mt-0.5 text-xs text-slate-400">Freely add and track exercises as you train</p>
+                          </div>
+                          <svg className="ml-auto h-5 w-5 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                          </svg>
+                        </button>
+
+                        <div>
+                          <div className="mb-3 flex items-center justify-between px-1">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Quick Preset Routines</p>
+                            <span className="text-[10px] text-slate-500">Popular</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {EXAMPLE_TEMPLATES.slice(0, 4).map((t) => (
+                              <button
+                                key={t.id}
+                                onClick={() => startFromTemplate(t)}
+                                className="liquid-glass liquid-glass-interactive rounded-2xl p-4 text-left group"
+                              >
+                                <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 mb-2">
+                                  {t.category}
+                                </span>
+                                <p className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{t.name}</p>
+                                <p className="mt-1 text-[10px] text-slate-400">{t.exercises.length} exercises</p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─── TAB 3: TEMPLATES ─── */}
+                {tab === "templates" && (
+                  <div className="space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => navigateToTab("ai")}
+                          className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white group"
+                        >
+                          <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                          </svg>
+                          <span>Dashboard</span>
+                        </button>
+                        <h2 className="text-lg font-extrabold text-white">Routines & Templates</h2>
+                      </div>
+
+                      <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-2 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98]"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Create Template
+                      </button>
+                    </div>
+
+                    <div className="space-y-8">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-white mb-2 px-1">My Saved Templates</h3>
+                        {userTemplates.length === 0 ? (
+                          <div className="liquid-glass flex items-center gap-4 rounded-3xl p-6">
+                            <div className="liquid-pill flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sky-300">
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-white">No custom templates yet</p>
+                              <p className="text-xs text-slate-400">Click &quot;Create Template&quot; to design your own exercise blueprint.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {userTemplates.map((t) => (
+                              <div key={t.id} className="liquid-glass liquid-glass-interactive group relative overflow-hidden rounded-2xl">
+                                <button onClick={() => startFromTemplate(t)} className="w-full p-4 text-left">
+                                  <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 mb-1.5">
+                                    {t.category}
+                                  </span>
+                                  <p className="text-sm font-extrabold text-white">{t.name}</p>
+                                  <p className="mt-0.5 text-[10px] text-slate-400">
+                                    {t.exercises.length} exercises • {t.exercises.reduce((s, e) => s + e.sets, 0)} total sets
+                                  </p>
+                                  <div className="mt-2.5 flex flex-wrap gap-1">
+                                    {t.exercises.slice(0, 3).map((e, i) => (
+                                      <span key={i} className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+                                        {e.name}
+                                      </span>
+                                    ))}
+                                    {t.exercises.length > 3 && (
+                                      <span className="text-[10px] text-slate-500 font-semibold">+{t.exercises.length - 3}</span>
+                                    )}
+                                  </div>
+                                </button>
+                                <button
+                                  onClick={() => deleteTemplate(t.id)}
+                                  className="absolute right-2.5 top-2.5 rounded-lg p-1 text-slate-500 opacity-0 transition-all hover:bg-red-500/20 hover:text-red-300 group-hover:opacity-100"
+                                  title="Delete"
+                                >
+                                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-extrabold text-white mb-2 px-1">Example Templates</h3>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {EXAMPLE_TEMPLATES.map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => startFromTemplate(t)}
+                              className="liquid-glass liquid-glass-interactive group overflow-hidden rounded-2xl p-4 text-left transition-all"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300">
+                                  {t.category}
+                                </span>
+                                <span className="text-[10px] font-bold text-sky-300 opacity-0 transition-opacity group-hover:opacity-100">
+                                  Start →
+                                </span>
+                              </div>
+                              <p className="mt-2 text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{t.name}</p>
+                              <p className="text-[10px] text-slate-400">
+                                {t.exercises.length} exercises • {t.exercises.reduce((s, e) => s + e.sets, 0)} total sets
+                              </p>
+                              <div className="mt-2.5 flex flex-wrap gap-1">
+                                {t.exercises.map((e, i) => (
+                                  <span key={i} className="rounded-md bg-white/[0.04] border border-white/[0.05] px-1.5 py-0.5 text-[10px] text-slate-300">
+                                    {e.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─── TAB 4: EXERCISE LIBRARY (40+ Exercises A to Z) ─── */}
+                {tab === "exercises" && (
+                  <ExerciseLibraryTab
+                    onSelectExercise={(ex) => setSelectedExercise(ex)}
+                    unit={preferredUnit}
+                    onSetUnit={(u) => setPreferredUnit(u)}
+                    onBack={() => navigateToTab("ai")}
+                  />
+                )}
+
+                {/* ─── TAB 5: BODY & METRICS ─── */}
+                {tab === "metrics" && (
+                  <div className="space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => navigateToTab("ai")}
+                        className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white group"
+                      >
+                        <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                        </svg>
+                        <span>Dashboard</span>
+                      </button>
+                      <h2 className="text-lg font-extrabold text-white">Body Progression & Measurements</h2>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div
+                        onClick={() => setActiveMetric("weight")}
+                        className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
+                          activeMetric === "weight"
+                            ? "border-sky-400/60 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/40"
+                            : "border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Weight</span>
+                          <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-sky-300">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
+                            </svg>
+                          </span>
+                        </div>
+                        <p className="mt-2 text-2xl font-black tracking-tight text-white">
+                          {latestMetric ? `${latestMetric.weight} lbs` : "—"}
+                        </p>
+                        <p className="mt-1 text-[11px] font-semibold text-sky-300">
+                          {metrics.length > 1
+                            ? `${Math.round((latestMetric!.weight - metrics[0].weight) * 10) / 10} lbs overall`
+                            : "Baseline set"}
+                        </p>
+                      </div>
+
+                      <div
+                        onClick={() => setActiveMetric("bodyFat")}
+                        className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
+                          activeMetric === "bodyFat"
+                            ? "border-teal-400/60 shadow-lg shadow-teal-500/20 ring-1 ring-teal-400/40"
+                            : "border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Fat</span>
+                          <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-teal-300">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                            </svg>
+                          </span>
+                        </div>
+                        <p className="mt-2 text-2xl font-black tracking-tight text-white">
+                          {latestMetric ? `${latestMetric.bodyFat}%` : "—"}
+                        </p>
+                        <p className="mt-1 text-[11px] font-semibold text-teal-300">Composition tracking</p>
+                      </div>
+
+                      <div
+                        onClick={() => setActiveMetric("calories")}
+                        className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
+                          activeMetric === "calories"
+                            ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400/40"
+                            : "border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Intake</span>
+                          <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-cyan-300">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                            </svg>
+                          </span>
+                        </div>
+                        <p className="mt-2 text-2xl font-black tracking-tight text-white">
+                          {latestMetric ? `${latestMetric.calories.toLocaleString()} kcal` : "—"}
+                        </p>
+                        <p className="mt-1 text-[11px] font-semibold text-cyan-300">Target intake</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-6 lg:grid-cols-12 items-start">
+                      <div className="liquid-glass rounded-3xl p-6 shadow-2xl lg:col-span-7 space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
+                              <h3 className="text-sm font-extrabold text-white">
+                                {activeMetric === "weight" ? "Weight Progression" : activeMetric === "bodyFat" ? "Body Fat Percentage" : "Caloric Intake Log"}
+                              </h3>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5">Timeline trends & historical measurements</p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="liquid-pill flex rounded-xl p-0.5 border-white/10">
+                              <button
+                                type="button"
+                                onClick={() => setTimelineFilter("days")}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                  timelineFilter === "days" ? "bg-white/15 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                Days
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setTimelineFilter("months")}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                  timelineFilter === "months" ? "bg-white/15 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                Months
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setShowLogModal(true)}
+                              className="flex items-center gap-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1 text-[10px] font-bold transition-all hover:bg-cyan-500/30"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                              Log
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="pt-2">
+                          <MetricsChart metrics={metrics} activeMetric={activeMetric} timelineFilter={timelineFilter} />
+                        </div>
+
+                        <div className="pt-4 border-t border-white/[0.06]">
+                          <div className="flex items-center justify-between mb-2.5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Logs</p>
+                            <span className="text-[10px] text-slate-500">{metrics.length} recorded</span>
+                          </div>
+                          <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                            {[...metrics].reverse().slice(0, 5).map((m) => (
+                              <div key={m.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
+                                <span className="font-mono text-slate-400">{m.date}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-bold text-white">{m.weight} lbs</span>
+                                  {m.bodyFat > 0 && <span className="text-teal-300">{m.bodyFat}%</span>}
+                                  {m.calories > 0 && <span className="text-cyan-300">{m.calories} kcal</span>}
+                                  <button
+                                    onClick={() => deleteMetricEntry(m.id)}
+                                    className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
+                                    title="Delete"
+                                  >
+                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-5">
+                        <BmiCalculator />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ══════════════ TRACKING VIEW ══════════════ */}
+            {phase === "tracking" && (
+              <div className="mx-auto w-full max-w-2xl">
+                <ActiveWorkout
+                  dayTitle={workoutTitle}
+                  tracked={trackedExercises}
+                  setTracked={setTrackedExercises}
+                  onFinish={finishWorkout}
+                  onBack={resetHome}
+                  elapsedSeconds={elapsedSeconds}
+                />
+              </div>
+            )}
+          </main>
+
+          {/* Footer */}
+          {phase === "home" && (
+            <footer className="border-t border-sky-400/[0.08] py-6 text-center text-xs text-slate-500">
+              © {new Date().getFullYear()} Forma.AI — Intelligent Fitness Experience
+            </footer>
+          )}
+        </div>
+      </div>
 
       {/* ══════════════ EXERCISE DETAIL MODAL ══════════════ */}
       {selectedExercise && (
@@ -3011,12 +3420,8 @@ export default function Home() {
         <LogMetricModal onSave={addMetricEntry} onClose={() => setShowLogModal(false)} />
       )}
 
-      {/* Footer */}
-      {phase === "home" && (
-        <footer className="border-t border-sky-400/[0.08] py-6 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} Forma.AI — Intelligent Fitness Experience
-        </footer>
-      )}
+      {/* ══════════════ TIP JAR MODAL ══════════════ */}
+      {showTipJar && <TipJarModal onClose={() => setShowTipJar(false)} />}
     </>
   );
 }
