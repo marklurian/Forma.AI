@@ -45,8 +45,36 @@ interface MetricEntry {
   calories: number; // kcal
 }
 
+export type BodyPart = "Chest" | "Back" | "Legs" | "Shoulders" | "Arms" | "Core";
+export type EquipmentCategory = "Barbell" | "Dumbbell" | "Bodyweight" | "Cable" | "Machine";
+
+interface ExerciseHistoryItem {
+  id: string;
+  date: string; // YYYY-MM-DD
+  sets: { setNum: number; weight: number; reps: number }[];
+  unit: "lbs" | "kg";
+}
+
+interface ExerciseLibraryItem {
+  id: string;
+  name: string;
+  bodyPart: BodyPart;
+  category: EquipmentCategory;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  primaryMuscle: string;
+  secondaryMuscles: string[];
+  instructions: {
+    setup: string;
+    execution: string[];
+    tips: string[];
+    commonMistakes: string[];
+  };
+  videoEmbedId: string; // YouTube embed ID for demonstration
+  defaultBarWeightLbs: number; // 45 for standard barbell, 0 for dumbbell/bodyweight
+}
+
 /* ═══════════════════════════════════════════════════════════════
-   Constants
+   Constants & Datasets
    ═══════════════════════════════════════════════════════════════ */
 const FITNESS_GOALS = ["Lose Weight", "Build Muscle", "Get Lean", "Strength"] as const;
 const EXPERIENCE_LEVELS = ["Beginner", "Intermediate", "Advanced"] as const;
@@ -75,7 +103,7 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     exercises: [
       { name: "Barbell Deadlift", sets: 4, reps: "5-6" },
       { name: "Chest-Supported Row", sets: 4, reps: "8-10" },
-      { name: "Lat Pulldown / Pull-Ups", sets: 3, reps: "8-10" },
+      { name: "Lat Pulldown", sets: 3, reps: "8-10" },
       { name: "Rear Delt Face Pulls", sets: 3, reps: "15-20" },
       { name: "Incline Dumbbell Curl", sets: 3, reps: "10-12" },
       { name: "Hammer Curls", sets: 3, reps: "10-12" },
@@ -102,11 +130,11 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     isExample: true,
     exercises: [
       { name: "Incline Barbell Bench", sets: 4, reps: "6-8" },
-      { name: "Weighted Pull-Up", sets: 4, reps: "6-8" },
+      { name: "Pull-Ups", sets: 4, reps: "6-8" },
       { name: "Standing Overhead Press", sets: 3, reps: "8-10" },
       { name: "Seated Cable Row", sets: 3, reps: "10-12" },
-      { name: "Cable Lateral Raise", sets: 3, reps: "12-15" },
-      { name: "Dips / Tricep Pushdown", sets: 3, reps: "10-12" },
+      { name: "Dumbbell Lateral Raise", sets: 3, reps: "12-15" },
+      { name: "Tricep Rope Pushdowns", sets: 3, reps: "10-12" },
     ],
   },
   {
@@ -115,12 +143,12 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Total Body",
     isExample: true,
     exercises: [
-      { name: "Barbell Squat", sets: 3, reps: "8-10" },
-      { name: "Flat Dumbbell Press", sets: 3, reps: "8-10" },
+      { name: "Barbell Back Squat", sets: 3, reps: "8-10" },
+      { name: "Barbell Bench Press", sets: 3, reps: "8-10" },
       { name: "Barbell Bent-Over Row", sets: 3, reps: "8-10" },
-      { name: "Dumbbell Romanian Deadlift", sets: 3, reps: "10-12" },
+      { name: "Romanian Deadlift", sets: 3, reps: "10-12" },
       { name: "Dumbbell Lateral Raise", sets: 3, reps: "12-15" },
-      { name: "Hanging Knee Raise", sets: 3, reps: "12-15" },
+      { name: "Hanging Leg Raise", sets: 3, reps: "12-15" },
     ],
   },
   {
@@ -129,17 +157,14 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Cardio & Stamina",
     isExample: true,
     exercises: [
-      { name: "Kettlebell Swings", sets: 4, reps: "20" },
       { name: "Dumbbell Thrusters", sets: 4, reps: "12" },
-      { name: "Bodyweight Push-Ups", sets: 4, reps: "15" },
-      { name: "Box Jumps / Step-Ups", sets: 4, reps: "12" },
+      { name: "Push-Ups", sets: 4, reps: "15" },
       { name: "Mountain Climbers", sets: 4, reps: "40s" },
-      { name: "Plank Hold", sets: 4, reps: "45s" },
+      { name: "Hanging Leg Raise", sets: 4, reps: "12" },
     ],
   },
 ];
 
-/* Default pre-seeded metrics history */
 const SEEDED_METRICS: MetricEntry[] = [
   { id: "m-1", date: "2026-03-01", weight: 184.2, bodyFat: 19.4, calories: 2650 },
   { id: "m-2", date: "2026-04-01", weight: 181.8, bodyFat: 18.6, calories: 2500 },
@@ -154,8 +179,337 @@ const SEEDED_METRICS: MetricEntry[] = [
   { id: "m-11", date: "2026-08-30", weight: 170.4, bodyFat: 14.2, calories: 2180 },
 ];
 
+/* Comprehensive Exercise Library Dataset */
+const EXERCISE_LIBRARY: ExerciseLibraryItem[] = [
+  {
+    id: "lib-bench",
+    name: "Barbell Bench Press",
+    bodyPart: "Chest",
+    category: "Barbell",
+    difficulty: "Intermediate",
+    primaryMuscle: "Pectoralis Major (Mid & Lower Chest)",
+    secondaryMuscles: ["Anterior Deltoids", "Triceps Brachii", "Serratus Anterior"],
+    instructions: {
+      setup: "Lie flat on the bench with your eyes directly under the racked bar. Plant your feet firmly on the floor. Grip the bar slightly wider than shoulder-width and retract your shoulder blades.",
+      execution: [
+        "Unrack the bar and stabilize it directly over your chest with locked elbows.",
+        "Inhale and lower the bar under control until it lightly touches your mid-sternum, keeping elbows at a ~45-degree angle to your torso.",
+        "Drive through your feet and press the bar back up forcefully to full lockout while exhaling."
+      ],
+      tips: [
+        "Maintain a slight natural arch in your lower back while keeping glutes pinned to the bench.",
+        "Think of bending the bar into a U-shape to engage your lats and pack the shoulders."
+      ],
+      commonMistakes: [
+        "Bouncing the bar off your chest.",
+        "Flaring elbows straight out at 90 degrees, stressing the rotator cuff.",
+        "Lifting glutes off the bench during the push."
+      ]
+    },
+    videoEmbedId: "rT7DgCr-3pg",
+    defaultBarWeightLbs: 45
+  },
+  {
+    id: "lib-squat",
+    name: "Barbell Back Squat",
+    bodyPart: "Legs",
+    category: "Barbell",
+    difficulty: "Advanced",
+    primaryMuscle: "Quadriceps & Gluteus Maximus",
+    secondaryMuscles: ["Hamstrings", "Erector Spinae", "Core & Calves"],
+    instructions: {
+      setup: "Position the bar on your upper traps (high bar) or rear delts (low bar). Stand with feet shoulder-width apart, toes turned slightly outward ~15–30 degrees.",
+      execution: [
+        "Brace your core with a deep diaphragmatic breath into your belt.",
+        "Hinge at the hips and knees simultaneously, lowering down until your hip crease drops below the top of your knees.",
+        "Drive through mid-foot to stand back up, pushing knees out and extending hips at the top."
+      ],
+      tips: [
+        "Keep your chest upright and maintain a neutral cervical spine throughout the rep.",
+        "Press your knees outward in line with your toes on the ascent."
+      ],
+      commonMistakes: [
+        "Knees caving inward (valgus collapse).",
+        "Rounding the lower back at the bottom (butt wink).",
+        "Shifting weight excessively onto the toes."
+      ]
+    },
+    videoEmbedId: "bEv6CCg2BC8",
+    defaultBarWeightLbs: 45
+  },
+  {
+    id: "lib-deadlift",
+    name: "Barbell Deadlift",
+    bodyPart: "Back",
+    category: "Barbell",
+    difficulty: "Advanced",
+    primaryMuscle: "Posterior Chain (Hamstrings, Glutes, Erector Spinae)",
+    secondaryMuscles: ["Latissimus Dorsi", "Trapezius", "Forearms / Grip", "Core"],
+    instructions: {
+      setup: "Stand with mid-foot directly under the bar, feet hip-width apart. Hinge down and grip the bar just outside your shins without moving the bar.",
+      execution: [
+        "Pull your chest up, engage your lats, and pull the slack out of the barbell.",
+        "Push the floor away with your legs while keeping the bar in contact with your shins and thighs.",
+        "Lock out hips and knees at the top by squeezing glutes without hyperextending your lower back."
+      ],
+      tips: [
+        "Drag the bar continuously against your legs throughout the lift.",
+        "Brace hard and hold breath during the pull (Valsalva maneuver)."
+      ],
+      commonMistakes: [
+        "Rounding the lumbar spine.",
+        "Jerking the bar off the floor instead of creating tension first.",
+        "Hyperextending the spine excessively at lockout."
+      ]
+    },
+    videoEmbedId: "op9kVnSso6Q",
+    defaultBarWeightLbs: 45
+  },
+  {
+    id: "lib-ohp",
+    name: "Standing Overhead Press",
+    bodyPart: "Shoulders",
+    category: "Barbell",
+    difficulty: "Intermediate",
+    primaryMuscle: "Anterior & Lateral Deltoids",
+    secondaryMuscles: ["Triceps Brachii", "Upper Pectorals", "Upper Traps", "Core"],
+    instructions: {
+      setup: "Unrack the barbell at collarbone level with hands just outside shoulder width. Stand tall with glutes and abs braced tight.",
+      execution: [
+        "Tilt your head slightly back to clear the bar path as you press vertically.",
+        "Press the bar overhead in a straight line until elbows are fully extended.",
+        "Bring your head through the 'window' created by your arms at the top for full lockout."
+      ],
+      tips: [
+        "Squeeze your glutes hard to protect your lower back from overarching.",
+        "Keep forearms perpendicular to the floor at the start of every rep."
+      ],
+      commonMistakes: [
+        "Using leg drive (making it a push press instead of strict press).",
+        "Overarching the lower back excessively.",
+        "Pressing the bar forward instead of straight up."
+      ]
+    },
+    videoEmbedId: "2yjwXTZQDDI",
+    defaultBarWeightLbs: 45
+  },
+  {
+    id: "lib-incline-db",
+    name: "Incline Dumbbell Press",
+    bodyPart: "Chest",
+    category: "Dumbbell",
+    difficulty: "Beginner",
+    primaryMuscle: "Clavicular Head (Upper Chest)",
+    secondaryMuscles: ["Anterior Deltoids", "Triceps Brachii"],
+    instructions: {
+      setup: "Set an adjustable bench to a 30–45 degree incline. Sit with dumbbells resting on your knees, then kick them up into position at shoulder height.",
+      execution: [
+        "Press the dumbbells up and slightly inward over your upper chest.",
+        "Lower under control until you feel a deep stretch in the upper pectorals.",
+        "Press back up smoothly without clanking the dumbbells together at the top."
+      ],
+      tips: [
+        "Keep wrist stacked directly over your elbows throughout the movement.",
+        "A 30-degree incline maximizes upper chest activation while minimizing front delt strain."
+      ],
+      commonMistakes: [
+        "Setting the bench angle too steep (>45 degrees), shifting work to shoulders.",
+        "Dropping elbows too low and over-stretching the shoulder capsule."
+      ]
+    },
+    videoEmbedId: "8iPEnn-ltC8",
+    defaultBarWeightLbs: 0
+  },
+  {
+    id: "lib-lat-raise",
+    name: "Dumbbell Lateral Raise",
+    bodyPart: "Shoulders",
+    category: "Dumbbell",
+    difficulty: "Beginner",
+    primaryMuscle: "Lateral Deltoid (Side Shoulder)",
+    secondaryMuscles: ["Supraspinatus", "Upper Traps"],
+    instructions: {
+      setup: "Stand with dumbbells at your sides, palms facing your thighs, with a slight forward torso lean ~10 degrees.",
+      execution: [
+        "Raise the dumbbells outward in the scapular plane until your upper arms are parallel to the floor.",
+        "Lead with your elbows and maintain a slight bend in your arms.",
+        "Pause briefly at the top and lower the weights with a controlled 2-second eccentric."
+      ],
+      tips: [
+        "Think of pouring water from a pitcher at the peak of the movement.",
+        "Keep traps relaxed to isolate the side deltoid."
+      ],
+      commonMistakes: [
+        "Swinging the body and using momentum from the hips.",
+        "Shrugging your shoulders up toward your ears."
+      ]
+    },
+    videoEmbedId: "3VcKaXpzqRo",
+    defaultBarWeightLbs: 0
+  },
+  {
+    id: "lib-pullups",
+    name: "Pull-Ups",
+    bodyPart: "Back",
+    category: "Bodyweight",
+    difficulty: "Intermediate",
+    primaryMuscle: "Latissimus Dorsi",
+    secondaryMuscles: ["Biceps Brachii", "Rhomboids", "Teres Major", "Forearms"],
+    instructions: {
+      setup: "Grip a pull-up bar with hands slightly wider than shoulder-width, palms facing away (overhand grip). Hang at full extension.",
+      execution: [
+        "Depress your scapula by pulling your shoulder blades down and back.",
+        "Drive your elbows down toward your hips to pull your chin cleanly over the bar.",
+        "Lower yourself under complete control back to a dead hang."
+      ],
+      tips: [
+        "Keep your chest driven upward toward the bar rather than curling in.",
+        "Cross your ankles and squeeze your glutes to prevent swinging."
+      ],
+      commonMistakes: [
+        "Kicking or kipping with legs to gain momentum.",
+        "Cutting range of motion short at the bottom or top."
+      ]
+    },
+    videoEmbedId: "eGo4IYlbE5g",
+    defaultBarWeightLbs: 0
+  },
+  {
+    id: "lib-bulgarian",
+    name: "Bulgarian Split Squat",
+    bodyPart: "Legs",
+    category: "Dumbbell",
+    difficulty: "Intermediate",
+    primaryMuscle: "Quadriceps & Gluteus Medius",
+    secondaryMuscles: ["Hamstrings", "Adductors", "Calves"],
+    instructions: {
+      setup: "Stand facing away from a bench. Place the top of one foot on the bench behind you. Hold dumbbells at your sides.",
+      execution: [
+        "Lower your hips down and back until your front thigh is parallel to the ground.",
+        "Keep your front shin relatively vertical and torso slightly hinged forward for glute focus.",
+        "Drive through the front heel to return to the starting position."
+      ],
+      tips: [
+        "Position your front foot far enough forward so your front knee doesn't feel cramped.",
+        "80% of your weight should be on the front leg; the rear leg is for balance only."
+      ],
+      commonMistakes: [
+        "Pushing excessively off the rear leg.",
+        "Losing balance due to feet being in a straight line instead of hip-width apart."
+      ]
+    },
+    videoEmbedId: "2C-uNgKwPLE",
+    defaultBarWeightLbs: 0
+  },
+  {
+    id: "lib-cable-pushdown",
+    name: "Tricep Rope Pushdown",
+    bodyPart: "Arms",
+    category: "Cable",
+    difficulty: "Beginner",
+    primaryMuscle: "Triceps Brachii (Lateral & Medial Heads)",
+    secondaryMuscles: ["Anconeus"],
+    instructions: {
+      setup: "Attach a double-rope to a high cable pulley. Grip the rope with palms facing each other and pin your elbows to your ribcage.",
+      execution: [
+        "Extend your forearms downward until your arms are fully straight.",
+        "Spread the rope apart at the bottom to maximize peak tricep contraction.",
+        "Control the return upward until your forearms reach roughly 90 degrees."
+      ],
+      tips: [
+        "Keep your upper arms completely stationary; only the forearms should move.",
+        "Lean forward slightly from the hips for balance."
+      ],
+      commonMistakes: [
+        "Allowing elbows to drift forward and backward (turning it into a row/lat pull).",
+        "Using body momentum to push the weight down."
+      ]
+    },
+    videoEmbedId: "vB5OHsJ3EME",
+    defaultBarWeightLbs: 0
+  },
+  {
+    id: "lib-hanging-leg-raise",
+    name: "Hanging Leg Raise",
+    bodyPart: "Core",
+    category: "Bodyweight",
+    difficulty: "Intermediate",
+    primaryMuscle: "Rectus Abdominis & Hip Flexors",
+    secondaryMuscles: ["Obliques", "Forearms / Grip"],
+    instructions: {
+      setup: "Hang from a pull-up bar with an overhand grip, legs straight, and shoulders active.",
+      execution: [
+        "Posteriorly tilt your pelvis and lift your legs upward until they are at least parallel to the floor (or touching the bar).",
+        "Focus on rolling your pelvis up toward your ribcage rather than just swinging legs.",
+        "Lower your legs under slow control without swinging."
+      ],
+      tips: [
+        "If straight legs are too difficult, bend your knees and perform hanging knee raises first.",
+        "Pause for a fraction of a second at the top of every rep."
+      ],
+      commonMistakes: [
+        "Swinging the torso to kick legs up using momentum.",
+        "Only flexing hips without curling the pelvis to engage the abs."
+      ]
+    },
+    videoEmbedId: "hdng3Nm1x_E",
+    defaultBarWeightLbs: 0
+  }
+];
+
+const SEEDED_EXERCISE_HISTORY: Record<string, ExerciseHistoryItem[]> = {
+  "lib-bench": [
+    {
+      id: "h-b1",
+      date: "2026-08-28",
+      unit: "lbs",
+      sets: [
+        { setNum: 1, weight: 185, reps: 10 },
+        { setNum: 2, weight: 205, reps: 8 },
+        { setNum: 3, weight: 225, reps: 6 },
+        { setNum: 4, weight: 225, reps: 5 }
+      ]
+    },
+    {
+      id: "h-b2",
+      date: "2026-08-21",
+      unit: "lbs",
+      sets: [
+        { setNum: 1, weight: 185, reps: 8 },
+        { setNum: 2, weight: 205, reps: 8 },
+        { setNum: 3, weight: 215, reps: 6 }
+      ]
+    }
+  ],
+  "lib-squat": [
+    {
+      id: "h-s1",
+      date: "2026-08-26",
+      unit: "lbs",
+      sets: [
+        { setNum: 1, weight: 225, reps: 8 },
+        { setNum: 2, weight: 275, reps: 6 },
+        { setNum: 3, weight: 295, reps: 5 },
+        { setNum: 4, weight: 315, reps: 3 }
+      ]
+    }
+  ],
+  "lib-deadlift": [
+    {
+      id: "h-d1",
+      date: "2026-08-24",
+      unit: "lbs",
+      sets: [
+        { setNum: 1, weight: 275, reps: 5 },
+        { setNum: 2, weight: 315, reps: 5 },
+        { setNum: 3, weight: 365, reps: 4 }
+      ]
+    }
+  ]
+};
+
 /* ═══════════════════════════════════════════════════════════════
-   Helpers
+   Helpers & Persistence
    ═══════════════════════════════════════════════════════════════ */
 function formatTime(s: number) {
   const m = Math.floor(s / 60);
@@ -212,6 +566,21 @@ function loadUserMetrics(): MetricEntry[] {
 
 function saveUserMetrics(m: MetricEntry[]) {
   localStorage.setItem("forma-metrics", JSON.stringify(m));
+}
+
+function loadExerciseHistory(): Record<string, ExerciseHistoryItem[]> {
+  if (typeof window === "undefined") return SEEDED_EXERCISE_HISTORY;
+  try {
+    const raw = localStorage.getItem("forma-exercise-history");
+    if (!raw) return SEEDED_EXERCISE_HISTORY;
+    return JSON.parse(raw);
+  } catch {
+    return SEEDED_EXERCISE_HISTORY;
+  }
+}
+
+function saveExerciseHistory(h: Record<string, ExerciseHistoryItem[]>) {
+  localStorage.setItem("forma-exercise-history", JSON.stringify(h));
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1010,13 +1379,11 @@ function MetricsChart({
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  // Filter & aggregate data based on timeline mode
   const chartData = useMemo(() => {
     if (metrics.length === 0) return [];
     const sorted = [...metrics].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     if (timelineFilter === "days") {
-      // Return last 14 entries (or all if < 14) formatted by day
       const slice = sorted.slice(-14);
       return slice.map((m) => ({
         label: new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -1024,7 +1391,6 @@ function MetricsChart({
         val: activeMetric === "weight" ? m.weight : activeMetric === "bodyFat" ? m.bodyFat : m.calories,
       }));
     } else {
-      // Monthly aggregation
       const monthlyMap = new Map<string, { total: number; count: number; dateStr: string }>();
       sorted.forEach((m) => {
         const d = new Date(m.date);
@@ -1067,7 +1433,6 @@ function MetricsChart({
   const plotWidth = width - leftPad - rightPad;
   const plotHeight = height - topPad - bottomPad;
 
-  // Calculate coordinates
   const points = chartData.map((d, i) => {
     const x = leftPad + (plotWidth / (chartData.length - 1 || 1)) * i;
     const normalizedY = (d.val - chartMin) / ((chartMax - chartMin) || 1);
@@ -1075,7 +1440,6 @@ function MetricsChart({
     return { x, y, data: d };
   });
 
-  // Build SVG path
   let pathD = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i];
@@ -1096,7 +1460,6 @@ function MetricsChart({
     <div className="relative w-full overflow-hidden select-none">
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
         <defs>
-          {/* Gradients for area fills */}
           <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#a855f7" stopOpacity="0.38" />
             <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
@@ -1110,7 +1473,6 @@ function MetricsChart({
             <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.0" />
           </linearGradient>
 
-          {/* Stroke gradients */}
           <linearGradient id="purpleLineGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#c084fc" />
             <stop offset="100%" stopColor="#e879f9" />
@@ -1125,7 +1487,6 @@ function MetricsChart({
           </linearGradient>
         </defs>
 
-        {/* Horizontal grid lines */}
         {[0, 0.33, 0.66, 1].map((ratio, idx) => {
           const y = topPad + plotHeight * (1 - ratio);
           const valLabel = Math.round(chartMin + (chartMax - chartMin) * ratio);
@@ -1153,10 +1514,8 @@ function MetricsChart({
           );
         })}
 
-        {/* Area fill under curve */}
         <path d={areaD} fill={`url(#${metricConfig.gradId})`} />
 
-        {/* Smooth line */}
         <path
           d={pathD}
           fill="none"
@@ -1167,15 +1526,12 @@ function MetricsChart({
           style={{ filter: `drop-shadow(0 0 10px ${metricConfig.color})` }}
         />
 
-        {/* Interactive Data Points & Vertical Guides */}
         {points.map((pt, i) => {
           const isHovered = hoveredIdx === i;
           return (
             <g key={i} className="cursor-pointer" onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)}>
-              {/* Invisible touch/hover target */}
               <circle cx={pt.x} cy={pt.y} r="14" fill="transparent" />
 
-              {/* Vertical crosshair on hover */}
               {isHovered && (
                 <line
                   x1={pt.x}
@@ -1187,7 +1543,6 @@ function MetricsChart({
                 />
               )}
 
-              {/* Data Point circle */}
               <circle
                 cx={pt.x}
                 cy={pt.y}
@@ -1198,7 +1553,6 @@ function MetricsChart({
                 className="transition-all duration-150"
               />
 
-              {/* X Axis Label */}
               <text
                 x={pt.x}
                 y={height - 10}
@@ -1215,7 +1569,6 @@ function MetricsChart({
         })}
       </svg>
 
-      {/* Floating Glass Tooltip */}
       {hoveredIdx !== null && points[hoveredIdx] && (
         <div
           className="liquid-pill absolute pointer-events-none rounded-xl px-3 py-1.5 shadow-2xl z-20 transition-transform duration-75 text-center"
@@ -1241,16 +1594,13 @@ function MetricsChart({
    ═══════════════════════════════════════════════════════════════ */
 function BmiCalculator() {
   const [unit, setUnit] = useState<"imperial" | "metric">("imperial");
-  // Imperial: feet, inches, lbs
   const [feet, setFeet] = useState(5);
   const [inches, setInches] = useState(10);
   const [weightLbs, setWeightLbs] = useState(170);
 
-  // Metric: cm, kg
   const [heightCm, setHeightCm] = useState(178);
   const [weightKg, setWeightKg] = useState(77);
 
-  // Calculation
   const { bmi, category, color, idealRange, progressRatio } = useMemo(() => {
     let bmiVal = 0;
     let idealMin = 0;
@@ -1279,12 +1629,12 @@ function BmiCalculator() {
 
     let cat = "Normal weight";
     let col = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
-    let ratio = 0.4; // 15 to 35 range mapped to 0..1
+    let ratio = 0.4;
 
     if (roundedBmi < 18.5) {
       cat = "Underweight";
       col = "text-sky-400 border-sky-500/30 bg-sky-500/10";
-      ratio = Math.max(0.05, (roundedBmi - 12) / (18.5 - 12) * 0.25);
+      ratio = Math.max(0.05, ((roundedBmi - 12) / (18.5 - 12)) * 0.25);
     } else if (roundedBmi < 25) {
       cat = "Healthy / Normal";
       col = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
@@ -1320,7 +1670,6 @@ function BmiCalculator() {
           <h3 className="text-sm font-extrabold text-white">Body Mass Index (BMI)</h3>
         </div>
 
-        {/* Unit Toggle */}
         <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
           <button
             type="button"
@@ -1343,7 +1692,6 @@ function BmiCalculator() {
         </div>
       </div>
 
-      {/* Input Sliders & Fields */}
       <div className="space-y-4">
         {unit === "imperial" ? (
           <>
@@ -1428,7 +1776,6 @@ function BmiCalculator() {
         )}
       </div>
 
-      {/* Result Display & Liquid Spectrum Needle Gauge */}
       <div className="liquid-glass rounded-2xl p-4.5 border-white/10 space-y-3.5">
         <div className="flex items-center justify-between">
           <div>
@@ -1443,10 +1790,8 @@ function BmiCalculator() {
           </div>
         </div>
 
-        {/* Gauge Bar */}
         <div className="relative pt-2">
           <div className="h-2 w-full rounded-full bg-gradient-to-r from-sky-500 via-emerald-400 via-amber-400 to-rose-500" />
-          {/* Indicator needle */}
           <div
             className="absolute top-0 h-4 w-1.5 rounded-full bg-white shadow-[0_0_10px_#ffffff] transition-all duration-300 -translate-x-1/2"
             style={{ left: `${progressRatio * 100}%` }}
@@ -1464,16 +1809,552 @@ function BmiCalculator() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Barbell / Dumbbell Plate Calculator & Input Module
+   ═══════════════════════════════════════════════════════════════ */
+function WeightAndPlateCalculator({
+  category,
+  defaultBarWeightLbs,
+  unit,
+  onLogSet,
+}: {
+  category: EquipmentCategory;
+  defaultBarWeightLbs: number;
+  unit: "lbs" | "kg";
+  onLogSet: (weight: number, reps: number) => void;
+}) {
+  const [barWeight, setBarWeight] = useState(defaultBarWeightLbs || (unit === "kg" ? 20 : 45));
+  const [targetWeight, setTargetWeight] = useState(unit === "kg" ? 60 : 135);
+  const [repsInput, setRepsInput] = useState(10);
+
+  // Convert for unit change if needed
+  const isBarbell = category === "Barbell";
+  const isDumbbell = category === "Dumbbell";
+
+  // Calculate plate distribution per side (standard Olympic plate breakdown)
+  const plateBreakdown = useMemo(() => {
+    if (!isBarbell) return [];
+    const availablePlates = unit === "lbs" ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25];
+    let remainingPerSide = Math.max(0, (targetWeight - barWeight) / 2);
+    const result: { plate: number; count: number }[] = [];
+
+    for (const plate of availablePlates) {
+      if (remainingPerSide >= plate) {
+        const count = Math.floor(remainingPerSide / plate);
+        result.push({ plate, count });
+        remainingPerSide -= count * plate;
+      }
+    }
+    return result;
+  }, [isBarbell, targetWeight, barWeight, unit]);
+
+  return (
+    <div className="liquid-glass rounded-2xl p-4.5 border-white/10 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-purple-300">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
+            </svg>
+          </span>
+          <h4 className="text-xs font-extrabold uppercase tracking-wider text-white">
+            {isBarbell ? "Barbell & Plate Setup" : isDumbbell ? "Dumbbell Weight Setup" : "Weight / Resistance Input"}
+          </h4>
+        </div>
+        <span className="liquid-pill px-2 py-0.5 text-[10px] font-bold text-slate-300 rounded-md uppercase">
+          {unit}
+        </span>
+      </div>
+
+      {/* Target Weight & Reps inputs */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            {isDumbbell ? `Each Dumbbell (${unit})` : `Total Lift Weight (${unit})`}
+          </label>
+          <div className="relative mt-1">
+            <input
+              type="number"
+              step="2.5"
+              value={targetWeight}
+              onChange={(e) => setTargetWeight(parseFloat(e.target.value) || 0)}
+              className="liquid-input w-full rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none"
+            />
+            <span className="absolute right-3 top-2.5 text-xs text-slate-500 font-semibold">{unit}</span>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Target Reps</label>
+          <input
+            type="number"
+            value={repsInput}
+            onChange={(e) => setRepsInput(parseInt(e.target.value) || 0)}
+            className="liquid-input mt-1 w-full rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Quick increments */}
+      <div className="flex flex-wrap gap-1.5">
+        {[2.5, 5, 10, 25].map((inc) => (
+          <button
+            key={inc}
+            type="button"
+            onClick={() => setTargetWeight((w) => w + inc)}
+            className="liquid-glass text-[10px] font-bold px-2 py-1 rounded-lg text-slate-300 hover:text-white hover:border-purple-400/40 transition-all"
+          >
+            +{inc} {unit}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setTargetWeight((w) => Math.max(0, w - 5))}
+          className="liquid-glass text-[10px] font-bold px-2 py-1 rounded-lg text-slate-400 hover:text-red-300 transition-all"
+        >
+          -5 {unit}
+        </button>
+      </div>
+
+      {/* Barbell Plate Visualizer */}
+      {isBarbell && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Barbell: <strong className="text-white">{barWeight} {unit}</strong></span>
+            <div className="flex gap-1.5 text-[9px] font-bold">
+              {[45, 35, 25].map((bw) => (
+                <button
+                  key={bw}
+                  type="button"
+                  onClick={() => setBarWeight(bw)}
+                  className={`px-1.5 py-0.5 rounded ${barWeight === bw ? "bg-accent text-white" : "text-slate-500 hover:text-white"}`}
+                >
+                  {bw} {unit} bar
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Each side:</span>
+            {plateBreakdown.length === 0 ? (
+              <span className="text-xs text-slate-500 italic">Empty bar (no plates needed)</span>
+            ) : (
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {plateBreakdown.map((p, i) => (
+                  <span
+                    key={i}
+                    className="liquid-pill px-2 py-0.5 text-xs font-mono font-bold text-purple-300 border-purple-500/30"
+                  >
+                    {p.count} × {p.plate} {unit}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Log set button */}
+      <button
+        type="button"
+        onClick={() => onLogSet(targetWeight, repsInput)}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-purple-500 hover:to-fuchsia-500 active:scale-[0.98]"
+      >
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Log Completed Set
+      </button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Exercise Detail Modal with Video Demonstration & Instructions
+   ═══════════════════════════════════════════════════════════════ */
+function ExerciseDetailModal({
+  exercise,
+  unit,
+  onToggleUnit,
+  history,
+  onAddHistorySet,
+  onClose,
+}: {
+  exercise: ExerciseLibraryItem;
+  unit: "lbs" | "kg";
+  onToggleUnit: () => void;
+  history: ExerciseHistoryItem[];
+  onAddHistorySet: (exId: string, weight: number, reps: number, unit: "lbs" | "kg") => void;
+  onClose: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"guide" | "history" | "setup">("guide");
+
+  function handleLogSet(weight: number, reps: number) {
+    onAddHistorySet(exercise.id, weight, reps, unit);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" style={{ animation: "fadeIn 0.25s ease-out" }}>
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
+      <div
+        className="liquid-glass relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5"
+        style={{ animation: "scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)" }}
+      >
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
+
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300 border-purple-500/30">
+                {exercise.bodyPart}
+              </span>
+              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 border-cyan-500/30">
+                {exercise.category}
+              </span>
+              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300 border-amber-500/30">
+                {exercise.difficulty}
+              </span>
+            </div>
+            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">{exercise.name}</h2>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Unit toggle */}
+            <button
+              type="button"
+              onClick={onToggleUnit}
+              className="liquid-pill px-2.5 py-1 text-xs font-bold text-purple-300 rounded-lg hover:border-purple-400 transition-all"
+              title="Toggle preferred unit"
+            >
+              {unit.toUpperCase()}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="liquid-pill h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-white"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Navigation Tabs */}
+        <div className="liquid-pill rounded-xl p-1 flex gap-1 border-white/10">
+          <button
+            type="button"
+            onClick={() => setActiveTab("guide")}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === "guide" ? "bg-accent text-white shadow" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Video & Guide
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("setup")}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === "setup" ? "bg-accent text-white shadow" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Weight & Plates
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === "history" ? "bg-accent text-white shadow" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            History ({history.length})
+          </button>
+        </div>
+
+        {/* ─── TAB: GUIDE (Video + Instructions) ─── */}
+        {activeTab === "guide" && (
+          <div className="space-y-4 animate-[fadeIn_0.2s_ease-out]">
+            {/* Video demonstration embed */}
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-xl">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${exercise.videoEmbedId}?rel=0&modestbranding=1`}
+                title={`${exercise.name} Demonstration Video`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full border-0"
+              />
+            </div>
+
+            {/* Targeted Muscles */}
+            <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Anatomy</h4>
+              <div className="space-y-1 text-xs">
+                <p>
+                  <strong className="text-purple-300">Primary:</strong>{" "}
+                  <span className="text-slate-200">{exercise.primaryMuscle}</span>
+                </p>
+                <p>
+                  <strong className="text-slate-400">Secondary:</strong>{" "}
+                  <span className="text-slate-300">{exercise.secondaryMuscles.join(", ")}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Step-by-step instructions */}
+            <div className="space-y-3">
+              <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">1. Setup</h4>
+                <p className="text-xs text-slate-200 leading-relaxed">{exercise.instructions.setup}</p>
+              </div>
+
+              <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">2. Execution</h4>
+                <ol className="space-y-1.5 text-xs text-slate-200">
+                  {exercise.instructions.execution.map((step, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="liquid-pill flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-emerald-300">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="liquid-glass rounded-2xl p-3.5 border-white/10 space-y-1.5">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Pro Tips</h4>
+                  <ul className="space-y-1 text-[11px] text-slate-300">
+                    {exercise.instructions.tips.map((t, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-purple-400">•</span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="liquid-glass rounded-2xl p-3.5 border-red-500/20 bg-red-950/10 space-y-1.5">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-red-300">Avoid</h4>
+                  <ul className="space-y-1 text-[11px] text-red-200/80">
+                    {exercise.instructions.commonMistakes.map((m, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-red-400">✕</span>
+                        <span>{m}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB: SETUP (Weight & Plate Calculator) ─── */}
+        {activeTab === "setup" && (
+          <div className="space-y-4 animate-[fadeIn_0.2s_ease-out]">
+            <WeightAndPlateCalculator
+              category={exercise.category}
+              defaultBarWeightLbs={exercise.defaultBarWeightLbs}
+              unit={unit}
+              onLogSet={handleLogSet}
+            />
+          </div>
+        )}
+
+        {/* ─── TAB: HISTORY ─── */}
+        {activeTab === "history" && (
+          <div className="space-y-3 animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Past Recorded Sessions</h4>
+              <button
+                type="button"
+                onClick={() => setActiveTab("setup")}
+                className="text-xs font-bold text-accent hover:underline"
+              >
+                + Log New Set
+              </button>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="liquid-glass flex flex-col items-center justify-center rounded-2xl p-8 text-center">
+                <svg className="h-8 w-8 text-slate-500 mb-2" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <p className="text-sm font-bold text-white">No session history yet</p>
+                <p className="text-xs text-slate-400 mt-0.5">Use the Weight & Plates tab to record your first set.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {history.map((item) => (
+                  <div key={item.id} className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-bold text-purple-300">{item.date}</span>
+                      <span className="liquid-pill px-2 py-0.5 text-[10px] font-semibold text-slate-400 rounded-md">
+                        {item.sets.length} sets completed
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {item.sets.map((s, idx) => (
+                        <div key={idx} className="rounded-xl border border-white/5 bg-white/[0.02] p-2 text-center">
+                          <span className="text-[9px] uppercase font-bold text-slate-500 block">Set {s.setNum}</span>
+                          <span className="text-xs font-extrabold text-white">
+                            {s.weight} {item.unit} × {s.reps}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Exercise Library Tab Component
+   ═══════════════════════════════════════════════════════════════ */
+function ExerciseLibraryTab({
+  onSelectExercise,
+  unit,
+}: {
+  onSelectExercise: (ex: ExerciseLibraryItem) => void;
+  unit: "lbs" | "kg";
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBodyPart, setSelectedBodyPart] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+  const bodyParts = ["All", "Chest", "Back", "Legs", "Shoulders", "Arms", "Core"];
+  const categories = ["All", "Barbell", "Dumbbell", "Bodyweight", "Cable", "Machine"];
+
+  const filteredExercises = useMemo(() => {
+    return EXERCISE_LIBRARY.filter((ex) => {
+      const matchSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ex.primaryMuscle.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchBodyPart = selectedBodyPart === "All" || ex.bodyPart === selectedBodyPart;
+      const matchCategory = selectedCategory === "All" || ex.category === selectedCategory;
+      return matchSearch && matchBodyPart && matchCategory;
+    });
+  }, [searchQuery, selectedBodyPart, selectedCategory]);
+
+  return (
+    <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+      {/* Top Search & Filter Bar */}
+      <div className="liquid-glass rounded-3xl p-5 border-white/10 space-y-4">
+        <div className="relative">
+          <svg className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search exercises by name or muscle (e.g. Bench, Quads, Lat)…"
+            className="liquid-input w-full rounded-2xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:outline-none"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Body Part pills */}
+          <div className="flex flex-wrap gap-1">
+            {bodyParts.map((bp) => (
+              <button
+                key={bp}
+                type="button"
+                onClick={() => setSelectedBodyPart(bp)}
+                className={`px-3 py-1 text-xs font-bold rounded-xl transition-all ${
+                  selectedBodyPart === bp
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                    : "liquid-glass text-slate-400 hover:text-white"
+                }`}
+              >
+                {bp}
+              </button>
+            ))}
+          </div>
+
+          {/* Category pills */}
+          <div className="flex flex-wrap gap-1">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-xl transition-all ${
+                  selectedCategory === cat
+                    ? "bg-cyan-600 text-white shadow-md shadow-cyan-500/20"
+                    : "liquid-glass text-slate-400 hover:text-white"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Exercises Grid */}
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredExercises.map((ex) => (
+          <div
+            key={ex.id}
+            onClick={() => onSelectExercise(ex)}
+            className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-purple-500/40 transition-all space-y-3 group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300 border-purple-500/30">
+                  {ex.bodyPart}
+                </span>
+                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 border-cyan-500/30">
+                  {ex.category}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-300 transition-colors">
+                View Guide →
+              </span>
+            </div>
+
+            <div>
+              <h3 className="text-base font-extrabold text-white group-hover:text-purple-300 transition-colors">
+                {ex.name}
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 line-clamp-1">
+                Target: {ex.primaryMuscle}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[11px] text-slate-400">
+              <span>{ex.difficulty}</span>
+              <span className="text-purple-300 font-semibold">Video + Steps</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    ╔═══════════════════════════════════════════════════════════╗
    ║                      MAIN DASHBOARD                      ║
    ╚═══════════════════════════════════════════════════════════╝
    ═══════════════════════════════════════════════════════════════ */
 type AppPhase = "home" | "tracking" | "summary";
-type HomeTab = "ai" | "quick" | "templates" | "metrics";
+type HomeTab = "ai" | "quick" | "templates" | "exercises" | "metrics";
 
 export default function Home() {
   /* ── Tab & Form state ─────────────────── */
   const [tab, setTab] = useState<HomeTab>("ai");
+  const [preferredUnit, setPreferredUnit] = useState<"lbs" | "kg">("lbs");
   const [goal, setGoal] = useState("");
   const [experience, setExperience] = useState("");
   const [equipment, setEquipment] = useState("");
@@ -1501,7 +2382,7 @@ export default function Home() {
     saveUserTemplates(updated);
   }
 
-  /* ── Body Metrics & Analytics state ────── */
+  /* ── Body Metrics state ───────────────── */
   const [metrics, setMetrics] = useState<MetricEntry[]>([]);
   const [showLogModal, setShowLogModal] = useState(false);
   const [activeMetric, setActiveMetric] = useState<ActiveMetricType>("weight");
@@ -1522,6 +2403,42 @@ export default function Home() {
     const updated = metrics.filter((m) => m.id !== id);
     setMetrics(updated);
     saveUserMetrics(updated);
+  }
+
+  /* ── Exercise Library & History state ─── */
+  const [exerciseHistory, setExerciseHistory] = useState<Record<string, ExerciseHistoryItem[]>>({});
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseLibraryItem | null>(null);
+
+  useEffect(() => {
+    setExerciseHistory(loadExerciseHistory());
+  }, []);
+
+  function addExerciseHistorySet(exId: string, weight: number, reps: number, unit: "lbs" | "kg") {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const currentHist = exerciseHistory[exId] || [];
+    const todaySession = currentHist.find((h) => h.date === todayStr);
+
+    let updatedHist: ExerciseHistoryItem[];
+    if (todaySession) {
+      const nextSetNum = todaySession.sets.length + 1;
+      const updatedSession = {
+        ...todaySession,
+        sets: [...todaySession.sets, { setNum: nextSetNum, weight, reps }],
+      };
+      updatedHist = currentHist.map((h) => (h.id === todaySession.id ? updatedSession : h));
+    } else {
+      const newSession: ExerciseHistoryItem = {
+        id: uid(),
+        date: todayStr,
+        unit,
+        sets: [{ setNum: 1, weight, reps }],
+      };
+      updatedHist = [newSession, ...currentHist];
+    }
+
+    const nextState = { ...exerciseHistory, [exId]: updatedHist };
+    setExerciseHistory(nextState);
+    saveExerciseHistory(nextState);
   }
 
   /* ── Tracking state ───────────────────── */
@@ -1638,6 +2555,15 @@ export default function Home() {
       ),
     },
     {
+      key: "exercises",
+      label: "Exercise Library",
+      icon: (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+        </svg>
+      ),
+    },
+    {
       key: "metrics",
       label: "Body & Metrics",
       icon: (
@@ -1648,7 +2574,6 @@ export default function Home() {
     },
   ];
 
-  /* Latest metric stats for header highlights */
   const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
   const initialMetric = metrics.length > 0 ? metrics[0] : null;
   const weightDiff = latestMetric && initialMetric ? Math.round((latestMetric.weight - initialMetric.weight) * 10) / 10 : 0;
@@ -1674,12 +2599,10 @@ export default function Home() {
             </span>
           </button>
 
-          {/* Center Date & Time widget */}
           <div className="hidden md:flex items-center">
             <LiveDateTime />
           </div>
 
-          {/* Right Status */}
           <div className="flex items-center gap-3">
             <div className="md:hidden">
               <LiveDateTime />
@@ -1739,7 +2662,6 @@ export default function Home() {
             {/* ─── TAB 1: AI GENERATOR (Compact 2-Column) ─── */}
             {tab === "ai" && (
               <div className="mt-6 grid gap-6 lg:grid-cols-12 items-start">
-                {/* Form Column */}
                 <form id="workout-form" onSubmit={handleGenerate} className="lg:col-span-5">
                   <div className="liquid-glass relative overflow-hidden rounded-3xl p-6 shadow-2xl">
                     <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent" />
@@ -1775,7 +2697,7 @@ export default function Home() {
                       ) : (
                         <>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0 2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455 2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455 2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                           </svg>
                           Build 3-Day Plan
                         </>
@@ -1784,7 +2706,6 @@ export default function Home() {
                   </div>
                 </form>
 
-                {/* Live Plan Column */}
                 <div className="lg:col-span-7 space-y-4">
                   {error && (
                     <div className="liquid-glass flex items-start gap-3 rounded-2xl border-red-500/30 bg-red-950/20 p-4 text-xs">
@@ -1917,7 +2838,6 @@ export default function Home() {
             {/* ─── TAB 3: TEMPLATES ─── */}
             {tab === "templates" && (
               <div className="mt-6 space-y-8 animate-[fadeInUp_0.3s_ease-out_both]">
-                {/* User Templates */}
                 <div>
                   <div className="mb-3 flex items-center justify-between px-1">
                     <div>
@@ -1985,7 +2905,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Example Templates */}
                 <div>
                   <div className="mb-3 px-1">
                     <h3 className="text-sm font-extrabold text-white">Preset Templates</h3>
@@ -2024,12 +2943,18 @@ export default function Home() {
               </div>
             )}
 
-            {/* ─── TAB 4: BODY & METRICS (Graph + BMI Calculator) ─── */}
+            {/* ─── TAB 4: EXERCISE LIBRARY (Guide, Video, Plates & History) ─── */}
+            {tab === "exercises" && (
+              <ExerciseLibraryTab
+                onSelectExercise={(ex) => setSelectedExercise(ex)}
+                unit={preferredUnit}
+              />
+            )}
+
+            {/* ─── TAB 5: BODY & METRICS (Graph + BMI Calculator) ─── */}
             {tab === "metrics" && (
               <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
-                {/* Metric Selector & Highlights */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                  {/* Weight card */}
                   <div
                     onClick={() => setActiveMetric("weight")}
                     className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
@@ -2054,7 +2979,6 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* Body Fat card */}
                   <div
                     onClick={() => setActiveMetric("bodyFat")}
                     className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
@@ -2078,7 +3002,6 @@ export default function Home() {
                     <p className="mt-1 text-[11px] font-semibold text-cyan-300">Composition tracking</p>
                   </div>
 
-                  {/* Calories card */}
                   <div
                     onClick={() => setActiveMetric("calories")}
                     className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
@@ -2091,7 +3014,7 @@ export default function Home() {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Intake</span>
                       <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-amber-300">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3.09 2.48Z" />
                         </svg>
                       </span>
                     </div>
@@ -2102,11 +3025,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Main Graph & BMI Section (2 Columns on large screens) */}
                 <div className="grid gap-6 lg:grid-cols-12 items-start">
-                  {/* Left Column: Interactive Graph Card */}
                   <div className="liquid-glass rounded-3xl p-6 shadow-2xl lg:col-span-7 space-y-4">
-                    {/* Header with Timeline switch & Log Entry button */}
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
@@ -2119,7 +3039,6 @@ export default function Home() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Timeline Filter Toggle: Days vs Months */}
                         <div className="liquid-pill flex rounded-xl p-0.5 border-white/10">
                           <button
                             type="button"
@@ -2141,7 +3060,6 @@ export default function Home() {
                           </button>
                         </div>
 
-                        {/* Log Button */}
                         <button
                           type="button"
                           onClick={() => setShowLogModal(true)}
@@ -2155,12 +3073,10 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Chart visualizer */}
                     <div className="pt-2">
                       <MetricsChart metrics={metrics} activeMetric={activeMetric} timelineFilter={timelineFilter} />
                     </div>
 
-                    {/* Recent Entries Table / List */}
                     <div className="pt-4 border-t border-white/[0.06]">
                       <div className="flex items-center justify-between mb-2.5">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Logs</p>
@@ -2190,7 +3106,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Right Column: BMI Calculator */}
                   <div className="lg:col-span-5">
                     <BmiCalculator />
                   </div>
@@ -2213,6 +3128,18 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* ══════════════ EXERCISE DETAIL MODAL ══════════════ */}
+      {selectedExercise && (
+        <ExerciseDetailModal
+          exercise={selectedExercise}
+          unit={preferredUnit}
+          onToggleUnit={() => setPreferredUnit((u) => (u === "lbs" ? "kg" : "lbs"))}
+          history={exerciseHistory[selectedExercise.id] || []}
+          onAddHistorySet={addExerciseHistorySet}
+          onClose={() => setSelectedExercise(null)}
+        />
+      )}
 
       {/* ══════════════ SUMMARY MODAL ══════════════ */}
       {phase === "summary" && (
