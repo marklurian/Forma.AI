@@ -881,6 +881,9 @@ function ActiveWorkout({
       if (!prev) return null;
       const nextRemaining = Math.max(0, prev.remainingSeconds + deltaSeconds);
       const nextTotal = Math.max(nextRemaining, prev.totalSeconds + (deltaSeconds > 0 ? deltaSeconds : 0));
+      if (nextTotal > 0) {
+        setCustomRestSeconds(Math.max(15, nextTotal));
+      }
       return {
         ...prev,
         remainingSeconds: nextRemaining,
@@ -1039,31 +1042,7 @@ function ActiveWorkout({
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
-            {/* User Custom Rest Duration Setter */}
-            <div className="liquid-pill flex items-center gap-1 px-2.5 py-1 rounded-xl border-white/10" title="Set default rest countdown duration">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Rest:</span>
-              <button
-                type="button"
-                onClick={() => setCustomRestSeconds((prev) => Math.max(15, prev - 30))}
-                className="text-[10px] font-black text-sky-300 hover:text-white px-1 py-0.5 rounded hover:bg-white/10 button-press"
-                title="Lessen rest time by 30 seconds"
-              >
-                -30s
-              </button>
-              <span className="font-mono text-xs font-black text-cyan-300 min-w-[32px] text-center">
-                {formatTime(customRestSeconds)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setCustomRestSeconds((prev) => Math.min(600, prev + 30))}
-                className="text-[10px] font-black text-sky-300 hover:text-white px-1 py-0.5 rounded hover:bg-white/10 button-press"
-                title="Add 30 seconds to rest time"
-              >
-                +30s
-              </button>
-            </div>
-
+          <div className="flex items-center gap-3 shrink-0">
             <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
             <div className="text-right">
               <p className="font-mono text-base font-bold tabular-nums text-slate-100">{formatTime(elapsedSeconds)}</p>
