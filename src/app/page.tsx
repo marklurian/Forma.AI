@@ -2,6 +2,12 @@
 
 import Image from "next/image";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import {
+  EXERCISE_LIBRARY,
+  BodyPart,
+  EquipmentCategory,
+  ExerciseLibraryItem,
+} from "./data/exercises";
 
 /* ═══════════════════════════════════════════════════════════════
    Types
@@ -45,32 +51,11 @@ interface MetricEntry {
   calories: number; // kcal
 }
 
-export type BodyPart = "Chest" | "Back" | "Legs" | "Shoulders" | "Arms" | "Core";
-export type EquipmentCategory = "Barbell" | "Dumbbell" | "Bodyweight" | "Cable" | "Machine";
-
 interface ExerciseHistoryItem {
   id: string;
   date: string; // YYYY-MM-DD
   sets: { setNum: number; weight: number; reps: number }[];
   unit: "lbs" | "kg";
-}
-
-interface ExerciseLibraryItem {
-  id: string;
-  name: string;
-  bodyPart: BodyPart;
-  category: EquipmentCategory;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
-  primaryMuscle: string;
-  secondaryMuscles: string[];
-  instructions: {
-    setup: string;
-    execution: string[];
-    tips: string[];
-    commonMistakes: string[];
-  };
-  videoEmbedId: string;
-  defaultBarWeightLbs: number;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -179,283 +164,6 @@ const SEEDED_METRICS: MetricEntry[] = [
   { id: "m-11", date: "2026-08-30", weight: 170.4, bodyFat: 14.2, calories: 2180 },
 ];
 
-const EXERCISE_LIBRARY: ExerciseLibraryItem[] = [
-  {
-    id: "lib-bench",
-    name: "Barbell Bench Press",
-    bodyPart: "Chest",
-    category: "Barbell",
-    difficulty: "Intermediate",
-    primaryMuscle: "Pectoralis Major (Mid & Lower Chest)",
-    secondaryMuscles: ["Anterior Deltoids", "Triceps Brachii", "Serratus Anterior"],
-    instructions: {
-      setup: "Lie flat on the bench with your eyes directly under the racked bar. Plant your feet firmly on the floor. Grip the bar slightly wider than shoulder-width and retract your shoulder blades.",
-      execution: [
-        "Unrack the bar and stabilize it directly over your chest with locked elbows.",
-        "Inhale and lower the bar under control until it lightly touches your mid-sternum, keeping elbows at a ~45-degree angle to your torso.",
-        "Drive through your feet and press the bar back up forcefully to full lockout while exhaling."
-      ],
-      tips: [
-        "Maintain a slight natural arch in your lower back while keeping glutes pinned to the bench.",
-        "Think of bending the bar into a U-shape to engage your lats and pack the shoulders."
-      ],
-      commonMistakes: [
-        "Bouncing the bar off your chest.",
-        "Flaring elbows straight out at 90 degrees, stressing the rotator cuff.",
-        "Lifting glutes off the bench during the push."
-      ]
-    },
-    videoEmbedId: "rT7DgCr-3pg",
-    defaultBarWeightLbs: 45
-  },
-  {
-    id: "lib-squat",
-    name: "Barbell Back Squat",
-    bodyPart: "Legs",
-    category: "Barbell",
-    difficulty: "Advanced",
-    primaryMuscle: "Quadriceps & Gluteus Maximus",
-    secondaryMuscles: ["Hamstrings", "Erector Spinae", "Core & Calves"],
-    instructions: {
-      setup: "Position the bar on your upper traps (high bar) or rear delts (low bar). Stand with feet shoulder-width apart, toes turned slightly outward ~15–30 degrees.",
-      execution: [
-        "Brace your core with a deep diaphragmatic breath into your belt.",
-        "Hinge at the hips and knees simultaneously, lowering down until your hip crease drops below the top of your knees.",
-        "Drive through mid-foot to stand back up, pushing knees out and extending hips at the top."
-      ],
-      tips: [
-        "Keep your chest upright and maintain a neutral cervical spine throughout the rep.",
-        "Press your knees outward in line with your toes on the ascent."
-      ],
-      commonMistakes: [
-        "Knees caving inward (valgus collapse).",
-        "Rounding the lower back at the bottom (butt wink).",
-        "Shifting weight excessively onto the toes."
-      ]
-    },
-    videoEmbedId: "bEv6CCg2BC8",
-    defaultBarWeightLbs: 45
-  },
-  {
-    id: "lib-deadlift",
-    name: "Barbell Deadlift",
-    bodyPart: "Back",
-    category: "Barbell",
-    difficulty: "Advanced",
-    primaryMuscle: "Posterior Chain (Hamstrings, Glutes, Erector Spinae)",
-    secondaryMuscles: ["Latissimus Dorsi", "Trapezius", "Forearms / Grip", "Core"],
-    instructions: {
-      setup: "Stand with mid-foot directly under the bar, feet hip-width apart. Hinge down and grip the bar just outside your shins without moving the bar.",
-      execution: [
-        "Pull your chest up, engage your lats, and pull the slack out of the barbell.",
-        "Push the floor away with your legs while keeping the bar in contact with your shins and thighs.",
-        "Lock out hips and knees at the top by squeezing glutes without hyperextending your lower back."
-      ],
-      tips: [
-        "Drag the bar continuously against your legs throughout the lift.",
-        "Brace hard and hold breath during the pull (Valsalva maneuver)."
-      ],
-      commonMistakes: [
-        "Rounding the lumbar spine.",
-        "Jerking the bar off the floor instead of creating tension first.",
-        "Hyperextending the spine excessively at lockout."
-      ]
-    },
-    videoEmbedId: "op9kVnSso6Q",
-    defaultBarWeightLbs: 45
-  },
-  {
-    id: "lib-ohp",
-    name: "Standing Overhead Press",
-    bodyPart: "Shoulders",
-    category: "Barbell",
-    difficulty: "Intermediate",
-    primaryMuscle: "Anterior & Lateral Deltoids",
-    secondaryMuscles: ["Triceps Brachii", "Upper Pectorals", "Upper Traps", "Core"],
-    instructions: {
-      setup: "Unrack the barbell at collarbone level with hands just outside shoulder width. Stand tall with glutes and abs braced tight.",
-      execution: [
-        "Tilt your head slightly back to clear the bar path as you press vertically.",
-        "Press the bar overhead in a straight line until elbows are fully extended.",
-        "Bring your head through the 'window' created by your arms at the top for full lockout."
-      ],
-      tips: [
-        "Squeeze your glutes hard to protect your lower back from overarching.",
-        "Keep forearms perpendicular to the floor at the start of every rep."
-      ],
-      commonMistakes: [
-        "Using leg drive (making it a push press instead of strict press).",
-        "Overarching the lower back excessively.",
-        "Pressing the bar forward instead of straight up."
-      ]
-    },
-    videoEmbedId: "2yjwXTZQDDI",
-    defaultBarWeightLbs: 45
-  },
-  {
-    id: "lib-incline-db",
-    name: "Incline Dumbbell Press",
-    bodyPart: "Chest",
-    category: "Dumbbell",
-    difficulty: "Beginner",
-    primaryMuscle: "Clavicular Head (Upper Chest)",
-    secondaryMuscles: ["Anterior Deltoids", "Triceps Brachii"],
-    instructions: {
-      setup: "Set an adjustable bench to a 30–45 degree incline. Sit with dumbbells resting on your knees, then kick them up into position at shoulder height.",
-      execution: [
-        "Press the dumbbells up and slightly inward over your upper chest.",
-        "Lower under control until you feel a deep stretch in the upper pectorals.",
-        "Press back up smoothly without clanking the dumbbells together at the top."
-      ],
-      tips: [
-        "Keep wrist stacked directly over your elbows throughout the movement.",
-        "A 30-degree incline maximizes upper chest activation while minimizing front delt strain."
-      ],
-      commonMistakes: [
-        "Setting the bench angle too steep (>45 degrees), shifting work to shoulders.",
-        "Dropping elbows too low and over-stretching the shoulder capsule."
-      ]
-    },
-    videoEmbedId: "8iPEnn-ltC8",
-    defaultBarWeightLbs: 0
-  },
-  {
-    id: "lib-lat-raise",
-    name: "Dumbbell Lateral Raise",
-    bodyPart: "Shoulders",
-    category: "Dumbbell",
-    difficulty: "Beginner",
-    primaryMuscle: "Lateral Deltoid (Side Shoulder)",
-    secondaryMuscles: ["Supraspinatus", "Upper Traps"],
-    instructions: {
-      setup: "Stand with dumbbells at your sides, palms facing your thighs, with a slight forward torso lean ~10 degrees.",
-      execution: [
-        "Raise the dumbbells outward in the scapular plane until your upper arms are parallel to the floor.",
-        "Lead with your elbows and maintain a slight bend in your arms.",
-        "Pause briefly at the top and lower the weights with a controlled 2-second eccentric."
-      ],
-      tips: [
-        "Think of pouring water from a pitcher at the peak of the movement.",
-        "Keep traps relaxed to isolate the side deltoid."
-      ],
-      commonMistakes: [
-        "Swinging the body and using momentum from the hips.",
-        "Shrugging your shoulders up toward your ears."
-      ]
-    },
-    videoEmbedId: "3VcKaXpzqRo",
-    defaultBarWeightLbs: 0
-  },
-  {
-    id: "lib-pullups",
-    name: "Pull-Ups",
-    bodyPart: "Back",
-    category: "Bodyweight",
-    difficulty: "Intermediate",
-    primaryMuscle: "Latissimus Dorsi",
-    secondaryMuscles: ["Biceps Brachii", "Rhomboids", "Teres Major", "Forearms"],
-    instructions: {
-      setup: "Grip a pull-up bar with hands slightly wider than shoulder-width, palms facing away (overhand grip). Hang at full extension.",
-      execution: [
-        "Depress your scapula by pulling your shoulder blades down and back.",
-        "Drive your elbows down toward your hips to pull your chin cleanly over the bar.",
-        "Lower yourself under complete control back to a dead hang."
-      ],
-      tips: [
-        "Keep your chest driven upward toward the bar rather than curling in.",
-        "Cross your ankles and squeeze your glutes to prevent swinging."
-      ],
-      commonMistakes: [
-        "Kicking or kipping with legs to gain momentum.",
-        "Cutting range of motion short at the bottom or top."
-      ]
-    },
-    videoEmbedId: "eGo4IYlbE5g",
-    defaultBarWeightLbs: 0
-  },
-  {
-    id: "lib-bulgarian",
-    name: "Bulgarian Split Squat",
-    bodyPart: "Legs",
-    category: "Dumbbell",
-    difficulty: "Intermediate",
-    primaryMuscle: "Quadriceps & Gluteus Medius",
-    secondaryMuscles: ["Hamstrings", "Adductors", "Calves"],
-    instructions: {
-      setup: "Stand facing away from a bench. Place the top of one foot on the bench behind you. Hold dumbbells at your sides.",
-      execution: [
-        "Lower your hips down and back until your front thigh is parallel to the ground.",
-        "Keep your front shin relatively vertical and torso slightly hinged forward for glute focus.",
-        "Drive through the front heel to return to the starting position."
-      ],
-      tips: [
-        "Position your front foot far enough forward so your front knee doesn't feel cramped.",
-        "80% of your weight should be on the front leg; the rear leg is for balance only."
-      ],
-      commonMistakes: [
-        "Pushing excessively off the rear leg.",
-        "Losing balance due to feet being in a straight line instead of hip-width apart."
-      ]
-    },
-    videoEmbedId: "2C-uNgKwPLE",
-    defaultBarWeightLbs: 0
-  },
-  {
-    id: "lib-cable-pushdown",
-    name: "Tricep Rope Pushdown",
-    bodyPart: "Arms",
-    category: "Cable",
-    difficulty: "Beginner",
-    primaryMuscle: "Triceps Brachii (Lateral & Medial Heads)",
-    secondaryMuscles: ["Anconeus"],
-    instructions: {
-      setup: "Attach a double-rope to a high cable pulley. Grip the rope with palms facing each other and pin your elbows to your ribcage.",
-      execution: [
-        "Extend your forearms downward until your arms are fully straight.",
-        "Spread the rope apart at the bottom to maximize peak tricep contraction.",
-        "Control the return upward until your forearms reach roughly 90 degrees."
-      ],
-      tips: [
-        "Keep your upper arms completely stationary; only the forearms should move.",
-        "Lean forward slightly from the hips for balance."
-      ],
-      commonMistakes: [
-        "Allowing elbows to drift forward and backward (turning it into a row/lat pull).",
-        "Using body momentum to push the weight down."
-      ]
-    },
-    videoEmbedId: "vB5OHsJ3EME",
-    defaultBarWeightLbs: 0
-  },
-  {
-    id: "lib-hanging-leg-raise",
-    name: "Hanging Leg Raise",
-    bodyPart: "Core",
-    category: "Bodyweight",
-    difficulty: "Intermediate",
-    primaryMuscle: "Rectus Abdominis & Hip Flexors",
-    secondaryMuscles: ["Obliques", "Forearms / Grip"],
-    instructions: {
-      setup: "Hang from a pull-up bar with an overhand grip, legs straight, and shoulders active.",
-      execution: [
-        "Posteriorly tilt your pelvis and lift your legs upward until they are at least parallel to the floor (or touching the bar).",
-        "Focus on rolling your pelvis up toward your ribcage rather than just swinging legs.",
-        "Lower your legs under slow control without swinging."
-      ],
-      tips: [
-        "If straight legs are too difficult, bend your knees and perform hanging knee raises first.",
-        "Pause for a fraction of a second at the top of every rep."
-      ],
-      commonMistakes: [
-        "Swinging the torso to kick legs up using momentum.",
-        "Only flexing hips without curling the pelvis to engage the abs."
-      ]
-    },
-    videoEmbedId: "hdng3Nm1x_E",
-    defaultBarWeightLbs: 0
-  }
-];
-
 const SEEDED_EXERCISE_HISTORY: Record<string, ExerciseHistoryItem[]> = {
   "lib-bench": [
     {
@@ -480,7 +188,7 @@ const SEEDED_EXERCISE_HISTORY: Record<string, ExerciseHistoryItem[]> = {
       ]
     }
   ],
-  "lib-squat": [
+  "lib-barbell-squat": [
     {
       id: "h-s1",
       date: "2026-08-26",
@@ -629,11 +337,8 @@ function UnitTogglePill({
 function LiquidBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* Deep Sea Sapphire Blob */}
       <div className="animate-blob-1 absolute -left-[10%] top-[8%] h-[580px] w-[580px] rounded-full bg-[#003b73]/25 blur-[130px]" />
-      {/* Ocean Cyan Blob */}
       <div className="animate-blob-2 absolute -right-[10%] top-[20%] h-[620px] w-[620px] rounded-full bg-[#0074b7]/20 blur-[140px]" />
-      {/* Aquatic Ice Glow */}
       <div className="animate-blob-1 absolute left-[28%] top-[60%] h-[520px] w-[520px] rounded-full bg-[#00a8e8]/15 blur-[135px]" />
 
       <svg className="absolute inset-0 h-full w-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
@@ -2272,7 +1977,7 @@ function ExerciseDetailModal({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Exercise Library Tab Component
+   Comprehensive A to Z Exercise Library Tab Component
    ═══════════════════════════════════════════════════════════════ */
 function ExerciseLibraryTab({
   onSelectExercise,
@@ -2284,46 +1989,93 @@ function ExerciseLibraryTab({
   onSetUnit: (u: "lbs" | "kg") => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLetter, setSelectedLetter] = useState<string>("All");
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>("All");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const bodyParts = ["All", "Chest", "Back", "Legs", "Shoulders", "Arms", "Core"];
   const categories = ["All", "Barbell", "Dumbbell", "Bodyweight", "Cable", "Machine"];
 
+  // Unique starting letters present in the library
+  const availableLetters = useMemo(() => {
+    const letters = new Set<string>();
+    EXERCISE_LIBRARY.forEach((ex) => {
+      const first = ex.name[0].toUpperCase();
+      if (first >= "A" && first <= "Z") letters.add(first);
+    });
+    return ["All", ...Array.from(letters).sort()];
+  }, []);
+
   const filteredExercises = useMemo(() => {
     return EXERCISE_LIBRARY.filter((ex) => {
-      const matchSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ex.primaryMuscle.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSearch =
+        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ex.primaryMuscle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ex.secondaryMuscles.some((m) => m.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const matchLetter =
+        selectedLetter === "All" || ex.name.toUpperCase().startsWith(selectedLetter);
+
       const matchBodyPart = selectedBodyPart === "All" || ex.bodyPart === selectedBodyPart;
       const matchCategory = selectedCategory === "All" || ex.category === selectedCategory;
-      return matchSearch && matchBodyPart && matchCategory;
+
+      return matchSearch && matchLetter && matchBodyPart && matchCategory;
     });
-  }, [searchQuery, selectedBodyPart, selectedCategory]);
+  }, [searchQuery, selectedLetter, selectedBodyPart, selectedCategory]);
 
   return (
     <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
-      <div className="liquid-glass rounded-3xl p-5 border-white/10 space-y-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+      {/* Search & Filter Header Bar */}
+      <div className="liquid-glass rounded-3xl p-5 sm:p-6 border-white/10 space-y-4.5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3.5">
           <div className="relative flex-1 w-full">
-            <svg className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg className="absolute left-3.5 top-3.5 h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search exercises by name or muscle (e.g. Bench, Quads, Lat)…"
-              className="liquid-input w-full rounded-2xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:outline-none"
+              placeholder="Search 40+ exercises from A to Z (e.g. Bench, Squat, Curl, Obliques)…"
+              className="liquid-input w-full rounded-2xl pl-10 pr-4 py-3 text-sm text-foreground focus:outline-none placeholder:text-slate-500"
             />
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
+          <div className="flex items-center gap-3 self-end sm:self-center">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit:</span>
             <UnitTogglePill unit={unit} onChange={onSetUnit} size="md" />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Alphabet A-Z Quick Jump Filter */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Alphabetical Index (A–Z)</span>
+            <span className="text-[10px] font-semibold text-sky-300">
+              Showing {filteredExercises.length} of {EXERCISE_LIBRARY.length}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1">
+            {availableLetters.map((letter) => (
+              <button
+                key={letter}
+                type="button"
+                onClick={() => setSelectedLetter(letter)}
+                className={`min-w-[28px] h-7 px-1.5 text-xs font-bold rounded-lg transition-all ${
+                  selectedLetter === letter
+                    ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/25"
+                    : "liquid-glass text-slate-400 hover:text-white"
+                }`}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Body Part & Equipment Categories */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.06]">
+          {/* Target Body Parts */}
           <div className="flex flex-wrap gap-1">
             {bodyParts.map((bp) => (
               <button
@@ -2341,6 +2093,7 @@ function ExerciseLibraryTab({
             ))}
           </div>
 
+          {/* Equipment Types */}
           <div className="flex flex-wrap gap-1">
             {categories.map((cat) => (
               <button
@@ -2360,43 +2113,68 @@ function ExerciseLibraryTab({
         </div>
       </div>
 
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredExercises.map((ex) => (
-          <div
-            key={ex.id}
-            onClick={() => onSelectExercise(ex)}
-            className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group"
+      {/* Exercises Grid (Alphabetical) */}
+      {filteredExercises.length === 0 ? (
+        <div className="liquid-glass flex flex-col items-center justify-center rounded-3xl p-12 text-center">
+          <svg className="h-10 w-10 text-slate-500 mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <h3 className="text-base font-bold text-white">No matching exercises found</h3>
+          <p className="mt-1 text-xs text-slate-400 max-w-sm">
+            Try adjusting your search keywords, body part filter, or letter selection.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              setSelectedLetter("All");
+              setSelectedBodyPart("All");
+              setSelectedCategory("All");
+            }}
+            className="mt-4 liquid-glass px-4 py-2 text-xs font-bold text-sky-300 hover:text-white rounded-xl"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 border-sky-500/30">
-                  {ex.bodyPart}
-                </span>
-                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 border-cyan-500/30">
-                  {ex.category}
+            Reset Filters
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredExercises.map((ex) => (
+            <div
+              key={ex.id}
+              onClick={() => onSelectExercise(ex)}
+              className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 border-sky-500/30">
+                    {ex.bodyPart}
+                  </span>
+                  <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 border-cyan-500/30">
+                    {ex.category}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-300 transition-colors">
+                  View Guide →
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-300 transition-colors">
-                View Guide →
-              </span>
-            </div>
 
-            <div>
-              <h3 className="text-base font-extrabold text-white group-hover:text-sky-300 transition-colors">
-                {ex.name}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 line-clamp-1">
-                Target: {ex.primaryMuscle}
-              </p>
-            </div>
+              <div>
+                <h3 className="text-base font-extrabold text-white group-hover:text-sky-300 transition-colors">
+                  {ex.name}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-1">
+                  Target: {ex.primaryMuscle}
+                </p>
+              </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[11px] text-slate-400">
-              <span>{ex.difficulty}</span>
-              <span className="text-sky-300 font-semibold">Video + Plates ({unit.toUpperCase()})</span>
+              <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[11px] text-slate-400">
+                <span>{ex.difficulty}</span>
+                <span className="text-sky-300 font-semibold">Video + Setup ({unit.toUpperCase()})</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -2710,7 +2488,7 @@ export default function Home() {
                 </h1>
               </div>
 
-              {/* Liquid Glass Tab Switcher (Ocean Serenity) */}
+              {/* Liquid Glass Tab Switcher */}
               <div className="liquid-glass rounded-2xl p-1.5 flex flex-wrap gap-1 border-white/10">
                 {TABS.map((t) => (
                   <button
@@ -2767,7 +2545,7 @@ export default function Home() {
                       ) : (
                         <>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455 2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                           </svg>
                           Build 3-Day Plan
                         </>
@@ -3013,7 +2791,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* ─── TAB 4: EXERCISE LIBRARY ─── */}
+            {/* ─── TAB 4: EXERCISE LIBRARY (40+ Exercises A to Z) ─── */}
             {tab === "exercises" && (
               <ExerciseLibraryTab
                 onSelectExercise={(ex) => setSelectedExercise(ex)}
