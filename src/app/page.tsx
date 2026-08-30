@@ -354,9 +354,9 @@ function LiquidBackground() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Live Date & Time Widget
+   Live Date & Time Widget (Sidebar & Mobile)
    ═══════════════════════════════════════════════════════════════ */
-function LiveDateTime() {
+function LiveDateTime({ compact = false }: { compact?: boolean }) {
   const [timeStr, setTimeStr] = useState<string>("");
   const [dateStr, setDateStr] = useState<string>("");
 
@@ -386,14 +386,30 @@ function LiveDateTime() {
 
   if (!timeStr) return null;
 
+  if (compact) {
+    return (
+      <div
+        className="liquid-pill flex flex-col items-center justify-center rounded-xl p-1.5 text-center select-none"
+        title={`${dateStr} • ${timeStr}`}
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38bdf8] mb-1" />
+        <span className="font-mono text-[9px] font-bold text-sky-200 leading-none tabular-nums">
+          {timeStr.split(" ")[0]}
+        </span>
+        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">
+          {timeStr.split(" ")[1]}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="liquid-pill flex items-center gap-2.5 rounded-full px-3 py-1.5 text-xs text-slate-300">
-      <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-      </svg>
-      <span className="font-medium text-slate-400">{dateStr}</span>
-      <span className="h-2.5 w-px bg-white/10" />
-      <span className="font-mono font-semibold text-sky-200">{timeStr}</span>
+    <div className="liquid-glass flex items-center justify-between rounded-xl px-3 py-2 border-white/10 text-xs shadow-inner">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="flex h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8] shrink-0" />
+        <span className="font-semibold text-slate-300 truncate text-[11px]">{dateStr}</span>
+      </div>
+      <span className="font-mono font-bold text-sky-200 text-xs shrink-0 tabular-nums">{timeStr}</span>
     </div>
   );
 }
@@ -2514,24 +2530,29 @@ export default function Home() {
           }`}
         >
           {/* Logo & Toggle Header */}
-          <div className="flex items-center justify-between gap-2 pb-5 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between gap-2 pb-4 border-b border-white/[0.06]">
             <button
               type="button"
               onClick={resetHome}
               className={`flex items-center gap-2.5 text-left group overflow-hidden ${sidebarCollapsed ? "justify-center w-full" : ""}`}
               title="Return to AI Studio / Home"
             >
-              <span className="liquid-pill flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sky-400 transition-transform group-hover:scale-105">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
-                </svg>
-              </span>
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-sky-400/30 bg-sky-950/40 shadow-lg shadow-sky-500/20 group-hover:border-sky-400/60 transition-all p-1">
+                <Image
+                  src="/forma-logo.jpg"
+                  alt="Forma.AI Logo"
+                  width={36}
+                  height={36}
+                  className="h-full w-full object-contain rounded-lg"
+                  priority
+                />
+              </div>
               {!sidebarCollapsed && (
                 <div className="min-w-0">
-                  <span className="text-base font-black tracking-tight text-white block">
+                  <span className="text-base font-black tracking-tight text-white block leading-tight">
                     Forma<span className="text-sky-400 font-black">.AI</span>
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-sky-400 block -mt-1">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-sky-400/90 block">
                     Studio v2.4
                   </span>
                 </div>
@@ -2554,22 +2575,27 @@ export default function Home() {
 
           {/* If Collapsed, quick expand toggle icon */}
           {sidebarCollapsed && (
-            <div className="py-2 flex justify-center">
+            <div className="py-1.5 flex justify-center">
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed(false)}
-                className="liquid-pill h-7 w-7 flex items-center justify-center rounded-lg text-sky-400 hover:text-white transition-all"
+                className="liquid-pill h-6 w-6 flex items-center justify-center rounded-lg text-sky-400 hover:text-white transition-all"
                 title="Expand sidebar"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
                 </svg>
               </button>
             </div>
           )}
 
+          {/* Live Date & Time Widget (Below Logo) */}
+          <div className="pt-3 pb-1">
+            <LiveDateTime compact={sidebarCollapsed} />
+          </div>
+
           {/* Quick Workout Button */}
-          <div className="pt-4 pb-2">
+          <div className="pt-2 pb-2">
             <button
               type="button"
               onClick={quickStart}
@@ -2586,7 +2612,7 @@ export default function Home() {
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 space-y-1.5 py-4 overflow-y-auto">
+          <div className="flex-1 space-y-1.5 py-3 overflow-y-auto">
             {!sidebarCollapsed && (
               <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                 Navigation
@@ -2677,14 +2703,18 @@ export default function Home() {
           <div className="fixed inset-0 z-50 lg:hidden" style={{ animation: "fadeIn 0.2s ease-out" }}>
             <div className="absolute inset-0 bg-[#020713]/85 backdrop-blur-md" onClick={() => setMobileDrawerOpen(false)} />
             <div className="liquid-glass absolute left-0 top-0 bottom-0 w-72 p-5 flex flex-col justify-between shadow-2xl z-10 border-r border-sky-400/20">
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <button type="button" onClick={resetHome} className="flex items-center gap-2.5">
-                    <span className="liquid-pill flex h-8 w-8 items-center justify-center rounded-xl text-sky-400">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
-                      </svg>
-                    </span>
+                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-sky-400/30 bg-sky-950/40 p-0.5">
+                      <Image
+                        src="/forma-logo.jpg"
+                        alt="Forma.AI Logo"
+                        width={30}
+                        height={30}
+                        className="h-full w-full object-contain rounded-lg"
+                      />
+                    </div>
                     <span className="text-base font-black text-white">Forma.AI</span>
                   </button>
 
@@ -2697,7 +2727,12 @@ export default function Home() {
                   </button>
                 </div>
 
-                <div className="space-y-1.5">
+                {/* Mobile Live Date & Time */}
+                <div>
+                  <LiveDateTime />
+                </div>
+
+                <div className="space-y-1.5 pt-1">
                   <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                     Navigation Menu
                   </p>
@@ -2800,17 +2835,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Center: Live Date Time */}
-              <div className="hidden md:flex items-center">
-                <LiveDateTime />
-              </div>
-
               {/* Right: Actions */}
               <div className="flex items-center gap-3">
-                <div className="md:hidden">
-                  <LiveDateTime />
-                </div>
-
                 <div className="hidden sm:flex">
                   <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
                 </div>
