@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════
    Types
@@ -35,6 +35,14 @@ interface WorkoutTemplate {
   category: string;
   exercises: Exercise[];
   isExample?: boolean;
+}
+
+interface MetricEntry {
+  id: string;
+  date: string; // YYYY-MM-DD
+  weight: number; // lbs
+  bodyFat: number; // %
+  calories: number; // kcal
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -131,6 +139,21 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
   },
 ];
 
+/* Default pre-seeded metrics history */
+const SEEDED_METRICS: MetricEntry[] = [
+  { id: "m-1", date: "2026-03-01", weight: 184.2, bodyFat: 19.4, calories: 2650 },
+  { id: "m-2", date: "2026-04-01", weight: 181.8, bodyFat: 18.6, calories: 2500 },
+  { id: "m-3", date: "2026-05-01", weight: 179.5, bodyFat: 17.8, calories: 2420 },
+  { id: "m-4", date: "2026-06-01", weight: 177.0, bodyFat: 16.9, calories: 2380 },
+  { id: "m-5", date: "2026-07-01", weight: 175.4, bodyFat: 16.1, calories: 2350 },
+  { id: "m-6", date: "2026-08-01", weight: 173.8, bodyFat: 15.5, calories: 2300 },
+  { id: "m-7", date: "2026-08-15", weight: 172.9, bodyFat: 15.1, calories: 2280 },
+  { id: "m-8", date: "2026-08-22", weight: 172.1, bodyFat: 14.8, calories: 2260 },
+  { id: "m-9", date: "2026-08-25", weight: 171.6, bodyFat: 14.7, calories: 2250 },
+  { id: "m-10", date: "2026-08-28", weight: 171.0, bodyFat: 14.5, calories: 2200 },
+  { id: "m-11", date: "2026-08-30", weight: 170.4, bodyFat: 14.2, calories: 2180 },
+];
+
 /* ═══════════════════════════════════════════════════════════════
    Helpers
    ═══════════════════════════════════════════════════════════════ */
@@ -175,18 +198,31 @@ function saveUserTemplates(t: WorkoutTemplate[]) {
   localStorage.setItem("forma-templates", JSON.stringify(t));
 }
 
+function loadUserMetrics(): MetricEntry[] {
+  if (typeof window === "undefined") return SEEDED_METRICS;
+  try {
+    const raw = localStorage.getItem("forma-metrics");
+    if (!raw) return SEEDED_METRICS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEEDED_METRICS;
+  } catch {
+    return SEEDED_METRICS;
+  }
+}
+
+function saveUserMetrics(m: MetricEntry[]) {
+  localStorage.setItem("forma-metrics", JSON.stringify(m));
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Liquid Background with Ambient Fluid Orbs
    ═══════════════════════════════════════════════════════════════ */
 function LiquidBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* Fluid glowing light blobs */}
       <div className="animate-blob-1 absolute -left-[10%] top-[10%] h-[550px] w-[550px] rounded-full bg-purple-600/15 blur-[120px]" />
       <div className="animate-blob-2 absolute -right-[10%] top-[25%] h-[600px] w-[600px] rounded-full bg-cyan-500/10 blur-[140px]" />
       <div className="animate-blob-1 absolute left-[30%] top-[65%] h-[500px] w-[500px] rounded-full bg-fuchsia-600/10 blur-[130px]" />
-      
-      {/* Subtle fine mesh grid */}
       <svg className="absolute inset-0 h-full w-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="liquid-grid" width="48" height="48" patternUnits="userSpaceOnUse">
@@ -453,7 +489,6 @@ function ActiveWorkout({
 
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-4">
-      {/* Sticky top metrics bar */}
       <div className="liquid-glass sticky top-16 z-40 rounded-2xl p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -485,7 +520,6 @@ function ActiveWorkout({
         </div>
       </div>
 
-      {/* Exercise Cards */}
       <div className="space-y-3.5">
         {tracked.map((ex, exIdx) => {
           const exDone = ex.trackedSets.length > 0 && ex.trackedSets.every((s) => s.completed);
@@ -586,7 +620,6 @@ function ActiveWorkout({
         <AddExerciseInline onAdd={addExercise} />
       </div>
 
-      {/* Sticky finish button */}
       <div className="sticky bottom-0 z-40 pt-2 pb-4">
         <div className="liquid-glass rounded-2xl p-2.5">
           <button
@@ -686,7 +719,6 @@ function WorkoutSummary({
           <p className="mt-1 text-xs text-slate-400">{dayTitle}</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="mt-6 grid grid-cols-2 gap-2.5">
           {stats.map((s, i) => (
             <div key={i} className="liquid-glass rounded-2xl p-3.5 text-center">
@@ -699,7 +731,6 @@ function WorkoutSummary({
           ))}
         </div>
 
-        {/* Exercise breakdown */}
         <div className="mt-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4">
           <h3 className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Exercise Summary</h3>
           <div className="space-y-1.5">
@@ -719,7 +750,6 @@ function WorkoutSummary({
           </div>
         </div>
 
-        {/* Tip Jar (NO EMOJI) */}
         <div className="mt-6 rounded-2xl border border-purple-500/20 bg-purple-500/[0.05] p-5 text-center">
           <div className="flex items-center justify-center gap-2">
             <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -746,7 +776,7 @@ function WorkoutSummary({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Create Template Modal (NO EMOJI)
+   Create Template Modal
    ═══════════════════════════════════════════════════════════════ */
 function CreateTemplateModal({
   onSave,
@@ -851,12 +881,595 @@ function CreateTemplateModal({
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Log Metric Entry Modal
+   ═══════════════════════════════════════════════════════════════ */
+function LogMetricModal({
+  onSave,
+  onClose,
+}: {
+  onSave: (entry: MetricEntry) => void;
+  onClose: () => void;
+}) {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [date, setDate] = useState(todayStr);
+  const [weight, setWeight] = useState("");
+  const [bodyFat, setBodyFat] = useState("");
+  const [calories, setCalories] = useState("");
+
+  function handleSave() {
+    const w = parseFloat(weight);
+    if (isNaN(w) || w <= 0) return;
+    const bf = parseFloat(bodyFat) || 0;
+    const cal = parseInt(calories) || 0;
+
+    onSave({
+      id: uid(),
+      date,
+      weight: w,
+      bodyFat: bf,
+      calories: cal,
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fadeIn 0.2s ease-out" }}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div
+        className="liquid-glass relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl p-6 shadow-2xl"
+        style={{ animation: "scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
+      >
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+        <h2 className="text-lg font-bold tracking-tight text-white">Log Body & Diet Metrics</h2>
+        <p className="mt-0.5 text-xs text-slate-400">Record your current progress metrics</p>
+
+        <div className="mt-4 space-y-3.5">
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="liquid-input mt-1 w-full rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Body Weight (lbs) *</label>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="e.g. 172.5"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="liquid-input mt-1 w-full rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none"
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Body Fat (%)</label>
+              <input
+                type="number"
+                step="0.1"
+                placeholder="e.g. 15.2"
+                value={bodyFat}
+                onChange={(e) => setBodyFat(e.target.value)}
+                className="liquid-input mt-1 w-full rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Calories (kcal)</label>
+              <input
+                type="number"
+                placeholder="e.g. 2350"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value)}
+                className="liquid-input mt-1 w-full rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex gap-2.5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="liquid-glass flex-1 rounded-xl py-2.5 text-xs font-semibold text-slate-300 hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!weight}
+            className="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40"
+          >
+            Save Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Interactive SVG Chart Component
+   ═══════════════════════════════════════════════════════════════ */
+type TimelineFilter = "days" | "months";
+type ActiveMetricType = "weight" | "bodyFat" | "calories";
+
+function MetricsChart({
+  metrics,
+  activeMetric,
+  timelineFilter,
+}: {
+  metrics: MetricEntry[];
+  activeMetric: ActiveMetricType;
+  timelineFilter: TimelineFilter;
+}) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  // Filter & aggregate data based on timeline mode
+  const chartData = useMemo(() => {
+    if (metrics.length === 0) return [];
+    const sorted = [...metrics].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    if (timelineFilter === "days") {
+      // Return last 14 entries (or all if < 14) formatted by day
+      const slice = sorted.slice(-14);
+      return slice.map((m) => ({
+        label: new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        fullDate: m.date,
+        val: activeMetric === "weight" ? m.weight : activeMetric === "bodyFat" ? m.bodyFat : m.calories,
+      }));
+    } else {
+      // Monthly aggregation
+      const monthlyMap = new Map<string, { total: number; count: number; dateStr: string }>();
+      sorted.forEach((m) => {
+        const d = new Date(m.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const val = activeMetric === "weight" ? m.weight : activeMetric === "bodyFat" ? m.bodyFat : m.calories;
+        const current = monthlyMap.get(key) || { total: 0, count: 0, dateStr: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) };
+        monthlyMap.set(key, { total: current.total + val, count: current.count + 1, dateStr: current.dateStr });
+      });
+
+      return Array.from(monthlyMap.entries()).map(([, data]) => ({
+        label: data.dateStr,
+        fullDate: data.dateStr,
+        val: Math.round((data.total / data.count) * 10) / 10,
+      }));
+    }
+  }, [metrics, activeMetric, timelineFilter]);
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex h-56 items-center justify-center text-xs text-slate-500">
+        No metric data available to display.
+      </div>
+    );
+  }
+
+  const values = chartData.map((d) => d.val);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal === 0 ? 1 : maxVal - minVal;
+  const padding = range * 0.15;
+  const chartMin = Math.max(0, Math.floor(minVal - padding));
+  const chartMax = Math.ceil(maxVal + padding);
+
+  const width = 640;
+  const height = 220;
+  const topPad = 25;
+  const bottomPad = 35;
+  const leftPad = 45;
+  const rightPad = 25;
+  const plotWidth = width - leftPad - rightPad;
+  const plotHeight = height - topPad - bottomPad;
+
+  // Calculate coordinates
+  const points = chartData.map((d, i) => {
+    const x = leftPad + (plotWidth / (chartData.length - 1 || 1)) * i;
+    const normalizedY = (d.val - chartMin) / ((chartMax - chartMin) || 1);
+    const y = topPad + plotHeight - normalizedY * plotHeight;
+    return { x, y, data: d };
+  });
+
+  // Build SVG path
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const mx = (p0.x + p1.x) / 2;
+    pathD += ` C ${mx} ${p0.y}, ${mx} ${p1.y}, ${p1.x} ${p1.y}`;
+  }
+
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${topPad + plotHeight} L ${points[0].x} ${topPad + plotHeight} Z`;
+
+  const metricConfig = {
+    weight: { unit: "lbs", color: "#a855f7", gradId: "weightGrad", stroke: "url(#purpleLineGrad)" },
+    bodyFat: { unit: "%", color: "#38bdf8", gradId: "bfGrad", stroke: "url(#cyanLineGrad)" },
+    calories: { unit: "kcal", color: "#fbbf24", gradId: "calGrad", stroke: "url(#amberLineGrad)" },
+  }[activeMetric];
+
+  return (
+    <div className="relative w-full overflow-hidden select-none">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
+        <defs>
+          {/* Gradients for area fills */}
+          <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.38" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
+          </linearGradient>
+          <linearGradient id="bfGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.38" />
+            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
+          </linearGradient>
+          <linearGradient id="calGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.38" />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.0" />
+          </linearGradient>
+
+          {/* Stroke gradients */}
+          <linearGradient id="purpleLineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#c084fc" />
+            <stop offset="100%" stopColor="#e879f9" />
+          </linearGradient>
+          <linearGradient id="cyanLineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="100%" stopColor="#2dd4bf" />
+          </linearGradient>
+          <linearGradient id="amberLineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#fbbf24" />
+            <stop offset="100%" stopColor="#f97316" />
+          </linearGradient>
+        </defs>
+
+        {/* Horizontal grid lines */}
+        {[0, 0.33, 0.66, 1].map((ratio, idx) => {
+          const y = topPad + plotHeight * (1 - ratio);
+          const valLabel = Math.round(chartMin + (chartMax - chartMin) * ratio);
+          return (
+            <g key={idx}>
+              <line
+                x1={leftPad}
+                y1={y}
+                x2={width - rightPad}
+                y2={y}
+                stroke="rgba(255, 255, 255, 0.07)"
+                strokeDasharray="3 3"
+              />
+              <text
+                x={leftPad - 8}
+                y={y + 3}
+                fill="rgba(148, 163, 184, 0.6)"
+                fontSize="9"
+                fontFamily="monospace"
+                textAnchor="end"
+              >
+                {valLabel}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Area fill under curve */}
+        <path d={areaD} fill={`url(#${metricConfig.gradId})`} />
+
+        {/* Smooth line */}
+        <path
+          d={pathD}
+          fill="none"
+          stroke={metricConfig.stroke}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ filter: `drop-shadow(0 0 10px ${metricConfig.color})` }}
+        />
+
+        {/* Interactive Data Points & Vertical Guides */}
+        {points.map((pt, i) => {
+          const isHovered = hoveredIdx === i;
+          return (
+            <g key={i} className="cursor-pointer" onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)}>
+              {/* Invisible touch/hover target */}
+              <circle cx={pt.x} cy={pt.y} r="14" fill="transparent" />
+
+              {/* Vertical crosshair on hover */}
+              {isHovered && (
+                <line
+                  x1={pt.x}
+                  y1={topPad}
+                  x2={pt.x}
+                  y2={topPad + plotHeight}
+                  stroke="rgba(255, 255, 255, 0.3)"
+                  strokeDasharray="2 2"
+                />
+              )}
+
+              {/* Data Point circle */}
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={isHovered ? "6" : "3.5"}
+                fill="#0a0a14"
+                stroke={metricConfig.color}
+                strokeWidth={isHovered ? "3" : "2"}
+                className="transition-all duration-150"
+              />
+
+              {/* X Axis Label */}
+              <text
+                x={pt.x}
+                y={height - 10}
+                fill={isHovered ? "#ffffff" : "rgba(148, 163, 184, 0.7)"}
+                fontSize={isHovered ? "10" : "8.5"}
+                fontWeight={isHovered ? "bold" : "normal"}
+                textAnchor="middle"
+                className="transition-all"
+              >
+                {pt.data.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Floating Glass Tooltip */}
+      {hoveredIdx !== null && points[hoveredIdx] && (
+        <div
+          className="liquid-pill absolute pointer-events-none rounded-xl px-3 py-1.5 shadow-2xl z-20 transition-transform duration-75 text-center"
+          style={{
+            left: `${(points[hoveredIdx].x / width) * 100}%`,
+            top: `${(points[hoveredIdx].y / height) * 100 - 35}%`,
+            transform: "translate(-50%, -100%)",
+            border: `1px solid ${metricConfig.color}40`,
+          }}
+        >
+          <p className="text-[10px] font-bold text-slate-400">{points[hoveredIdx].data.fullDate}</p>
+          <p className="text-xs font-black text-white">
+            {points[hoveredIdx].data.val} <span className="text-[10px] font-normal text-slate-300">{metricConfig.unit}</span>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BMI Calculator Component
+   ═══════════════════════════════════════════════════════════════ */
+function BmiCalculator() {
+  const [unit, setUnit] = useState<"imperial" | "metric">("imperial");
+  // Imperial: feet, inches, lbs
+  const [feet, setFeet] = useState(5);
+  const [inches, setInches] = useState(10);
+  const [weightLbs, setWeightLbs] = useState(170);
+
+  // Metric: cm, kg
+  const [heightCm, setHeightCm] = useState(178);
+  const [weightKg, setWeightKg] = useState(77);
+
+  // Calculation
+  const { bmi, category, color, idealRange, progressRatio } = useMemo(() => {
+    let bmiVal = 0;
+    let idealMin = 0;
+    let idealMax = 0;
+    let unitLabel = "";
+
+    if (unit === "imperial") {
+      const totalInches = feet * 12 + inches;
+      if (totalInches > 0) {
+        bmiVal = (weightLbs / (totalInches * totalInches)) * 703;
+        idealMin = Math.round((18.5 * totalInches * totalInches) / 703);
+        idealMax = Math.round((24.9 * totalInches * totalInches) / 703);
+        unitLabel = "lbs";
+      }
+    } else {
+      const heightM = heightCm / 100;
+      if (heightM > 0) {
+        bmiVal = weightKg / (heightM * heightM);
+        idealMin = Math.round(18.5 * heightM * heightM * 10) / 10;
+        idealMax = Math.round(24.9 * heightM * heightM * 10) / 10;
+        unitLabel = "kg";
+      }
+    }
+
+    const roundedBmi = Math.round(bmiVal * 10) / 10;
+
+    let cat = "Normal weight";
+    let col = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+    let ratio = 0.4; // 15 to 35 range mapped to 0..1
+
+    if (roundedBmi < 18.5) {
+      cat = "Underweight";
+      col = "text-sky-400 border-sky-500/30 bg-sky-500/10";
+      ratio = Math.max(0.05, (roundedBmi - 12) / (18.5 - 12) * 0.25);
+    } else if (roundedBmi < 25) {
+      cat = "Healthy / Normal";
+      col = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+      ratio = 0.25 + ((roundedBmi - 18.5) / (25 - 18.5)) * 0.35;
+    } else if (roundedBmi < 30) {
+      cat = "Overweight";
+      col = "text-amber-400 border-amber-500/30 bg-amber-500/10";
+      ratio = 0.6 + ((roundedBmi - 25) / (30 - 25)) * 0.25;
+    } else {
+      cat = "Obese";
+      col = "text-rose-400 border-rose-500/30 bg-rose-500/10";
+      ratio = Math.min(0.98, 0.85 + ((roundedBmi - 30) / (40 - 30)) * 0.15);
+    }
+
+    return {
+      bmi: roundedBmi,
+      category: cat,
+      color: col,
+      idealRange: `${idealMin} – ${idealMax} ${unitLabel}`,
+      progressRatio: Math.min(Math.max(ratio, 0.03), 0.97),
+    };
+  }, [unit, feet, inches, weightLbs, heightCm, weightKg]);
+
+  return (
+    <div className="liquid-glass rounded-3xl p-6 shadow-2xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-cyan-400">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+          </span>
+          <h3 className="text-sm font-extrabold text-white">Body Mass Index (BMI)</h3>
+        </div>
+
+        {/* Unit Toggle */}
+        <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
+          <button
+            type="button"
+            onClick={() => setUnit("imperial")}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+              unit === "imperial" ? "bg-accent text-white" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Imperial
+          </button>
+          <button
+            type="button"
+            onClick={() => setUnit("metric")}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+              unit === "metric" ? "bg-accent text-white" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Metric
+          </button>
+        </div>
+      </div>
+
+      {/* Input Sliders & Fields */}
+      <div className="space-y-4">
+        {unit === "imperial" ? (
+          <>
+            <div>
+              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
+                <span>Height</span>
+                <span className="font-mono text-cyan-300">{feet} ft {inches} in</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">Feet</label>
+                  <input
+                    type="range"
+                    min={4}
+                    max={7}
+                    value={feet}
+                    onChange={(e) => setFeet(parseInt(e.target.value))}
+                    className="w-full accent-purple-500 cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">Inches</label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={11}
+                    value={inches}
+                    onChange={(e) => setInches(parseInt(e.target.value))}
+                    className="w-full accent-purple-500 cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
+                <span>Weight</span>
+                <span className="font-mono text-purple-300">{weightLbs} lbs</span>
+              </div>
+              <input
+                type="range"
+                min={80}
+                max={350}
+                value={weightLbs}
+                onChange={(e) => setWeightLbs(parseInt(e.target.value))}
+                className="w-full accent-purple-500 cursor-pointer"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
+                <span>Height</span>
+                <span className="font-mono text-cyan-300">{heightCm} cm</span>
+              </div>
+              <input
+                type="range"
+                min={120}
+                max={220}
+                value={heightCm}
+                onChange={(e) => setHeightCm(parseInt(e.target.value))}
+                className="w-full accent-purple-500 cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
+                <span>Weight</span>
+                <span className="font-mono text-purple-300">{weightKg} kg</span>
+              </div>
+              <input
+                type="range"
+                min={35}
+                max={160}
+                value={weightKg}
+                onChange={(e) => setWeightKg(parseInt(e.target.value))}
+                className="w-full accent-purple-500 cursor-pointer"
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Result Display & Liquid Spectrum Needle Gauge */}
+      <div className="liquid-glass rounded-2xl p-4.5 border-white/10 space-y-3.5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Calculated Score</p>
+            <p className="text-3xl font-black tracking-tight text-white mt-0.5">{bmi}</p>
+          </div>
+          <div className="text-right">
+            <span className={`liquid-pill inline-block rounded-lg px-2.5 py-1 text-xs font-bold ${color}`}>
+              {category}
+            </span>
+            <p className="text-[10px] text-slate-400 mt-1">Ideal: {idealRange}</p>
+          </div>
+        </div>
+
+        {/* Gauge Bar */}
+        <div className="relative pt-2">
+          <div className="h-2 w-full rounded-full bg-gradient-to-r from-sky-500 via-emerald-400 via-amber-400 to-rose-500" />
+          {/* Indicator needle */}
+          <div
+            className="absolute top-0 h-4 w-1.5 rounded-full bg-white shadow-[0_0_10px_#ffffff] transition-all duration-300 -translate-x-1/2"
+            style={{ left: `${progressRatio * 100}%` }}
+          />
+          <div className="flex justify-between text-[8px] font-bold uppercase tracking-wider text-slate-500 mt-1.5">
+            <span>Under (&lt;18.5)</span>
+            <span>Healthy (18.5-24.9)</span>
+            <span>Over (25-29.9)</span>
+            <span>Obese (30+)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    ╔═══════════════════════════════════════════════════════════╗
    ║                      MAIN DASHBOARD                      ║
    ╚═══════════════════════════════════════════════════════════╝
    ═══════════════════════════════════════════════════════════════ */
 type AppPhase = "home" | "tracking" | "summary";
-type HomeTab = "ai" | "quick" | "templates";
+type HomeTab = "ai" | "quick" | "templates" | "metrics";
 
 export default function Home() {
   /* ── Tab & Form state ─────────────────── */
@@ -886,6 +1499,29 @@ export default function Home() {
     const updated = userTemplates.filter((t) => t.id !== id);
     setUserTemplates(updated);
     saveUserTemplates(updated);
+  }
+
+  /* ── Body Metrics & Analytics state ────── */
+  const [metrics, setMetrics] = useState<MetricEntry[]>([]);
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [activeMetric, setActiveMetric] = useState<ActiveMetricType>("weight");
+  const [timelineFilter, setTimelineFilter] = useState<TimelineFilter>("days");
+
+  useEffect(() => {
+    setMetrics(loadUserMetrics());
+  }, []);
+
+  function addMetricEntry(entry: MetricEntry) {
+    const updated = [...metrics, entry];
+    setMetrics(updated);
+    saveUserMetrics(updated);
+    setShowLogModal(false);
+  }
+
+  function deleteMetricEntry(id: string) {
+    const updated = metrics.filter((m) => m.id !== id);
+    setMetrics(updated);
+    saveUserMetrics(updated);
   }
 
   /* ── Tracking state ───────────────────── */
@@ -1001,7 +1637,21 @@ export default function Home() {
         </svg>
       ),
     },
+    {
+      key: "metrics",
+      label: "Body & Metrics",
+      icon: (
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+        </svg>
+      ),
+    },
   ];
+
+  /* Latest metric stats for header highlights */
+  const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
+  const initialMetric = metrics.length > 0 ? metrics[0] : null;
+  const weightDiff = latestMetric && initialMetric ? Math.round((latestMetric.weight - initialMetric.weight) * 10) / 10 : 0;
 
   return (
     <>
@@ -1068,12 +1718,12 @@ export default function Home() {
               </div>
 
               {/* Liquid Glass Tab Switcher */}
-              <div className="liquid-glass rounded-2xl p-1.5 flex gap-1 border-white/10">
+              <div className="liquid-glass rounded-2xl p-1.5 flex flex-wrap gap-1 border-white/10">
                 {TABS.map((t) => (
                   <button
                     key={t.key}
                     onClick={() => setTab(t.key)}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 ${
+                    className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-200 ${
                       tab === t.key
                         ? "bg-gradient-to-r from-purple-600/80 to-fuchsia-600/80 text-white shadow-lg shadow-purple-500/20 border border-white/20"
                         : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
@@ -1125,7 +1775,7 @@ export default function Home() {
                       ) : (
                         <>
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0 2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455 2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                           </svg>
                           Build 3-Day Plan
                         </>
@@ -1373,6 +2023,180 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            {/* ─── TAB 4: BODY & METRICS (Graph + BMI Calculator) ─── */}
+            {tab === "metrics" && (
+              <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
+                {/* Metric Selector & Highlights */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {/* Weight card */}
+                  <div
+                    onClick={() => setActiveMetric("weight")}
+                    className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
+                      activeMetric === "weight"
+                        ? "border-purple-500/50 shadow-lg shadow-purple-500/15 ring-1 ring-purple-500/30"
+                        : "border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Weight</span>
+                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-purple-300">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
+                        </svg>
+                      </span>
+                    </div>
+                    <p className="mt-2 text-2xl font-black tracking-tight text-white">
+                      {latestMetric ? `${latestMetric.weight} lbs` : "—"}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold text-purple-300">
+                      {weightDiff <= 0 ? `${weightDiff} lbs` : `+${weightDiff} lbs`} overall
+                    </p>
+                  </div>
+
+                  {/* Body Fat card */}
+                  <div
+                    onClick={() => setActiveMetric("bodyFat")}
+                    className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
+                      activeMetric === "bodyFat"
+                        ? "border-cyan-500/50 shadow-lg shadow-cyan-500/15 ring-1 ring-cyan-500/30"
+                        : "border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Fat</span>
+                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-cyan-300">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                        </svg>
+                      </span>
+                    </div>
+                    <p className="mt-2 text-2xl font-black tracking-tight text-white">
+                      {latestMetric ? `${latestMetric.bodyFat}%` : "—"}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold text-cyan-300">Composition tracking</p>
+                  </div>
+
+                  {/* Calories card */}
+                  <div
+                    onClick={() => setActiveMetric("calories")}
+                    className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
+                      activeMetric === "calories"
+                        ? "border-amber-500/50 shadow-lg shadow-amber-500/15 ring-1 ring-amber-500/30"
+                        : "border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Intake</span>
+                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-amber-300">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                        </svg>
+                      </span>
+                    </div>
+                    <p className="mt-2 text-2xl font-black tracking-tight text-white">
+                      {latestMetric ? `${latestMetric.calories.toLocaleString()} kcal` : "—"}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold text-amber-300">Target intake</p>
+                  </div>
+                </div>
+
+                {/* Main Graph & BMI Section (2 Columns on large screens) */}
+                <div className="grid gap-6 lg:grid-cols-12 items-start">
+                  {/* Left Column: Interactive Graph Card */}
+                  <div className="liquid-glass rounded-3xl p-6 shadow-2xl lg:col-span-7 space-y-4">
+                    {/* Header with Timeline switch & Log Entry button */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
+                          <h3 className="text-sm font-extrabold text-white">
+                            {activeMetric === "weight" ? "Weight Progression" : activeMetric === "bodyFat" ? "Body Fat Percentage" : "Caloric Intake Log"}
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-0.5">Timeline trends & historical measurements</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Timeline Filter Toggle: Days vs Months */}
+                        <div className="liquid-pill flex rounded-xl p-0.5 border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setTimelineFilter("days")}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                              timelineFilter === "days" ? "bg-white/15 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            Days
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTimelineFilter("months")}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                              timelineFilter === "months" ? "bg-white/15 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            Months
+                          </button>
+                        </div>
+
+                        {/* Log Button */}
+                        <button
+                          type="button"
+                          onClick={() => setShowLogModal(true)}
+                          className="flex items-center gap-1 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1 text-[10px] font-bold transition-all hover:bg-cyan-500/30"
+                        >
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Log
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Chart visualizer */}
+                    <div className="pt-2">
+                      <MetricsChart metrics={metrics} activeMetric={activeMetric} timelineFilter={timelineFilter} />
+                    </div>
+
+                    {/* Recent Entries Table / List */}
+                    <div className="pt-4 border-t border-white/[0.06]">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Logs</p>
+                        <span className="text-[10px] text-slate-500">{metrics.length} recorded</span>
+                      </div>
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                        {[...metrics].reverse().slice(0, 5).map((m) => (
+                          <div key={m.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
+                            <span className="font-mono text-slate-400">{m.date}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="font-bold text-white">{m.weight} lbs</span>
+                              {m.bodyFat > 0 && <span className="text-cyan-300">{m.bodyFat}%</span>}
+                              {m.calories > 0 && <span className="text-amber-300">{m.calories} kcal</span>}
+                              <button
+                                onClick={() => deleteMetricEntry(m.id)}
+                                className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
+                                title="Delete"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: BMI Calculator */}
+                  <div className="lg:col-span-5">
+                    <BmiCalculator />
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -1403,6 +2227,11 @@ export default function Home() {
       {/* ══════════════ CREATE TEMPLATE MODAL ══════════════ */}
       {showCreateModal && (
         <CreateTemplateModal onSave={saveTemplate} onClose={() => setShowCreateModal(false)} />
+      )}
+
+      {/* ══════════════ LOG METRICS MODAL ══════════════ */}
+      {showLogModal && (
+        <LogMetricModal onSave={addMetricEntry} onClose={() => setShowLogModal(false)} />
       )}
 
       {/* Footer */}
