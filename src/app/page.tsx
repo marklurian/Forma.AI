@@ -814,6 +814,82 @@ interface ActiveRestTimerState {
   targetSetIdx?: number;
 }
 
+function parseMinSecToSeconds(input: string): number {
+  if (!input) return 60;
+  const trimmed = input.trim();
+  if (trimmed.includes(":")) {
+    const parts = trimmed.split(":");
+    const m = parseInt(parts[0], 10) || 0;
+    const s = parseInt(parts[1], 10) || 0;
+    return Math.max(5, m * 60 + s);
+  }
+  const parsed = parseInt(trimmed, 10);
+  return isNaN(parsed) ? 60 : Math.max(5, parsed);
+}
+
+function formatMinSec(totalSec: number): string {
+  const m = Math.floor(Math.max(0, totalSec) / 60);
+  const s = Math.max(0, totalSec) % 60;
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
+}
+
+function MinSecRestInput({
+  seconds,
+  onChange,
+}: {
+  seconds: number;
+  onChange: (newSec: number) => void;
+}) {
+  const [textVal, setTextVal] = useState(() => formatMinSec(seconds));
+
+  useEffect(() => {
+    setTextVal(formatMinSec(seconds));
+  }, [seconds]);
+
+  function handleBlur() {
+    const parsed = parseMinSecToSeconds(textVal);
+    onChange(parsed);
+    setTextVal(formatMinSec(parsed));
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
+    }
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(5, seconds - 30))}
+        className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/5 hover:bg-white/15 text-sky-300 button-press"
+        title="Lessen rest by 30 seconds"
+      >
+        -30s
+      </button>
+      <input
+        type="text"
+        value={textVal}
+        onChange={(e) => setTextVal(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className="liquid-input w-12 text-center rounded-lg px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none border-cyan-500/30"
+        placeholder="1:00"
+        title="Type rest duration (e.g. 1:00, 2:00, 2:30, 3:00)"
+      />
+      <button
+        type="button"
+        onClick={() => onChange(Math.min(900, seconds + 30))}
+        className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/5 hover:bg-white/15 text-sky-300 button-press"
+        title="Add 30 seconds to rest"
+      >
+        +30s
+      </button>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Active Workout Tracker (with Automatic Rest Timers & Sticky HUD)
    ═══════════════════════════════════════════════════════════════ */
@@ -1293,8 +1369,8 @@ function ActiveWorkout({
                           </div>
                         </div>
 
-                        {/* Minimalist Set Rest Timer Row */}
-                        <div className="flex items-center justify-between px-4 py-1.5 bg-white/[0.015] border-t border-white/[0.03] text-[10px]">
+                        {/* Minimalist Set Rest Timer Row (Centered in Middle) */}
+                        <div className="flex items-center justify-center gap-3 px-4 py-1.5 bg-white/[0.015] border-t border-white/[0.03] text-[10px]">
                           <span className="font-semibold text-slate-400 flex items-center gap-1.5">
                             <svg className="h-3 w-3 text-cyan-400/80" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -1304,9 +1380,9 @@ function ActiveWorkout({
 
                           <div className="flex items-center gap-1.5">
                             {isThisSetTimerActive && restTimer ? (
-                              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.2)] animate-scale-in">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.2)] animate-scale-in">
                                 <span className="font-mono text-xs font-black tabular-nums text-cyan-200">
-                                  {formatTime(restTimer.remainingSeconds)}
+                                  {formatMinSec(restTimer.remainingSeconds)}
                                 </span>
                                 <div className="flex items-center gap-1 ml-0.5">
                                   <button
@@ -1328,20 +1404,10 @@ function ActiveWorkout({
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="number"
-                                  min={5}
-                                  max={600}
-                                  step={5}
-                                  value={set.restSeconds ?? (customRestSeconds || 60)}
-                                  onChange={(e) => updateSet(exIdx, si, "restSeconds", parseInt(e.target.value) || 0)}
-                                  className="liquid-input w-12 text-center rounded-lg px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none"
-                                  placeholder="60"
-                                  title="Custom rest time in seconds for this set"
-                                />
-                                <span className="text-[10px] text-slate-500 font-semibold">sec</span>
-                              </div>
+                              <MinSecRestInput
+                                seconds={set.restSeconds ?? (customRestSeconds || 60)}
+                                onChange={(newSec) => updateSet(exIdx, si, "restSeconds", newSec)}
+                              />
                             )}
                           </div>
                         </div>
@@ -1369,13 +1435,19 @@ function ActiveWorkout({
                 </div>
               </div>
 
-              {/* ── Minimal Inter-Exercise Divider with Customizable Timer ── */}
+              {/* ── Minimal Inter-Exercise Divider with Customizable Timer (Centered in Middle) ── */}
               {isNextExerciseAvailable && (
                 <div className="flex items-center justify-center gap-3 py-2 text-slate-500">
                   <span className="h-px flex-1 bg-white/[0.06]" />
-                  <div className="flex items-center gap-3 flex-wrap justify-center">
+                  <div className="flex items-center gap-2.5 flex-wrap justify-center">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                       Next Movement: <span className="text-sky-300 font-extrabold">{tracked[exIdx + 1].name}</span>
+                    </span>
+
+                    <span className="text-slate-600 font-bold">•</span>
+
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Rest:
                     </span>
 
                     {/* Inline Rest Timer on Right Side after Exercise Name */}
@@ -1385,7 +1457,7 @@ function ActiveWorkout({
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                         <span className="font-mono text-xs font-black tabular-nums text-cyan-200">
-                          {formatTime(restTimer.remainingSeconds)}
+                          {formatMinSec(restTimer.remainingSeconds)}
                         </span>
                         <div className="flex items-center gap-1 ml-0.5">
                           <button
@@ -1407,21 +1479,10 @@ function ActiveWorkout({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 liquid-pill px-2 py-0.5 rounded-lg border-white/10">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Rest:</span>
-                        <input
-                          type="number"
-                          min={5}
-                          max={600}
-                          step={5}
-                          value={ex.interExerciseRestSeconds ?? (customRestSeconds || 60)}
-                          onChange={(e) => updateExerciseRest(exIdx, parseInt(e.target.value) || 0)}
-                          className="liquid-input w-12 text-center rounded-md px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none"
-                          placeholder="60"
-                          title="Custom recovery time in seconds before next exercise"
-                        />
-                        <span className="text-[9px] text-slate-500 font-semibold">sec</span>
-                      </div>
+                      <MinSecRestInput
+                        seconds={ex.interExerciseRestSeconds ?? (customRestSeconds || 60)}
+                        onChange={(newSec) => updateExerciseRest(exIdx, newSec)}
+                      />
                     )}
                   </div>
                   <span className="h-px flex-1 bg-white/[0.06]" />
