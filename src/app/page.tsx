@@ -594,15 +594,15 @@ function UnitTogglePill({
   onChange: (u: "lbs" | "kg") => void;
   size?: "sm" | "md";
 }) {
-  const pad = size === "sm" ? "px-2 py-0.5 text-[9px]" : "px-3 py-1 text-xs";
+  const pad = size === "sm" ? "px-2.5 py-0.5 text-[10px]" : "px-3.5 py-1 text-xs";
   return (
-    <div className="liquid-pill flex items-center rounded-xl p-0.5 border-white/10 shrink-0 select-none">
+    <div className="liquid-pill flex items-center rounded-xl p-0.5 border-sky-400/20 shrink-0 select-none">
       <button
         type="button"
         onClick={() => onChange("lbs")}
         className={`${pad} font-extrabold rounded-lg transition-all ${
           unit === "lbs"
-            ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-500/25"
+            ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/25"
             : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
         }`}
       >
@@ -613,7 +613,7 @@ function UnitTogglePill({
         onClick={() => onChange("kg")}
         className={`${pad} font-extrabold rounded-lg transition-all ${
           unit === "kg"
-            ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-500/25"
+            ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/25"
             : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
         }`}
       >
@@ -624,18 +624,22 @@ function UnitTogglePill({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Liquid Background with Ambient Fluid Orbs
+   Liquid Background with Ambient Fluid Orbs (Ocean Blue Serenity)
    ═══════════════════════════════════════════════════════════════ */
 function LiquidBackground() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="animate-blob-1 absolute -left-[10%] top-[10%] h-[550px] w-[550px] rounded-full bg-purple-600/15 blur-[120px]" />
-      <div className="animate-blob-2 absolute -right-[10%] top-[25%] h-[600px] w-[600px] rounded-full bg-cyan-500/10 blur-[140px]" />
-      <div className="animate-blob-1 absolute left-[30%] top-[65%] h-[500px] w-[500px] rounded-full bg-fuchsia-600/10 blur-[130px]" />
-      <svg className="absolute inset-0 h-full w-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+      {/* Deep Sea Sapphire Blob */}
+      <div className="animate-blob-1 absolute -left-[10%] top-[8%] h-[580px] w-[580px] rounded-full bg-[#003b73]/25 blur-[130px]" />
+      {/* Ocean Cyan Blob */}
+      <div className="animate-blob-2 absolute -right-[10%] top-[20%] h-[620px] w-[620px] rounded-full bg-[#0074b7]/20 blur-[140px]" />
+      {/* Aquatic Ice Glow */}
+      <div className="animate-blob-1 absolute left-[28%] top-[60%] h-[520px] w-[520px] rounded-full bg-[#00a8e8]/15 blur-[135px]" />
+
+      <svg className="absolute inset-0 h-full w-full opacity-[0.025]" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="liquid-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-            <circle cx="1.5" cy="1.5" r="1" fill="currentColor" />
+            <circle cx="1.5" cy="1.5" r="1" fill="#7dd3fc" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#liquid-grid)" />
@@ -679,12 +683,12 @@ function LiveDateTime() {
 
   return (
     <div className="liquid-pill flex items-center gap-2.5 rounded-full px-3 py-1.5 text-xs text-slate-300">
-      <svg className="h-3.5 w-3.5 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
       </svg>
       <span className="font-medium text-slate-400">{dateStr}</span>
       <span className="h-2.5 w-px bg-white/10" />
-      <span className="font-mono font-semibold text-slate-200">{timeStr}</span>
+      <span className="font-mono font-semibold text-sky-200">{timeStr}</span>
     </div>
   );
 }
@@ -718,11 +722,11 @@ function SelectField({
         onChange={(e) => onChange(e.target.value)}
         className="liquid-input w-full cursor-pointer rounded-xl px-3.5 py-2.5 pr-10 text-sm text-foreground transition-all focus:outline-none"
       >
-        <option value="" disabled className="bg-neutral-900 text-slate-500">
+        <option value="" disabled className="bg-[#061226] text-slate-500">
           {placeholder}
         </option>
         {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-neutral-900 text-slate-200">
+          <option key={opt} value={opt} className="bg-[#061226] text-slate-200">
             {opt}
           </option>
         ))}
@@ -747,12 +751,12 @@ function SetCheckbox({ checked, onChange }: { checked: boolean; onChange: () => 
       onClick={onChange}
       className={`group flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-all duration-300 ${
         checked
-          ? "border-emerald-400/80 bg-emerald-500/25 shadow-[0_0_14px_rgba(52,211,153,0.35)]"
+          ? "border-cyan-400/90 bg-cyan-500/25 shadow-[0_0_14px_rgba(56,189,248,0.4)]"
           : "border-white/15 bg-white/[0.03] hover:border-white/30"
       }`}
     >
       {checked && (
-        <svg className="h-4 w-4 text-emerald-300" style={{ animation: "checkPop 0.25s ease-out" }} fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+        <svg className="h-4 w-4 text-cyan-300" style={{ animation: "checkPop 0.25s ease-out" }} fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
         </svg>
       )}
@@ -785,7 +789,7 @@ function AddExerciseInline({ onAdd }: { onAdd: (ex: Exercise) => void }) {
         onClick={() => setOpen(true)}
         className="liquid-glass liquid-glass-interactive flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-semibold text-slate-300 transition-all hover:text-white"
       >
-        <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+        <svg className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
         Add Exercise
@@ -825,7 +829,7 @@ function AddExerciseInline({ onAdd }: { onAdd: (ex: Exercise) => void }) {
           type="button"
           onClick={handleAdd}
           disabled={!name.trim()}
-          className="mt-4 rounded-xl bg-accent px-4 py-2 text-xs font-bold text-white shadow-lg transition-all hover:bg-accent-hover disabled:opacity-40"
+          className="mt-4 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-4 py-2 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40"
         >
           Add
         </button>
@@ -842,7 +846,7 @@ function AddExerciseInline({ onAdd }: { onAdd: (ex: Exercise) => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Active Workout Tracker (with prominent Back/Exit navigation)
+   Active Workout Tracker (Ocean Theme with Back Button)
    ═══════════════════════════════════════════════════════════════ */
 function ActiveWorkout({
   dayTitle,
@@ -900,17 +904,17 @@ function ActiveWorkout({
 
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-4">
-      {/* Sticky top metrics bar with Back/Exit button */}
+      {/* Sticky top metrics bar */}
       <div className="liquid-glass sticky top-16 z-40 rounded-2xl p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-center gap-3">
             <button
               type="button"
               onClick={onBack}
-              className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:border-purple-400/40 transition-all group shrink-0"
+              className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:border-sky-400/40 transition-all group shrink-0"
               title="Return to Dashboard"
             >
-              <svg className="h-4 w-4 text-purple-300 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
               <span>Back</span>
@@ -918,8 +922,8 @@ function ActiveWorkout({
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Active Session</p>
+                <span className="flex h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-400">Active Session</p>
               </div>
               <h2 className="truncate text-base font-extrabold tracking-tight text-white mt-0.5">{dayTitle}</h2>
             </div>
@@ -941,7 +945,7 @@ function ActiveWorkout({
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-accent via-fuchsia-500 to-emerald-400 transition-all duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-teal-300 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -954,7 +958,7 @@ function ActiveWorkout({
             <div
               key={exIdx}
               className={`liquid-glass overflow-hidden rounded-2xl transition-all duration-300 ${
-                exDone ? "border-emerald-500/30 bg-emerald-950/10" : ""
+                exDone ? "border-cyan-500/40 bg-cyan-950/15" : ""
               }`}
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
@@ -962,8 +966,8 @@ function ActiveWorkout({
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
                       exDone
-                        ? "bg-emerald-500/20 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]"
-                        : "bg-purple-500/15 text-purple-300"
+                        ? "bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.3)]"
+                        : "bg-sky-500/15 text-sky-300"
                     }`}
                   >
                     {exDone ? (
@@ -974,7 +978,7 @@ function ActiveWorkout({
                       exIdx + 1
                     )}
                   </span>
-                  <h3 className={`truncate text-sm font-semibold ${exDone ? "text-emerald-300" : "text-white"}`}>
+                  <h3 className={`truncate text-sm font-semibold ${exDone ? "text-cyan-200" : "text-white"}`}>
                     {ex.name}
                   </h3>
                 </div>
@@ -1006,10 +1010,10 @@ function ActiveWorkout({
                   <div
                     key={si}
                     className={`grid grid-cols-[38px_1fr_1fr_36px] items-center gap-2 px-4 py-2 transition-colors ${
-                      set.completed ? "bg-emerald-500/[0.06]" : "hover:bg-white/[0.02]"
+                      set.completed ? "bg-cyan-500/[0.06]" : "hover:bg-white/[0.02]"
                     }`}
                   >
-                    <span className={`text-xs font-bold tabular-nums ${set.completed ? "text-emerald-400" : "text-slate-400"}`}>
+                    <span className={`text-xs font-bold tabular-nums ${set.completed ? "text-cyan-300" : "text-slate-400"}`}>
                       {si + 1}
                     </span>
                     <input
@@ -1019,7 +1023,7 @@ function ActiveWorkout({
                       value={set.weight}
                       onChange={(e) => updateSet(exIdx, si, "weight", e.target.value)}
                       className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
-                        set.completed ? "text-emerald-300 border-emerald-500/30" : "text-white"
+                        set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
                       }`}
                     />
                     <div className="flex items-center gap-1">
@@ -1030,7 +1034,7 @@ function ActiveWorkout({
                         value={set.actualReps}
                         onChange={(e) => updateSet(exIdx, si, "actualReps", e.target.value)}
                         className={`liquid-input w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-all focus:outline-none ${
-                          set.completed ? "text-emerald-300 border-emerald-500/30" : "text-white"
+                          set.completed ? "text-cyan-200 border-cyan-500/40" : "text-white"
                         }`}
                       />
                     </div>
@@ -1052,7 +1056,7 @@ function ActiveWorkout({
           <button
             type="button"
             onClick={onFinish}
-            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3.5 text-sm font-bold text-white shadow-xl transition-all hover:from-emerald-400 hover:to-teal-400 active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-teal-400 px-5 py-3.5 text-sm font-bold text-white shadow-xl transition-all hover:from-cyan-400 hover:to-teal-300 active:scale-[0.98]"
             style={{ animation: "success-glow 3s ease-in-out infinite" }}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -1067,7 +1071,7 @@ function ActiveWorkout({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Workout Summary Modal (NO EMOJIS)
+   Workout Summary Modal (Ocean Theme)
    ═══════════════════════════════════════════════════════════════ */
 function WorkoutSummary({
   dayTitle,
@@ -1093,7 +1097,7 @@ function WorkoutSummary({
       label: "Duration",
       value: formatTimeLong(elapsedSeconds),
       icon: (
-        <svg className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
       ),
@@ -1102,7 +1106,7 @@ function WorkoutSummary({
       label: "Sets Finished",
       value: `${completedSets.length}`,
       icon: (
-        <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg className="h-5 w-5 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
       ),
@@ -1111,7 +1115,7 @@ function WorkoutSummary({
       label: "Total Volume",
       value: `${totalVolume.toLocaleString()} lbs`,
       icon: (
-        <svg className="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg className="h-5 w-5 text-teal-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
         </svg>
       ),
@@ -1120,7 +1124,7 @@ function WorkoutSummary({
       label: "Est. Energy",
       value: `${estimatedCalories} kcal`,
       icon: (
-        <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg className="h-5 w-5 text-amber-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
         </svg>
       ),
@@ -1129,16 +1133,16 @@ function WorkoutSummary({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fadeIn 0.25s ease-out" }}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#020713]/85 backdrop-blur-md" onClick={onClose} />
       <div
         className="liquid-glass relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl p-6 shadow-2xl sm:p-8"
         style={{ animation: "scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)" }}
       >
-        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
 
         <div className="text-center pt-2">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 shadow-[0_0_25px_rgba(52,211,153,0.25)] border border-emerald-500/30">
-            <svg className="h-7 w-7 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/15 shadow-[0_0_25px_rgba(56,189,248,0.25)] border border-cyan-500/30">
+            <svg className="h-7 w-7 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
@@ -1168,7 +1172,7 @@ function WorkoutSummary({
                   <span className={done > 0 ? "text-slate-200 font-medium" : "text-slate-500 line-through"}>
                     {ex.name}
                   </span>
-                  <span className={`font-mono font-bold ${done === ex.trackedSets.length ? "text-emerald-400" : "text-slate-400"}`}>
+                  <span className={`font-mono font-bold ${done === ex.trackedSets.length ? "text-cyan-300" : "text-slate-400"}`}>
                     {done}/{ex.trackedSets.length}
                   </span>
                 </div>
@@ -1177,9 +1181,9 @@ function WorkoutSummary({
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-purple-500/20 bg-purple-500/[0.05] p-5 text-center">
+        <div className="mt-6 rounded-2xl border border-sky-500/20 bg-sky-950/20 p-5 text-center">
           <div className="flex items-center justify-center gap-2">
-            <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
             </svg>
             <h3 className="text-sm font-bold tracking-tight text-white">Support Development</h3>
@@ -1235,12 +1239,12 @@ function CreateTemplateModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fadeIn 0.2s ease-out" }}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#020713]/80 backdrop-blur-md" onClick={onClose} />
       <div
         className="liquid-glass relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl p-6 shadow-2xl"
         style={{ animation: "scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
       >
-        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
         
         <h2 className="text-lg font-bold tracking-tight text-white">Create Routine Template</h2>
         <p className="mt-0.5 text-xs text-slate-400">Save custom workouts for quick one-tap start</p>
@@ -1297,7 +1301,7 @@ function CreateTemplateModal({
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || exercises.length === 0}
-            className="flex-1 rounded-xl bg-accent py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:bg-accent-hover disabled:opacity-40"
+            className="flex-1 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40"
           >
             Save Template
           </button>
@@ -1340,7 +1344,7 @@ function LogMetricModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ animation: "fadeIn 0.2s ease-out" }}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#020713]/80 backdrop-blur-md" onClick={onClose} />
       <div
         className="liquid-glass relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-3xl p-6 shadow-2xl"
         style={{ animation: "scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}
@@ -1410,7 +1414,7 @@ function LogMetricModal({
             type="button"
             onClick={handleSave}
             disabled={!weight}
-            className="flex-1 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40"
+            className="flex-1 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40"
           >
             Save Entry
           </button>
@@ -1421,7 +1425,7 @@ function LogMetricModal({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Interactive SVG Chart Component
+   Interactive SVG Chart Component (Ocean Colors)
    ═══════════════════════════════════════════════════════════════ */
 type TimelineFilter = "days" | "months";
 type ActiveMetricType = "weight" | "bodyFat" | "calories";
@@ -1509,9 +1513,9 @@ function MetricsChart({
   const areaD = `${pathD} L ${points[points.length - 1].x} ${topPad + plotHeight} L ${points[0].x} ${topPad + plotHeight} Z`;
 
   const metricConfig = {
-    weight: { unit: "lbs", color: "#a855f7", gradId: "weightGrad", stroke: "url(#purpleLineGrad)" },
-    bodyFat: { unit: "%", color: "#38bdf8", gradId: "bfGrad", stroke: "url(#cyanLineGrad)" },
-    calories: { unit: "kcal", color: "#fbbf24", gradId: "calGrad", stroke: "url(#amberLineGrad)" },
+    weight: { unit: "lbs", color: "#00a8e8", gradId: "weightGrad", stroke: "url(#oceanLineGrad)" },
+    bodyFat: { unit: "%", color: "#2dd4bf", gradId: "bfGrad", stroke: "url(#seafoamLineGrad)" },
+    calories: { unit: "kcal", color: "#38bdf8", gradId: "calGrad", stroke: "url(#skyLineGrad)" },
   }[activeMetric];
 
   return (
@@ -1519,29 +1523,29 @@ function MetricsChart({
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
         <defs>
           <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.38" />
-            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#00a8e8" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#00a8e8" stopOpacity="0.0" />
           </linearGradient>
           <linearGradient id="bfGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.38" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.0" />
           </linearGradient>
           <linearGradient id="calGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.38" />
-            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
           </linearGradient>
 
-          <linearGradient id="purpleLineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#c084fc" />
-            <stop offset="100%" stopColor="#e879f9" />
+          <linearGradient id="oceanLineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#0074b7" />
+            <stop offset="100%" stopColor="#48cae4" />
           </linearGradient>
-          <linearGradient id="cyanLineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#38bdf8" />
+          <linearGradient id="seafoamLineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#0ea5e9" />
             <stop offset="100%" stopColor="#2dd4bf" />
           </linearGradient>
-          <linearGradient id="amberLineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#f97316" />
+          <linearGradient id="skyLineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#0284c7" />
+            <stop offset="100%" stopColor="#90e0ef" />
           </linearGradient>
         </defs>
 
@@ -1555,13 +1559,13 @@ function MetricsChart({
                 y1={y}
                 x2={width - rightPad}
                 y2={y}
-                stroke="rgba(255, 255, 255, 0.07)"
+                stroke="rgba(144, 224, 239, 0.1)"
                 strokeDasharray="3 3"
               />
               <text
                 x={leftPad - 8}
                 y={y + 3}
-                fill="rgba(148, 163, 184, 0.6)"
+                fill="rgba(144, 224, 239, 0.6)"
                 fontSize="9"
                 fontFamily="monospace"
                 textAnchor="end"
@@ -1596,7 +1600,7 @@ function MetricsChart({
                   y1={topPad}
                   x2={pt.x}
                   y2={topPad + plotHeight}
-                  stroke="rgba(255, 255, 255, 0.3)"
+                  stroke="rgba(255, 255, 255, 0.35)"
                   strokeDasharray="2 2"
                 />
               )}
@@ -1605,7 +1609,7 @@ function MetricsChart({
                 cx={pt.x}
                 cy={pt.y}
                 r={isHovered ? "6" : "3.5"}
-                fill="#0a0a14"
+                fill="#040e20"
                 stroke={metricConfig.color}
                 strokeWidth={isHovered ? "3" : "2"}
                 className="transition-all duration-150"
@@ -1614,7 +1618,7 @@ function MetricsChart({
               <text
                 x={pt.x}
                 y={height - 10}
-                fill={isHovered ? "#ffffff" : "rgba(148, 163, 184, 0.7)"}
+                fill={isHovered ? "#ffffff" : "rgba(148, 163, 184, 0.75)"}
                 fontSize={isHovered ? "10" : "8.5"}
                 fontWeight={isHovered ? "bold" : "normal"}
                 textAnchor="middle"
@@ -1634,12 +1638,12 @@ function MetricsChart({
             left: `${(points[hoveredIdx].x / width) * 100}%`,
             top: `${(points[hoveredIdx].y / height) * 100 - 35}%`,
             transform: "translate(-50%, -100%)",
-            border: `1px solid ${metricConfig.color}40`,
+            border: `1px solid ${metricConfig.color}50`,
           }}
         >
           <p className="text-[10px] font-bold text-slate-400">{points[hoveredIdx].data.fullDate}</p>
           <p className="text-xs font-black text-white">
-            {points[hoveredIdx].data.val} <span className="text-[10px] font-normal text-slate-300">{metricConfig.unit}</span>
+            {points[hoveredIdx].data.val} <span className="text-[10px] font-normal text-sky-200">{metricConfig.unit}</span>
           </p>
         </div>
       )}
@@ -1648,7 +1652,7 @@ function MetricsChart({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BMI Calculator Component
+   BMI Calculator Component (Ocean Colors)
    ═══════════════════════════════════════════════════════════════ */
 function BmiCalculator() {
   const [unit, setUnit] = useState<"imperial" | "metric">("imperial");
@@ -1686,24 +1690,24 @@ function BmiCalculator() {
     const roundedBmi = Math.round(bmiVal * 10) / 10;
 
     let cat = "Normal weight";
-    let col = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+    let col = "text-teal-300 border-teal-500/30 bg-teal-500/10";
     let ratio = 0.4;
 
     if (roundedBmi < 18.5) {
       cat = "Underweight";
-      col = "text-sky-400 border-sky-500/30 bg-sky-500/10";
+      col = "text-sky-300 border-sky-500/30 bg-sky-500/10";
       ratio = Math.max(0.05, ((roundedBmi - 12) / (18.5 - 12)) * 0.25);
     } else if (roundedBmi < 25) {
       cat = "Healthy / Normal";
-      col = "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+      col = "text-cyan-300 border-cyan-500/30 bg-cyan-500/10";
       ratio = 0.25 + ((roundedBmi - 18.5) / (25 - 18.5)) * 0.35;
     } else if (roundedBmi < 30) {
       cat = "Overweight";
-      col = "text-amber-400 border-amber-500/30 bg-amber-500/10";
+      col = "text-amber-300 border-amber-500/30 bg-amber-500/10";
       ratio = 0.6 + ((roundedBmi - 25) / (30 - 25)) * 0.25;
     } else {
       cat = "Obese";
-      col = "text-rose-400 border-rose-500/30 bg-rose-500/10";
+      col = "text-rose-300 border-rose-500/30 bg-rose-500/10";
       ratio = Math.min(0.98, 0.85 + ((roundedBmi - 30) / (40 - 30)) * 0.15);
     }
 
@@ -1720,7 +1724,7 @@ function BmiCalculator() {
     <div className="liquid-glass rounded-3xl p-6 shadow-2xl space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-cyan-400">
+          <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-400">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>
@@ -1733,7 +1737,7 @@ function BmiCalculator() {
             type="button"
             onClick={() => setUnit("imperial")}
             className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
-              unit === "imperial" ? "bg-accent text-white" : "text-slate-400 hover:text-white"
+              unit === "imperial" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
             Imperial
@@ -1742,7 +1746,7 @@ function BmiCalculator() {
             type="button"
             onClick={() => setUnit("metric")}
             className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
-              unit === "metric" ? "bg-accent text-white" : "text-slate-400 hover:text-white"
+              unit === "metric" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
             Metric
@@ -1767,7 +1771,7 @@ function BmiCalculator() {
                     max={7}
                     value={feet}
                     onChange={(e) => setFeet(parseInt(e.target.value))}
-                    className="w-full accent-purple-500 cursor-pointer"
+                    className="w-full accent-cyan-400 cursor-pointer"
                   />
                 </div>
                 <div>
@@ -1778,7 +1782,7 @@ function BmiCalculator() {
                     max={11}
                     value={inches}
                     onChange={(e) => setInches(parseInt(e.target.value))}
-                    className="w-full accent-purple-500 cursor-pointer"
+                    className="w-full accent-cyan-400 cursor-pointer"
                   />
                 </div>
               </div>
@@ -1787,7 +1791,7 @@ function BmiCalculator() {
             <div>
               <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
                 <span>Weight</span>
-                <span className="font-mono text-purple-300">{weightLbs} lbs</span>
+                <span className="font-mono text-sky-300">{weightLbs} lbs</span>
               </div>
               <input
                 type="range"
@@ -1795,7 +1799,7 @@ function BmiCalculator() {
                 max={350}
                 value={weightLbs}
                 onChange={(e) => setWeightLbs(parseInt(e.target.value))}
-                className="w-full accent-purple-500 cursor-pointer"
+                className="w-full accent-cyan-400 cursor-pointer"
               />
             </div>
           </>
@@ -1812,14 +1816,14 @@ function BmiCalculator() {
                 max={220}
                 value={heightCm}
                 onChange={(e) => setHeightCm(parseInt(e.target.value))}
-                className="w-full accent-purple-500 cursor-pointer"
+                className="w-full accent-cyan-400 cursor-pointer"
               />
             </div>
 
             <div>
               <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
                 <span>Weight</span>
-                <span className="font-mono text-purple-300">{weightKg} kg</span>
+                <span className="font-mono text-sky-300">{weightKg} kg</span>
               </div>
               <input
                 type="range"
@@ -1827,7 +1831,7 @@ function BmiCalculator() {
                 max={160}
                 value={weightKg}
                 onChange={(e) => setWeightKg(parseInt(e.target.value))}
-                className="w-full accent-purple-500 cursor-pointer"
+                className="w-full accent-cyan-400 cursor-pointer"
               />
             </div>
           </>
@@ -1849,7 +1853,7 @@ function BmiCalculator() {
         </div>
 
         <div className="relative pt-2">
-          <div className="h-2 w-full rounded-full bg-gradient-to-r from-sky-500 via-emerald-400 via-amber-400 to-rose-500" />
+          <div className="h-2 w-full rounded-full bg-gradient-to-r from-sky-400 via-teal-300 via-amber-300 to-rose-400" />
           <div
             className="absolute top-0 h-4 w-1.5 rounded-full bg-white shadow-[0_0_10px_#ffffff] transition-all duration-300 -translate-x-1/2"
             style={{ left: `${progressRatio * 100}%` }}
@@ -1886,7 +1890,6 @@ function WeightAndPlateCalculator({
   const [targetWeight, setTargetWeight] = useState(unit === "kg" ? 60 : 135);
   const [repsInput, setRepsInput] = useState(10);
 
-  // Sync default weights if unit changes
   useEffect(() => {
     if (unit === "kg") {
       setBarWeight((bw) => (bw === 45 ? 20 : bw === 35 ? 15 : bw === 25 ? 10 : 20));
@@ -1920,7 +1923,7 @@ function WeightAndPlateCalculator({
     <div className="liquid-glass rounded-2xl p-4.5 border-white/10 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-purple-300">
+          <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-sky-300">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
             </svg>
@@ -1930,11 +1933,9 @@ function WeightAndPlateCalculator({
           </h4>
         </div>
 
-        {/* Segmented Unit Selector */}
         <UnitTogglePill unit={unit} onChange={onSetUnit} size="sm" />
       </div>
 
-      {/* Target Weight & Reps inputs */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
@@ -1963,14 +1964,13 @@ function WeightAndPlateCalculator({
         </div>
       </div>
 
-      {/* Quick increments */}
       <div className="flex flex-wrap gap-1.5">
         {(unit === "lbs" ? [2.5, 5, 10, 25] : [1, 2.5, 5, 10]).map((inc) => (
           <button
             key={inc}
             type="button"
             onClick={() => setTargetWeight((w) => w + inc)}
-            className="liquid-glass text-[10px] font-bold px-2 py-1 rounded-lg text-slate-300 hover:text-white hover:border-purple-400/40 transition-all"
+            className="liquid-glass text-[10px] font-bold px-2 py-1 rounded-lg text-slate-300 hover:text-white hover:border-sky-400/40 transition-all"
           >
             +{inc} {unit}
           </button>
@@ -1984,7 +1984,6 @@ function WeightAndPlateCalculator({
         </button>
       </div>
 
-      {/* Barbell Plate Visualizer */}
       {isBarbell && (
         <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2">
           <div className="flex items-center justify-between text-[11px]">
@@ -1995,7 +1994,7 @@ function WeightAndPlateCalculator({
                   key={bw}
                   type="button"
                   onClick={() => setBarWeight(bw)}
-                  className={`px-1.5 py-0.5 rounded ${barWeight === bw ? "bg-accent text-white" : "text-slate-500 hover:text-white"}`}
+                  className={`px-1.5 py-0.5 rounded ${barWeight === bw ? "bg-sky-600 text-white" : "text-slate-500 hover:text-white"}`}
                 >
                   {bw} {unit} bar
                 </button>
@@ -2012,7 +2011,7 @@ function WeightAndPlateCalculator({
                 {plateBreakdown.map((p, i) => (
                   <span
                     key={i}
-                    className="liquid-pill px-2 py-0.5 text-xs font-mono font-bold text-purple-300 border-purple-500/30"
+                    className="liquid-pill px-2 py-0.5 text-xs font-mono font-bold text-cyan-300 border-sky-500/30"
                   >
                     {p.count} × {p.plate} {unit}
                   </span>
@@ -2026,7 +2025,7 @@ function WeightAndPlateCalculator({
       <button
         type="button"
         onClick={() => onLogSet(targetWeight, repsInput)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-purple-500 hover:to-fuchsia-500 active:scale-[0.98]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98]"
       >
         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -2038,7 +2037,7 @@ function WeightAndPlateCalculator({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Exercise Detail Modal with Video Demonstration & Instructions
+   Exercise Detail Modal (Ocean Serenity)
    ═══════════════════════════════════════════════════════════════ */
 function ExerciseDetailModal({
   exercise,
@@ -2063,24 +2062,23 @@ function ExerciseDetailModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" style={{ animation: "fadeIn 0.25s ease-out" }}>
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#020713]/85 backdrop-blur-md" onClick={onClose} />
       <div
         className="liquid-glass relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5"
         style={{ animation: "scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)" }}
       >
-        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
+        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
 
-        {/* Top Header with Segmented Unit Switch & Close */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300 border-purple-500/30">
+              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 border-sky-500/30">
                 {exercise.bodyPart}
               </span>
               <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 border-cyan-500/30">
                 {exercise.category}
               </span>
-              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300 border-amber-500/30">
+              <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-teal-300 border-teal-500/30">
                 {exercise.difficulty}
               </span>
             </div>
@@ -2088,7 +2086,6 @@ function ExerciseDetailModal({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Clear segmented unit switch */}
             <UnitTogglePill unit={unit} onChange={onSetUnit} size="md" />
 
             <button
@@ -2104,13 +2101,12 @@ function ExerciseDetailModal({
           </div>
         </div>
 
-        {/* Modal Navigation Tabs */}
         <div className="liquid-pill rounded-xl p-1 flex gap-1 border-white/10">
           <button
             type="button"
             onClick={() => setActiveTab("guide")}
             className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "guide" ? "bg-accent text-white shadow" : "text-slate-400 hover:text-white"
+              activeTab === "guide" ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow" : "text-slate-400 hover:text-white"
             }`}
           >
             Video & Guide
@@ -2119,7 +2115,7 @@ function ExerciseDetailModal({
             type="button"
             onClick={() => setActiveTab("setup")}
             className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "setup" ? "bg-accent text-white shadow" : "text-slate-400 hover:text-white"
+              activeTab === "setup" ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow" : "text-slate-400 hover:text-white"
             }`}
           >
             Weight & Plates
@@ -2128,14 +2124,13 @@ function ExerciseDetailModal({
             type="button"
             onClick={() => setActiveTab("history")}
             className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "history" ? "bg-accent text-white shadow" : "text-slate-400 hover:text-white"
+              activeTab === "history" ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow" : "text-slate-400 hover:text-white"
             }`}
           >
             History ({history.length})
           </button>
         </div>
 
-        {/* ─── TAB: GUIDE (Video + Instructions) ─── */}
         {activeTab === "guide" && (
           <div className="space-y-4 animate-[fadeIn_0.2s_ease-out]">
             <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black/60 shadow-xl">
@@ -2152,7 +2147,7 @@ function ExerciseDetailModal({
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Anatomy</h4>
               <div className="space-y-1 text-xs">
                 <p>
-                  <strong className="text-purple-300">Primary:</strong>{" "}
+                  <strong className="text-sky-300">Primary:</strong>{" "}
                   <span className="text-slate-200">{exercise.primaryMuscle}</span>
                 </p>
                 <p>
@@ -2164,16 +2159,16 @@ function ExerciseDetailModal({
 
             <div className="space-y-3">
               <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">1. Setup</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">1. Setup</h4>
                 <p className="text-xs text-slate-200 leading-relaxed">{exercise.instructions.setup}</p>
               </div>
 
               <div className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">2. Execution</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-teal-300">2. Execution</h4>
                 <ol className="space-y-1.5 text-xs text-slate-200">
                   {exercise.instructions.execution.map((step, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="liquid-pill flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-emerald-300">
+                      <span className="liquid-pill flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-cyan-300">
                         {i + 1}
                       </span>
                       <span>{step}</span>
@@ -2184,11 +2179,11 @@ function ExerciseDetailModal({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="liquid-glass rounded-2xl p-3.5 border-white/10 space-y-1.5">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Pro Tips</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-sky-300">Pro Tips</h4>
                   <ul className="space-y-1 text-[11px] text-slate-300">
                     {exercise.instructions.tips.map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5">
-                        <span className="text-purple-400">•</span>
+                        <span className="text-sky-400">•</span>
                         <span>{t}</span>
                       </li>
                     ))}
@@ -2211,7 +2206,6 @@ function ExerciseDetailModal({
           </div>
         )}
 
-        {/* ─── TAB: SETUP (Weight & Plate Calculator) ─── */}
         {activeTab === "setup" && (
           <div className="space-y-4 animate-[fadeIn_0.2s_ease-out]">
             <WeightAndPlateCalculator
@@ -2224,7 +2218,6 @@ function ExerciseDetailModal({
           </div>
         )}
 
-        {/* ─── TAB: HISTORY ─── */}
         {activeTab === "history" && (
           <div className="space-y-3 animate-[fadeIn_0.2s_ease-out]">
             <div className="flex items-center justify-between">
@@ -2232,7 +2225,7 @@ function ExerciseDetailModal({
               <button
                 type="button"
                 onClick={() => setActiveTab("setup")}
-                className="text-xs font-bold text-accent hover:underline"
+                className="text-xs font-bold text-sky-400 hover:underline"
               >
                 + Log New Set
               </button>
@@ -2251,7 +2244,7 @@ function ExerciseDetailModal({
                 {history.map((item) => (
                   <div key={item.id} className="liquid-glass rounded-2xl p-4 border-white/10 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-purple-300">{item.date}</span>
+                      <span className="font-mono text-xs font-bold text-cyan-300">{item.date}</span>
                       <span className="liquid-pill px-2 py-0.5 text-[10px] font-semibold text-slate-400 rounded-md">
                         {item.sets.length} sets completed
                       </span>
@@ -2309,7 +2302,6 @@ function ExerciseLibraryTab({
 
   return (
     <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
-      {/* Top Search, Filter & Unit Switch Bar */}
       <div className="liquid-glass rounded-3xl p-5 border-white/10 space-y-4">
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
@@ -2331,7 +2323,6 @@ function ExerciseLibraryTab({
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-1">
             {bodyParts.map((bp) => (
@@ -2341,7 +2332,7 @@ function ExerciseLibraryTab({
                 onClick={() => setSelectedBodyPart(bp)}
                 className={`px-3 py-1 text-xs font-bold rounded-xl transition-all ${
                   selectedBodyPart === bp
-                    ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                    ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
                     : "liquid-glass text-slate-400 hover:text-white"
                 }`}
               >
@@ -2369,30 +2360,29 @@ function ExerciseLibraryTab({
         </div>
       </div>
 
-      {/* Exercises Grid */}
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {filteredExercises.map((ex) => (
           <div
             key={ex.id}
             onClick={() => onSelectExercise(ex)}
-            className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-purple-500/40 transition-all space-y-3 group"
+            className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300 border-purple-500/30">
+                <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 border-sky-500/30">
                   {ex.bodyPart}
                 </span>
                 <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 border-cyan-500/30">
                   {ex.category}
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-300 transition-colors">
+              <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-300 transition-colors">
                 View Guide →
               </span>
             </div>
 
             <div>
-              <h3 className="text-base font-extrabold text-white group-hover:text-purple-300 transition-colors">
+              <h3 className="text-base font-extrabold text-white group-hover:text-sky-300 transition-colors">
                 {ex.name}
               </h3>
               <p className="text-xs text-slate-400 mt-1 line-clamp-1">
@@ -2402,7 +2392,7 @@ function ExerciseLibraryTab({
 
             <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[11px] text-slate-400">
               <span>{ex.difficulty}</span>
-              <span className="text-purple-300 font-semibold">Video + Plates ({unit.toUpperCase()})</span>
+              <span className="text-sky-300 font-semibold">Video + Plates ({unit.toUpperCase()})</span>
             </div>
           </div>
         ))}
@@ -2592,7 +2582,7 @@ export default function Home() {
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     Tabs Configuration (NO EMOJI)
+     Tabs Configuration (Ocean Serenity Icons)
      ═══════════════════════════════════════════════════════════════ */
   const TABS: { key: HomeTab; label: string; icon: React.ReactNode }[] = [
     {
@@ -2651,19 +2641,19 @@ export default function Home() {
       <LiquidBackground />
 
       {/* ── Top Navigation with Live Clock ──── */}
-      <nav className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#050508]/75 backdrop-blur-2xl">
+      <nav className="sticky top-0 z-50 border-b border-sky-400/[0.12] bg-[#040914]/80 backdrop-blur-2xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <button
             onClick={phase !== "home" ? resetHome : undefined}
             className="flex items-center gap-2.5 text-base font-extrabold tracking-tight group"
           >
-            <span className="liquid-pill flex h-8 w-8 items-center justify-center rounded-xl text-accent transition-transform group-hover:scale-105">
+            <span className="liquid-pill flex h-8 w-8 items-center justify-center rounded-xl text-sky-400 transition-transform group-hover:scale-105">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
               </svg>
             </span>
             <span className="text-white">
-              Forma<span className="text-accent font-black">.AI</span>
+              Forma<span className="text-sky-400 font-black">.AI</span>
             </span>
           </button>
 
@@ -2682,22 +2672,22 @@ export default function Home() {
                   onClick={resetHome}
                   className="liquid-pill flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-slate-300 hover:text-white transition-all rounded-full"
                 >
-                  <svg className="h-3.5 w-3.5 text-purple-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
                   </svg>
                   <span>Dashboard</span>
                 </button>
-                <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-emerald-400 border-emerald-500/30">
+                <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-cyan-400 border-cyan-500/30">
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
                   </span>
                   <span className="text-[11px] font-bold uppercase tracking-wider">Tracking</span>
                 </div>
               </div>
             ) : (
               <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
                 <span className="text-[11px] font-semibold text-slate-300">Ready</span>
               </div>
             )}
@@ -2712,15 +2702,15 @@ export default function Home() {
             {/* Header / Hero */}
             <div className="flex flex-col items-center justify-between gap-4 py-2 sm:flex-row sm:py-4">
               <div>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300 mb-2">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300 mb-2">
                   <span>Intelligent Performance</span>
                 </div>
                 <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
-                  Forma <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">Workout Studio</span>
+                  Forma <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Workout Studio</span>
                 </h1>
               </div>
 
-              {/* Liquid Glass Tab Switcher */}
+              {/* Liquid Glass Tab Switcher (Ocean Serenity) */}
               <div className="liquid-glass rounded-2xl p-1.5 flex flex-wrap gap-1 border-white/10">
                 {TABS.map((t) => (
                   <button
@@ -2728,7 +2718,7 @@ export default function Home() {
                     onClick={() => setTab(t.key)}
                     className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-200 ${
                       tab === t.key
-                        ? "bg-gradient-to-r from-purple-600/80 to-fuchsia-600/80 text-white shadow-lg shadow-purple-500/20 border border-white/20"
+                        ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-lg shadow-sky-500/25 border border-white/20"
                         : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
                     }`}
                   >
@@ -2739,16 +2729,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ─── TAB 1: AI GENERATOR (Compact 2-Column) ─── */}
+            {/* ─── TAB 1: AI GENERATOR ─── */}
             {tab === "ai" && (
               <div className="mt-6 grid gap-6 lg:grid-cols-12 items-start">
                 <form id="workout-form" onSubmit={handleGenerate} className="lg:col-span-5">
                   <div className="liquid-glass relative overflow-hidden rounded-3xl p-6 shadow-2xl">
-                    <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent" />
+                    <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
 
                     <div className="mb-5 flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-purple-300">
+                        <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-300">
                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                           </svg>
@@ -2767,7 +2757,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={!isReady || loading}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-600 px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition-all hover:from-purple-500 hover:to-fuchsia-500 disabled:opacity-40 active:scale-[0.98]"
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40 active:scale-[0.98]"
                       style={isReady && !loading ? { animation: "pulse-glow 3s ease-in-out infinite" } : undefined}
                     >
                       {loading ? (
@@ -2802,7 +2792,7 @@ export default function Home() {
                   {loading && (
                     <div className="liquid-glass rounded-3xl p-8">
                       <div className="flex items-center gap-3">
-                        <Spinner className="h-5 w-5 text-accent" />
+                        <Spinner className="h-5 w-5 text-sky-400" />
                         <div>
                           <p className="text-sm font-bold text-white">AI Coach is calculating routine…</p>
                           <p className="text-xs text-slate-400">Optimizing volume, rest intervals, and exercises</p>
@@ -2819,7 +2809,7 @@ export default function Home() {
                   {plan && !loading && (
                     <div className="space-y-3 animate-[fadeInUp_0.3s_ease-out_both]">
                       <div className="flex items-center justify-between px-1">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">Custom 3-Day Plan Generated</p>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400">Custom 3-Day Plan Generated</p>
                         <span className="text-[10px] text-slate-400">Tap a day to begin</span>
                       </div>
                       {plan.map((day, i) => (
@@ -2829,10 +2819,10 @@ export default function Home() {
                           className="liquid-glass liquid-glass-interactive group w-full overflow-hidden rounded-2xl p-5 text-left transition-all"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="liquid-pill rounded-lg px-2.5 py-1 text-xs font-bold text-purple-300 border-purple-500/30">
+                            <span className="liquid-pill rounded-lg px-2.5 py-1 text-xs font-bold text-sky-300 border-sky-500/30">
                               {day.day}
                             </span>
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-purple-300 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-sky-300 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
                               <span>Start Workout</span>
                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -2853,7 +2843,7 @@ export default function Home() {
 
                   {!plan && !loading && !error && (
                     <div className="liquid-glass flex flex-col items-center justify-center rounded-3xl p-10 text-center">
-                      <div className="liquid-pill flex h-14 w-14 items-center justify-center rounded-2xl text-purple-300 mb-3">
+                      <div className="liquid-pill flex h-14 w-14 items-center justify-center rounded-2xl text-sky-300 mb-3">
                         <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
                         </svg>
@@ -2876,7 +2866,7 @@ export default function Home() {
                     onClick={quickStart}
                     className="liquid-glass liquid-glass-interactive group flex w-full items-center gap-5 rounded-3xl p-6 text-left"
                   >
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-600 shadow-xl shadow-purple-500/25 transition-transform group-hover:scale-105">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 shadow-xl shadow-sky-500/25 transition-transform group-hover:scale-105">
                       <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
                       </svg>
@@ -2885,7 +2875,7 @@ export default function Home() {
                       <h3 className="text-base font-extrabold text-white">Start Empty Workout</h3>
                       <p className="mt-0.5 text-xs text-slate-400">Freely add and track exercises as you train</p>
                     </div>
-                    <svg className="ml-auto h-5 w-5 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-purple-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <svg className="ml-auto h-5 w-5 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                     </svg>
                   </button>
@@ -2902,10 +2892,10 @@ export default function Home() {
                           onClick={() => startFromTemplate(t)}
                           className="liquid-glass liquid-glass-interactive rounded-2xl p-4 text-left group"
                         >
-                          <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300 mb-2">
+                          <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 mb-2">
                             {t.category}
                           </span>
-                          <p className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors">{t.name}</p>
+                          <p className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{t.name}</p>
                           <p className="mt-1 text-[10px] text-slate-400">{t.exercises.length} exercises</p>
                         </button>
                       ))}
@@ -2926,7 +2916,7 @@ export default function Home() {
                     </div>
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg transition-all hover:from-purple-500 hover:to-fuchsia-500 active:scale-[0.98]"
+                      className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-2 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98]"
                     >
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -2937,7 +2927,7 @@ export default function Home() {
 
                   {userTemplates.length === 0 ? (
                     <div className="liquid-glass flex items-center gap-4 rounded-3xl p-6">
-                      <div className="liquid-pill flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-purple-300">
+                      <div className="liquid-pill flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sky-300">
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                         </svg>
@@ -2952,7 +2942,7 @@ export default function Home() {
                       {userTemplates.map((t) => (
                         <div key={t.id} className="liquid-glass liquid-glass-interactive group relative overflow-hidden rounded-2xl">
                           <button onClick={() => startFromTemplate(t)} className="w-full p-4 text-left">
-                            <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300 mb-1.5">
+                            <span className="liquid-pill inline-block rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 mb-1.5">
                               {t.category}
                             </span>
                             <p className="text-sm font-extrabold text-white">{t.name}</p>
@@ -2998,14 +2988,14 @@ export default function Home() {
                         className="liquid-glass liquid-glass-interactive group overflow-hidden rounded-2xl p-4 text-left transition-all"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-300">
+                          <span className="liquid-pill rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300">
                             {t.category}
                           </span>
-                          <span className="text-[10px] font-bold text-purple-300 opacity-0 transition-opacity group-hover:opacity-100">
+                          <span className="text-[10px] font-bold text-sky-300 opacity-0 transition-opacity group-hover:opacity-100">
                             Start →
                           </span>
                         </div>
-                        <p className="mt-2 text-sm font-bold text-white group-hover:text-purple-300 transition-colors">{t.name}</p>
+                        <p className="mt-2 text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{t.name}</p>
                         <p className="text-[10px] text-slate-400">
                           {t.exercises.length} exercises • {t.exercises.reduce((s, e) => s + e.sets, 0)} total sets
                         </p>
@@ -3023,7 +3013,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* ─── TAB 4: EXERCISE LIBRARY (Guide, Video, Plates & History) ─── */}
+            {/* ─── TAB 4: EXERCISE LIBRARY ─── */}
             {tab === "exercises" && (
               <ExerciseLibraryTab
                 onSelectExercise={(ex) => setSelectedExercise(ex)}
@@ -3032,7 +3022,7 @@ export default function Home() {
               />
             )}
 
-            {/* ─── TAB 5: BODY & METRICS (Graph + BMI Calculator) ─── */}
+            {/* ─── TAB 5: BODY & METRICS ─── */}
             {tab === "metrics" && (
               <div className="mt-6 space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -3040,13 +3030,13 @@ export default function Home() {
                     onClick={() => setActiveMetric("weight")}
                     className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
                       activeMetric === "weight"
-                        ? "border-purple-500/50 shadow-lg shadow-purple-500/15 ring-1 ring-purple-500/30"
+                        ? "border-sky-400/60 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/40"
                         : "border-white/10"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Weight</span>
-                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-purple-300">
+                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-sky-300">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
                         </svg>
@@ -3055,7 +3045,7 @@ export default function Home() {
                     <p className="mt-2 text-2xl font-black tracking-tight text-white">
                       {latestMetric ? `${latestMetric.weight} lbs` : "—"}
                     </p>
-                    <p className="mt-1 text-[11px] font-semibold text-purple-300">
+                    <p className="mt-1 text-[11px] font-semibold text-sky-300">
                       {weightDiff <= 0 ? `${weightDiff} lbs` : `+${weightDiff} lbs`} overall
                     </p>
                   </div>
@@ -3064,13 +3054,13 @@ export default function Home() {
                     onClick={() => setActiveMetric("bodyFat")}
                     className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
                       activeMetric === "bodyFat"
-                        ? "border-cyan-500/50 shadow-lg shadow-cyan-500/15 ring-1 ring-cyan-500/30"
+                        ? "border-teal-400/60 shadow-lg shadow-teal-500/20 ring-1 ring-teal-400/40"
                         : "border-white/10"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Fat</span>
-                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-cyan-300">
+                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-teal-300">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
@@ -3080,20 +3070,20 @@ export default function Home() {
                     <p className="mt-2 text-2xl font-black tracking-tight text-white">
                       {latestMetric ? `${latestMetric.bodyFat}%` : "—"}
                     </p>
-                    <p className="mt-1 text-[11px] font-semibold text-cyan-300">Composition tracking</p>
+                    <p className="mt-1 text-[11px] font-semibold text-teal-300">Composition tracking</p>
                   </div>
 
                   <div
                     onClick={() => setActiveMetric("calories")}
                     className={`liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border transition-all ${
                       activeMetric === "calories"
-                        ? "border-amber-500/50 shadow-lg shadow-amber-500/15 ring-1 ring-amber-500/30"
+                        ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400/40"
                         : "border-white/10"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Intake</span>
-                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-amber-300">
+                      <span className="liquid-pill flex h-6 w-6 items-center justify-center rounded-lg text-cyan-300">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
                         </svg>
@@ -3102,7 +3092,7 @@ export default function Home() {
                     <p className="mt-2 text-2xl font-black tracking-tight text-white">
                       {latestMetric ? `${latestMetric.calories.toLocaleString()} kcal` : "—"}
                     </p>
-                    <p className="mt-1 text-[11px] font-semibold text-amber-300">Target intake</p>
+                    <p className="mt-1 text-[11px] font-semibold text-cyan-300">Target intake</p>
                   </div>
                 </div>
 
@@ -3169,8 +3159,8 @@ export default function Home() {
                             <span className="font-mono text-slate-400">{m.date}</span>
                             <div className="flex items-center gap-3">
                               <span className="font-bold text-white">{m.weight} lbs</span>
-                              {m.bodyFat > 0 && <span className="text-cyan-300">{m.bodyFat}%</span>}
-                              {m.calories > 0 && <span className="text-amber-300">{m.calories} kcal</span>}
+                              {m.bodyFat > 0 && <span className="text-teal-300">{m.bodyFat}%</span>}
+                              {m.calories > 0 && <span className="text-cyan-300">{m.calories} kcal</span>}
                               <button
                                 onClick={() => deleteMetricEntry(m.id)}
                                 className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
@@ -3245,7 +3235,7 @@ export default function Home() {
 
       {/* Footer */}
       {phase === "home" && (
-        <footer className="border-t border-white/[0.06] py-6 text-center text-xs text-slate-400">
+        <footer className="border-t border-sky-400/[0.08] py-6 text-center text-xs text-slate-500">
           © {new Date().getFullYear()} Forma.AI — Intelligent Fitness Experience
         </footer>
       )}
