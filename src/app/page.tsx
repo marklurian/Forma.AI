@@ -813,215 +813,7 @@ interface ActiveRestTimerState {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Minimalist Centered Set-Level Rest Timer (Pure Custom Input)
-   ═══════════════════════════════════════════════════════════════ */
-function SetRestTimerWidget({
-  setNum,
-  exerciseName,
-  exIdx,
-  setIdx,
-  isCompleted,
-  activeTimer,
-  onStartTimer,
-  onAdjustTimer,
-  onStopTimer,
-}: {
-  setNum: number;
-  exerciseName: string;
-  exIdx: number;
-  setIdx: number;
-  isCompleted?: boolean;
-  activeTimer: ActiveRestTimerState | null;
-  onStartTimer: (
-    id: string,
-    label: string,
-    seconds: number,
-    type: "set" | "exercise",
-    targetExIdx?: number,
-    targetSetIdx?: number
-  ) => void;
-  onAdjustTimer: (delta: number) => void;
-  onStopTimer: () => void;
-}) {
-  const [customSec, setCustomSec] = useState("");
-  const isThisActive = activeTimer?.id === `set-rest-${exIdx}-${setIdx}`;
-
-  function handleStart(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    const val = parseInt(customSec, 10);
-    const targetSeconds = !isNaN(val) && val > 0 ? val : 60;
-    onStartTimer(
-      `set-rest-${exIdx}-${setIdx}`,
-      `${exerciseName} • Set ${setNum} Rest`,
-      targetSeconds,
-      "set",
-      exIdx,
-      setIdx
-    );
-    setCustomSec("");
-  }
-
-  return (
-    <div
-      className={`px-3 py-1.5 border-t border-white/[0.03] transition-all flex items-center justify-center gap-2 text-center ${
-        isThisActive ? "bg-cyan-950/30 border-cyan-400/30" : "bg-white/[0.01]"
-      }`}
-    >
-      {isThisActive ? (
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-[11px] font-bold text-slate-300">Set {setNum} Rest:</span>
-          <span className="font-mono text-xs font-black text-cyan-300 animate-pulse tabular-nums">
-            ⏱️ {formatTime(activeTimer.remainingSeconds)}
-          </span>
-          <button
-            type="button"
-            onClick={() => onAdjustTimer(15)}
-            className="liquid-pill px-2 py-0.5 text-[10px] font-bold text-sky-300 hover:text-white rounded-md button-press"
-          >
-            +15s
-          </button>
-          <button
-            type="button"
-            onClick={onStopTimer}
-            className="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 hover:text-white text-[10px] font-bold button-press"
-          >
-            Skip
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleStart} className="flex items-center justify-center gap-2">
-          <span className="text-[11px] font-medium text-slate-400">Set {setNum} Rest:</span>
-          <div className="flex items-center gap-1">
-            <input
-              type="number"
-              min="5"
-              max="900"
-              placeholder="60"
-              value={customSec}
-              onChange={(e) => setCustomSec(e.target.value)}
-              className="liquid-input w-14 px-2 py-0.5 text-[11px] rounded-md text-center font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
-            />
-            <span className="text-[10px] text-slate-400">sec</span>
-          </div>
-          <button
-            type="submit"
-            className="px-2.5 py-0.5 rounded-md bg-white/5 hover:bg-cyan-500/20 text-sky-300 hover:text-cyan-200 border border-white/10 hover:border-cyan-400/40 text-[10px] font-bold button-press transition-all"
-          >
-            Start
-          </button>
-        </form>
-      )}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Minimalist Inter-Exercise Recovery Widget (Pure Custom Input)
-   ═══════════════════════════════════════════════════════════════ */
-function InterExerciseRestCard({
-  exIdx,
-  nextExName,
-  activeTimer,
-  onStartTimer,
-  onAdjustTimer,
-  onStopTimer,
-}: {
-  exIdx: number;
-  currentExName: string;
-  nextExName: string;
-  activeTimer: ActiveRestTimerState | null;
-  onStartTimer: (
-    id: string,
-    label: string,
-    seconds: number,
-    type: "set" | "exercise",
-    targetExIdx?: number,
-    targetSetIdx?: number
-  ) => void;
-  onAdjustTimer: (delta: number) => void;
-  onStopTimer: () => void;
-}) {
-  const [customSec, setCustomSec] = useState("");
-  const isThisActive = activeTimer?.id === `inter-ex-${exIdx}`;
-
-  function handleStart(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    const val = parseInt(customSec, 10);
-    const targetSeconds = !isNaN(val) && val > 0 ? val : 120;
-    onStartTimer(`inter-ex-${exIdx}`, `Rest before ${nextExName}`, targetSeconds, "exercise", exIdx + 1);
-    setCustomSec("");
-  }
-
-  return (
-    <div className="py-1">
-      <div
-        className={`liquid-glass card-hover-lift rounded-xl px-4 py-2.5 border transition-all flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left ${
-          isThisActive
-            ? "border-cyan-400/60 bg-cyan-950/30 shadow-md shadow-cyan-500/10"
-            : "border-white/10 hover:border-cyan-400/30"
-        }`}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-cyan-500/15 text-cyan-300">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-            </svg>
-          </span>
-          <p className="text-xs font-semibold text-slate-300 truncate">
-            Next: <span className="font-bold text-white">{nextExName}</span>
-          </p>
-        </div>
-
-        {isThisActive ? (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="font-mono text-sm font-black text-cyan-300 tabular-nums animate-pulse">
-              ⏱️ {formatTime(activeTimer.remainingSeconds)}
-            </span>
-            <button
-              type="button"
-              onClick={() => onAdjustTimer(30)}
-              className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
-            >
-              +30s
-            </button>
-            <button
-              type="button"
-              onClick={onStopTimer}
-              className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white text-[10px] font-bold button-press"
-            >
-              Start {nextExName} →
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleStart} className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] text-slate-400">Rest:</span>
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
-                min="10"
-                max="900"
-                placeholder="120"
-                value={customSec}
-                onChange={(e) => setCustomSec(e.target.value)}
-                className="liquid-input w-16 px-2 py-0.5 text-xs rounded-md text-center font-mono text-white placeholder:text-slate-500 focus:outline-none"
-              />
-              <span className="text-[10px] text-slate-400">sec</span>
-            </div>
-            <button
-              type="submit"
-              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-cyan-500/20 text-sky-300 hover:text-cyan-200 border border-white/10 hover:border-cyan-400/40 text-xs font-bold button-press transition-all"
-            >
-              Start Rest
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Active Workout Tracker (with Centered Per-Set & Inter-Exercise Rest Timers)
+   Active Workout Tracker (with Automatic Rest Timers & Sticky HUD)
    ═══════════════════════════════════════════════════════════════ */
 function ActiveWorkout({
   dayTitle,
@@ -1473,58 +1265,43 @@ function ActiveWorkout({
                             onChange={() => handleToggleSetDone(exIdx, si)}
                           />
                         </div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
 
-                      {/* ── Centered Set-Level Rest Timer Strip with Custom Inputs ── */}
-                      <SetRestTimerWidget
-                        setNum={si + 1}
-                        exerciseName={ex.name}
-                        exIdx={exIdx}
-                        setIdx={si}
-                        isCompleted={set.completed}
-                        activeTimer={restTimer}
-                        onStartTimer={startRestTimer}
-                        onAdjustTimer={adjustRestTimer}
-                        onStopTimer={stopRestTimer}
-                      />
-                    </div>
-                  ))}
+                  {/* ── Bottom of Exercise Card: + Add Another Set Button ── */}
+                  <div className="p-3 border-t border-white/[0.06] bg-white/[0.01] flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => addSetToExercise(exIdx)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sky-300 hover:text-white text-xs font-bold transition-all button-press active:scale-95"
+                    >
+                      <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      <span>+ Add Another Set</span>
+                    </button>
+
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {ex.trackedSets.length} sets planned
+                    </span>
+                  </div>
                 </div>
 
-                {/* ── Bottom of Exercise Card: + Add Another Set Button ── */}
-                <div className="p-3 border-t border-white/[0.06] bg-white/[0.01] flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => addSetToExercise(exIdx)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sky-300 hover:text-white text-xs font-bold transition-all button-press active:scale-95"
-                  >
-                    <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    <span>+ Add Another Set</span>
-                  </button>
-
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    {ex.trackedSets.length} sets planned
-                  </span>
-                </div>
+                {/* ── Minimal Inter-Exercise Divider ── */}
+                {isNextExerciseAvailable && (
+                  <div className="flex items-center justify-center gap-3 py-1 text-slate-500">
+                    <span className="h-px flex-1 bg-white/[0.06]" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Next Movement: <span className="text-sky-300">{tracked[exIdx + 1].name}</span>
+                    </span>
+                    <span className="h-px flex-1 bg-white/[0.06]" />
+                  </div>
+                )}
               </div>
-
-              {/* ── Centered Inter-Exercise Rest Timer Widget (Between Each Exercise) ── */}
-              {isNextExerciseAvailable && (
-                <InterExerciseRestCard
-                  exIdx={exIdx}
-                  currentExName={ex.name}
-                  nextExName={tracked[exIdx + 1].name}
-                  activeTimer={restTimer}
-                  onStartTimer={startRestTimer}
-                  onAdjustTimer={adjustRestTimer}
-                  onStopTimer={stopRestTimer}
-                />
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
 
         <AddExerciseInline onAdd={addExercise} />
       </div>
