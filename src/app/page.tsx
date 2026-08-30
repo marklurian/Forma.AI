@@ -2471,7 +2471,7 @@ function ExerciseLibraryTab({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Comprehensive Fitness Dashboard Component
+   Minimalist Executive Fitness Dashboard
    ═══════════════════════════════════════════════════════════════ */
 function DashboardTab({
   onNavigateTab,
@@ -2514,80 +2514,74 @@ function DashboardTab({
         });
       });
     });
-    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4);
+    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3);
   }, [exerciseHistory]);
 
   const spotlightExercises = useMemo(() => {
-    const ids = ["lib-bench-press", "lib-back-squat", "lib-romanian-deadlift", "lib-lat-pulldown"];
-    return EXERCISE_LIBRARY.filter((ex) => ids.includes(ex.id)).slice(0, 4);
+    const ids = ["lib-bench-press", "lib-back-squat", "lib-lat-pulldown"];
+    return EXERCISE_LIBRARY.filter((ex) => ids.includes(ex.id)).slice(0, 3);
   }, []);
 
   const weeklySchedule = useMemo(() => {
     const daysConfig = [
-      { dayKey: 1, day: "Mon", title: "Upper Push", duration: "48m", color: "text-sky-300" },
-      { dayKey: 2, day: "Tue", title: "Pull Power", duration: "52m", color: "text-teal-300" },
-      { dayKey: 3, day: "Wed", title: "Active Recovery", duration: "25m", color: "text-cyan-300" },
-      { dayKey: 4, day: "Thu", title: "Legs & Core", duration: "55m", color: "text-emerald-300" },
-      { dayKey: 5, day: "Fri", title: "Push Hypertrophy", duration: "45m", color: "text-sky-300" },
-      { dayKey: 6, day: "Sat", title: "Power Conditioning", duration: "50m", color: "text-indigo-300" },
-      { dayKey: 0, day: "Sun", title: "Rest & Mobility", duration: "Recovery", color: "text-slate-400" },
+      { dayKey: 1, day: "Mon", title: "Push", duration: "48m" },
+      { dayKey: 2, day: "Tue", title: "Pull", duration: "52m" },
+      { dayKey: 3, day: "Wed", title: "Recovery", duration: "25m" },
+      { dayKey: 4, day: "Thu", title: "Legs", duration: "55m" },
+      { dayKey: 5, day: "Fri", title: "Upper", duration: "45m" },
+      { dayKey: 6, day: "Sat", title: "Conditioning", duration: "50m" },
+      { dayKey: 0, day: "Sun", title: "Mobility", duration: "Active" },
     ];
 
-    const todayDay = new Date().getDay(); // 0 is Sunday, 1 is Monday, ... 6 is Saturday
-    // Convert 0 (Sun) to 7 for straightforward Mon(1) - Sun(7) microcycle comparison
+    const todayDay = new Date().getDay(); // 0 is Sunday
     const normalizedToday = todayDay === 0 ? 7 : todayDay;
 
     return daysConfig.map((item) => {
       const normalizedDay = item.dayKey === 0 ? 7 : item.dayKey;
       let status: "completed" | "today" | "upcoming";
-      let displayTitle = item.title;
-      let displayDuration = item.duration;
-
       if (normalizedDay < normalizedToday) {
         status = "completed";
       } else if (normalizedDay === normalizedToday) {
         status = "today";
-        displayTitle = todayDay === 0 ? "Sunday Session / Mobility" : `${item.day}'s Routine`;
-        displayDuration = "Ready";
       } else {
         status = "upcoming";
-        displayDuration = "Scheduled";
       }
-
       return {
         day: item.day,
-        title: displayTitle,
-        duration: displayDuration,
+        title: item.title,
+        duration: item.duration,
         status,
-        color: status === "today" ? "text-white" : item.color,
       };
     });
   }, []);
 
+  // Top 4 curated templates for quick launch
+  const topTemplates = useMemo(() => {
+    const list = [...userTemplates, ...EXAMPLE_TEMPLATES];
+    return list.slice(0, 4);
+  }, [userTemplates]);
+
   return (
-    <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-6">
-      {/* ── 1. Hero / Header with Live Greeting & CTAs ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-1">
-        <div>
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300 mb-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38bdf8]" />
-            <span>Performance Intelligence</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+    <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-5">
+      {/* ── 1. Compact Header Bar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
             Training <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Command Center</span>
           </h1>
-          <p className="mt-1 text-xs text-slate-400 max-w-xl">
-            Live telemetry, weekly volume consistency, recovery tracking, and high-velocity workout launchers.
-          </p>
+          <span className="liquid-pill hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-sky-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38bdf8]" />
+            <span>Active Cycle</span>
+          </span>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onQuickStart}
-            className="flex items-center gap-2 rounded-2xl bg-white/10 hover:bg-white/15 px-4 py-2.5 text-xs font-bold text-white border border-white/15 transition-all shadow-md active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-bold text-slate-200 border border-white/10 transition-all active:scale-95"
           >
-            <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+            <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
             </svg>
             <span>+ Quick Workout</span>
@@ -2596,9 +2590,9 @@ function DashboardTab({
           <button
             type="button"
             onClick={() => onNavigateTab("ai")}
-            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 px-4.5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-sky-500/25 transition-all hover:opacity-95 active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-sky-500/20 hover:opacity-95 transition-opacity active:scale-95"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
             </svg>
             <span>AI Studio</span>
@@ -2606,333 +2600,249 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* ── 2. Smart AI Training Cue Banner ── */}
-      <div className="liquid-glass relative overflow-hidden rounded-3xl p-5 border border-sky-400/20 bg-gradient-to-r from-sky-950/30 via-slate-900/60 to-cyan-950/20 shadow-xl">
-        <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
-          <div className="flex items-start gap-3.5">
-            <span className="liquid-pill flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-cyan-300 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.508 1.333 1.508 2.316V18" />
-              </svg>
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-cyan-400">AI Daily Training Cue</p>
-                <span className="liquid-pill text-[9px] font-bold px-2 py-0.2 rounded-full text-slate-300">Phase 2: Overload</span>
+      {/* ── 2. Unified Streamlined 4-Stat Strip ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Streak */}
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Consistency</span>
+            <span className="text-[10px] font-bold text-sky-400">92%</span>
+          </div>
+          <div className="mt-1">
+            <span className="text-2xl font-black text-white">5</span>
+            <span className="text-xs font-bold text-sky-400 ml-1">Day Streak</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">4 sessions logged this week</p>
+        </div>
+
+        {/* Weight */}
+        <div
+          onClick={() => onNavigateTab("metrics")}
+          className="liquid-glass liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Weight</span>
+            <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-bold text-teal-300 rounded">BMI 23.8</span>
+          </div>
+          <div className="mt-1">
+            <span className="text-2xl font-black text-white">{latestMetric ? latestMetric.weight : "175.4"}</span>
+            <span className="text-xs font-bold text-teal-400 ml-1">lbs</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            {weightDelta !== 0 ? `${weightDelta > 0 ? "+" : ""}${weightDelta} lbs baseline` : "Baseline calibrated"}
+          </p>
+        </div>
+
+        {/* Volume Time */}
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Volume Time</span>
+            <span className="text-[10px] font-bold text-cyan-300">93%</span>
+          </div>
+          <div className="mt-1">
+            <span className="text-2xl font-black text-white">225</span>
+            <span className="text-xs font-bold text-cyan-400 ml-1">mins</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">Target: 240 mins / week</p>
+        </div>
+
+        {/* Split */}
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Muscle Split</span>
+            <span className="text-[10px] font-bold text-emerald-400">Optimal</span>
+          </div>
+          <div className="mt-1">
+            <span className="text-base font-black text-white">Push / Pull / Legs</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">35% Push • 35% Pull • 30% Legs</p>
+        </div>
+      </div>
+
+      {/* ── 3. Combined Microcycle Tracker & AI Training Cue ── */}
+      <div className="liquid-glass rounded-2xl p-4 border border-white/10 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-extrabold text-white">Weekly Microcycle</span>
+            <span className="text-[10px] text-slate-400">• Mon to Sun</span>
+          </div>
+          <button
+            type="button"
+            onClick={onQuickStart}
+            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1"
+          >
+            <span>Start Today&apos;s Workout</span>
+            <span>→</span>
+          </button>
+        </div>
+
+        {/* 7-Day Microcycle Strip */}
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+          {weeklySchedule.map((item, idx) => (
+            <div
+              key={idx}
+              className={`rounded-xl p-2 sm:p-2.5 text-center border transition-all ${
+                item.status === "today"
+                  ? "border-cyan-400/70 bg-cyan-950/40 ring-1 ring-cyan-400/40 shadow-sm"
+                  : item.status === "completed"
+                  ? "border-sky-500/30 bg-sky-950/20"
+                  : "border-white/5 bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-[11px] font-bold text-white">{item.day}</span>
+                {item.status === "completed" && (
+                  <span className="text-cyan-400 text-[9px] font-black">✓</span>
+                )}
+                {item.status === "today" && (
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                )}
               </div>
-              <p className="text-sm font-semibold text-slate-100 mt-0.5">
-                Target +2.5 lbs or +1 rep on your primary compound lifts today. Prioritize 2–3 minutes rest between sets for maximum motor unit recruitment.
+              <p className={`text-[10px] font-bold mt-1 truncate ${item.status === "today" ? "text-cyan-300 font-extrabold" : "text-slate-400"}`}>
+                {item.title}
               </p>
             </div>
+          ))}
+        </div>
+
+        {/* Slim AI Cue Footer */}
+        <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-300">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="liquid-pill px-1.5 py-0.2 rounded text-[9px] font-bold text-cyan-300 uppercase shrink-0">
+              AI Cue
+            </span>
+            <p className="text-[11px] text-slate-300 truncate font-medium">
+              Overload phase: target +2.5 lbs or +1 rep on primary compound movements. Rest 2–3 min between sets.
+            </p>
           </div>
           <button
             type="button"
             onClick={() => onNavigateTab("ai")}
-            className="self-start sm:self-center shrink-0 text-xs font-bold text-sky-300 hover:text-white flex items-center gap-1 transition-colors px-3.5 py-2 liquid-pill rounded-xl"
+            className="text-[10px] font-bold text-sky-400 hover:text-white shrink-0 ml-2"
           >
-            <span>Custom Routine</span>
-            <span>→</span>
+            Custom Routine →
           </button>
         </div>
       </div>
 
-      {/* ── 3. 4 KPI Metrics Glass Cards ── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1: Consistency & Streak */}
-        <div className="liquid-glass rounded-3xl p-5 border border-white/10 space-y-3 relative overflow-hidden group hover:border-sky-400/40 transition-all">
+      {/* ── 4. Main Two-Column Hub (Workouts on Left, Telemetry on Right) ── */}
+      <div className="grid gap-5 lg:grid-cols-12 items-start">
+        {/* Left Column (7 cols): Quick Launch Blueprints */}
+        <div className="lg:col-span-7 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Consistency</span>
-            <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-300">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-              </svg>
-            </span>
-          </div>
-          <div>
-            <p className="text-3xl font-black tracking-tight text-white">5-Day <span className="text-sky-400 text-lg font-bold">Streak</span></p>
-            <p className="text-[11px] font-semibold text-slate-300 mt-1">4 Workouts Completed this week</p>
-          </div>
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-400">
-            <span>Adherence</span>
-            <span className="font-bold text-sky-300">92% On-Track</span>
-          </div>
-        </div>
-
-        {/* Card 2: Body Weight & Trend */}
-        <div
-          onClick={() => onNavigateTab("metrics")}
-          className="liquid-glass liquid-glass-interactive cursor-pointer rounded-3xl p-5 border border-white/10 space-y-3 relative overflow-hidden group hover:border-teal-400/40 transition-all"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Weight</span>
-            <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-teal-300">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97ZM5.25 4.97c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L7.87 4.97M5.25 4.97c-1.01.143-2.01.317-3 .52m3-.52L2.63 15.696c-.122.499.106 1.028.589 1.202.628.226 1.305.352 2.031.352.726 0 1.403-.126 2.031-.352.483-.174.711-.703.59-1.202L5.25 4.97Z" />
-              </svg>
-            </span>
-          </div>
-          <div>
-            <p className="text-3xl font-black tracking-tight text-white">
-              {latestMetric ? `${latestMetric.weight}` : "175.4"}{" "}
-              <span className="text-teal-400 text-lg font-bold">lbs</span>
-            </p>
-            <p className="text-[11px] font-semibold text-slate-300 mt-1">
-              {weightDelta !== 0 ? `${weightDelta > 0 ? "+" : ""}${weightDelta} lbs vs baseline` : "Baseline calibrated"}
-            </p>
-          </div>
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-400">
-            <span>BMI Status</span>
-            <span className="font-bold text-teal-300">23.8 (Normal)</span>
-          </div>
-        </div>
-
-        {/* Card 3: Training Volume & Time */}
-        <div className="liquid-glass rounded-3xl p-5 border border-white/10 space-y-3 relative overflow-hidden group hover:border-cyan-400/40 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Volume Time</span>
-            <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-cyan-300">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
-            </span>
-          </div>
-          <div>
-            <p className="text-3xl font-black tracking-tight text-white">
-              225 <span className="text-cyan-400 text-lg font-bold">mins</span>
-            </p>
-            <div className="mt-2 relative">
-              <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-sky-400 to-cyan-400 rounded-full" style={{ width: "93%" }} />
-              </div>
-            </div>
-          </div>
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-400">
-            <span>Target: 240m</span>
-            <span className="font-bold text-cyan-300">93% Complete</span>
-          </div>
-        </div>
-
-        {/* Card 4: Muscle Split Distribution */}
-        <div className="liquid-glass rounded-3xl p-5 border border-white/10 space-y-3 relative overflow-hidden group hover:border-sky-400/40 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Split Balance</span>
-            <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-300">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
-              </svg>
-            </span>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] font-bold text-white">
-              <span>Push / Chest & Shoulders</span>
-              <span className="text-sky-300">35%</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-bold text-white">
-              <span>Pull / Back & Biceps</span>
-              <span className="text-teal-300">35%</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-bold text-white">
-              <span>Legs & Posterior Chain</span>
-              <span className="text-cyan-300">30%</span>
-            </div>
-          </div>
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-400">
-            <span>Muscle Symmetry</span>
-            <span className="font-bold text-emerald-300">Optimized</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 4. 7-Day Consistency & Activity Strip ── */}
-      <div className="liquid-glass rounded-3xl p-5 border border-white/10 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-extrabold text-white">7-Day Consistency Tracker</h3>
-            <p className="text-xs text-slate-400">Track workout completion across the current microcycle</p>
-          </div>
-          <span className="liquid-pill text-[10px] font-bold px-2.5 py-1 text-sky-300 rounded-lg">
-            Week 34 • Active Cycle
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-          {weeklySchedule.map((item, idx) => (
-            <div
-              key={idx}
-              className={`rounded-2xl p-3.5 flex flex-col justify-between border transition-all ${
-                item.status === "today"
-                  ? "border-cyan-400/60 bg-cyan-950/30 ring-1 ring-cyan-400/40 shadow-lg shadow-cyan-500/10"
-                  : item.status === "completed"
-                  ? "border-sky-500/30 bg-sky-950/15"
-                  : "border-white/5 bg-white/[0.02]"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-white">{item.day}</span>
-                {item.status === "completed" && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">
-                    ✓
-                  </span>
-                )}
-                {item.status === "today" && (
-                  <span className="flex h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8] animate-pulse" />
-                )}
-                {item.status === "upcoming" && (
-                  <span className="text-[10px] text-slate-500 font-semibold">REST</span>
-                )}
-              </div>
-
-              <div className="mt-3">
-                <p className={`text-xs font-extrabold truncate ${item.color}`}>{item.title}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{item.duration}</p>
-              </div>
-
-              {item.status === "today" && (
-                <button
-                  type="button"
-                  onClick={onQuickStart}
-                  className="mt-3 w-full py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-[10px] font-bold text-white shadow hover:opacity-90 transition-opacity"
-                >
-                  Start Now
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 5. Quick Launch Blueprints Deck ── */}
-      <div className="space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-extrabold text-white">Quick Launch Blueprints</h3>
-            <p className="text-xs text-slate-400">Launch proven resistance protocols in a single click</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onNavigateTab("templates")}
-            className="text-xs font-bold text-sky-400 hover:text-white transition-colors"
-          >
-            All Templates ({userTemplates.length + EXAMPLE_TEMPLATES.length}) →
-          </button>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {EXAMPLE_TEMPLATES.map((tmpl) => (
-            <div
-              key={tmpl.id}
-              className="liquid-glass liquid-glass-interactive rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3.5 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="liquid-pill px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300 rounded-md">
-                    {tmpl.category}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono font-semibold">{tmpl.exercises.length} Ex</span>
-                </div>
-                <h4 className="text-base font-extrabold text-white mt-2.5">{tmpl.name}</h4>
-                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
-                  {tmpl.exercises.map((e) => e.name).slice(0, 3).join(" • ")}...
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onStartTemplate(tmpl)}
-                className="w-full rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 py-2.5 text-xs font-bold text-white shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-1.5"
-              >
-                <span>Launch Workout</span>
-                <span>→</span>
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 6. Two-Column Row: Spotlight Exercises + Recent Activity Stream ── */}
-      <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* Spotlight Exercises (7 cols) */}
-        <div className="lg:col-span-7 space-y-3.5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-extrabold text-white">Exercise Directory Spotlight</h3>
-              <p className="text-xs text-slate-400">Popular movements with video guides and plate calculators</p>
-            </div>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Quick Launch Routines</h3>
             <button
               type="button"
-              onClick={() => onNavigateTab("exercises")}
-              className="text-xs font-bold text-sky-400 hover:text-white transition-colors"
+              onClick={() => onNavigateTab("templates")}
+              className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors"
             >
-              Explore 77 Exercises A–Z →
+              All Templates ({userTemplates.length + EXAMPLE_TEMPLATES.length}) →
             </button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {spotlightExercises.map((ex) => (
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {topTemplates.map((tmpl) => (
               <div
-                key={ex.id}
-                onClick={() => onSelectExercise(ex)}
-                className="liquid-glass liquid-glass-interactive cursor-pointer rounded-2xl p-4 border border-white/10 hover:border-cyan-400/40 transition-all space-y-2.5 group"
+                key={tmpl.id}
+                className="liquid-glass rounded-2xl p-3.5 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
               >
-                <div className="flex items-center justify-between">
-                  <span className="liquid-pill px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300 rounded">
-                    {ex.bodyPart}
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400 group-hover:text-cyan-300 transition-colors">
-                    Guide & Demo →
-                  </span>
-                </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                    {ex.name}
+                  <div className="flex items-center justify-between">
+                    <span className="liquid-pill px-2 py-0.5 text-[9px] font-bold uppercase text-sky-300 rounded">
+                      {tmpl.category}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">{tmpl.exercises.length} Exercises</span>
+                  </div>
+                  <h4 className="text-sm font-extrabold text-white mt-2 group-hover:text-sky-300 transition-colors">
+                    {tmpl.name}
                   </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Target: {ex.primaryMuscle}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                    {tmpl.exercises.map((e) => e.name).slice(0, 3).join(", ")}
+                  </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => onStartTemplate(tmpl)}
+                  className="mt-3 w-full py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1"
+                >
+                  <span>Start Workout</span>
+                  <span>→</span>
+                </button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Recent Performance Logs (5 cols) */}
-        <div className="lg:col-span-5 space-y-3.5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-extrabold text-white">Recent Performance</h3>
-              <p className="text-xs text-slate-400">Latest recorded sets & lifts</p>
+        {/* Right Column (5 cols): Activity Stream & Quick Guides */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Recent Performance */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Recent Performance</h3>
+              <button
+                type="button"
+                onClick={() => onNavigateTab("metrics")}
+                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors"
+              >
+                Full Analytics →
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab("metrics")}
-              className="text-xs font-bold text-sky-400 hover:text-white transition-colors"
-            >
-              Full Analytics →
-            </button>
+
+            <div className="liquid-glass rounded-2xl p-3 border border-white/10 space-y-1.5">
+              {allSessions.length === 0 ? (
+                <div className="py-4 text-center text-xs text-slate-400">
+                  No recorded lifts yet. Start a session to see telemetry!
+                </div>
+              ) : (
+                allSessions.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/5 px-2.5 py-2 text-xs"
+                  >
+                    <div>
+                      <p className="font-bold text-white text-[11px]">{s.exName}</p>
+                      <p className="font-mono text-[9px] text-slate-400">{s.date}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-sky-300 text-[11px]">
+                        {s.maxWeight > 0 ? `${s.maxWeight} ${s.unit}` : "Bodyweight"}
+                      </p>
+                      <p className="text-[9px] text-slate-400">{s.setsCount} sets</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="liquid-glass rounded-3xl p-4.5 border border-white/10 space-y-2.5">
-            {allSessions.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
-                No sets recorded yet. Start a session or log an exercise to see live telemetry!
-              </div>
-            ) : (
-              allSessions.map((s) => (
+          {/* Quick Exercise Spotlight */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Exercise Library Spotlight</h3>
+              <button
+                type="button"
+                onClick={() => onNavigateTab("exercises")}
+                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors"
+              >
+                A–Z Library (77) →
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5">
+              {spotlightExercises.map((ex) => (
                 <div
-                  key={s.id}
-                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-3 text-xs"
+                  key={ex.id}
+                  onClick={() => onSelectExercise(ex)}
+                  className="liquid-glass liquid-glass-interactive cursor-pointer rounded-xl p-2 border border-white/10 text-center hover:border-cyan-400/40 transition-all group"
                 >
-                  <div>
-                    <p className="font-bold text-white">{s.exName}</p>
-                    <p className="font-mono text-[10px] text-slate-400">{s.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sky-300">{s.maxWeight > 0 ? `${s.maxWeight} ${s.unit}` : "Bodyweight"}</p>
-                    <p className="text-[10px] text-slate-400">{s.setsCount} sets recorded</p>
-                  </div>
+                  <p className="text-[11px] font-extrabold text-white group-hover:text-cyan-300 truncate transition-colors">
+                    {ex.name}
+                  </p>
+                  <span className="text-[9px] font-semibold text-slate-400 block mt-0.5">{ex.bodyPart}</span>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
         </div>
       </div>
