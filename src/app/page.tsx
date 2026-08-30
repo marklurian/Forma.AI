@@ -3060,10 +3060,6 @@ function DashboardTab({
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
             Training <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Command Center</span>
           </h1>
-          <span className="liquid-pill hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-sky-300 animate-float">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#38bdf8]" />
-            <span>Active Cycle</span>
-          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -3951,7 +3947,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={resetHome}
-                      className="liquid-pill flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-300 hover:text-white transition-all rounded-full"
+                      className="liquid-pill flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-300 hover:text-white transition-all rounded-full button-press"
                     >
                       <svg className="h-3.5 w-3.5 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -3966,12 +3962,7 @@ export default function Home() {
                       <span className="text-[11px] font-bold uppercase tracking-wider">{formatTime(elapsedSeconds)}</span>
                     </div>
                   </div>
-                ) : (
-                  <div className="liquid-pill flex items-center gap-2 rounded-full px-3 py-1 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />
-                    <span className="text-[11px] font-semibold text-slate-300">Studio Ready</span>
-                  </div>
-                )}
+                ) : null}
               </div>
             </div>
           </header>
