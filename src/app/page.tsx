@@ -2522,15 +2522,47 @@ function DashboardTab({
     return EXERCISE_LIBRARY.filter((ex) => ids.includes(ex.id)).slice(0, 4);
   }, []);
 
-  const weeklySchedule = [
-    { day: "Mon", title: "Upper Push", duration: "48m", status: "completed", date: "Aug 24", color: "text-sky-300" },
-    { day: "Tue", title: "Pull Power", duration: "52m", status: "completed", date: "Aug 25", color: "text-teal-300" },
-    { day: "Wed", title: "Active Recovery", duration: "25m", status: "completed", date: "Aug 26", color: "text-cyan-300" },
-    { day: "Thu", title: "Legs & Core", duration: "55m", status: "completed", date: "Aug 27", color: "text-emerald-300" },
-    { day: "Fri", title: "Push Hypertrophy", duration: "45m", status: "completed", date: "Aug 28", color: "text-sky-300" },
-    { day: "Sat", title: "Today's Routine", duration: "Ready", status: "today", date: "Aug 29", color: "text-white" },
-    { day: "Sun", title: "Rest & Mobility", duration: "Scheduled", status: "upcoming", date: "Aug 30", color: "text-slate-400" },
-  ];
+  const weeklySchedule = useMemo(() => {
+    const daysConfig = [
+      { dayKey: 1, day: "Mon", title: "Upper Push", duration: "48m", color: "text-sky-300" },
+      { dayKey: 2, day: "Tue", title: "Pull Power", duration: "52m", color: "text-teal-300" },
+      { dayKey: 3, day: "Wed", title: "Active Recovery", duration: "25m", color: "text-cyan-300" },
+      { dayKey: 4, day: "Thu", title: "Legs & Core", duration: "55m", color: "text-emerald-300" },
+      { dayKey: 5, day: "Fri", title: "Push Hypertrophy", duration: "45m", color: "text-sky-300" },
+      { dayKey: 6, day: "Sat", title: "Power Conditioning", duration: "50m", color: "text-indigo-300" },
+      { dayKey: 0, day: "Sun", title: "Rest & Mobility", duration: "Recovery", color: "text-slate-400" },
+    ];
+
+    const todayDay = new Date().getDay(); // 0 is Sunday, 1 is Monday, ... 6 is Saturday
+    // Convert 0 (Sun) to 7 for straightforward Mon(1) - Sun(7) microcycle comparison
+    const normalizedToday = todayDay === 0 ? 7 : todayDay;
+
+    return daysConfig.map((item) => {
+      const normalizedDay = item.dayKey === 0 ? 7 : item.dayKey;
+      let status: "completed" | "today" | "upcoming";
+      let displayTitle = item.title;
+      let displayDuration = item.duration;
+
+      if (normalizedDay < normalizedToday) {
+        status = "completed";
+      } else if (normalizedDay === normalizedToday) {
+        status = "today";
+        displayTitle = todayDay === 0 ? "Sunday Session / Mobility" : `${item.day}'s Routine`;
+        displayDuration = "Ready";
+      } else {
+        status = "upcoming";
+        displayDuration = "Scheduled";
+      }
+
+      return {
+        day: item.day,
+        title: displayTitle,
+        duration: displayDuration,
+        status,
+        color: status === "today" ? "text-white" : item.color,
+      };
+    });
+  }, []);
 
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-6">
