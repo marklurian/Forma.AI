@@ -859,34 +859,16 @@ function MinSecRestInput({
   }
 
   return (
-    <div className="inline-flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => onChange(Math.max(5, seconds - 30))}
-        className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/5 hover:bg-white/15 text-sky-300 button-press"
-        title="Lessen rest by 30 seconds"
-      >
-        -30s
-      </button>
-      <input
-        type="text"
-        value={textVal}
-        onChange={(e) => setTextVal(e.target.value)}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        className="liquid-input w-12 text-center rounded-lg px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none border-cyan-500/30"
-        placeholder="1:00"
-        title="Type rest duration (e.g. 1:00, 2:00, 2:30, 3:00)"
-      />
-      <button
-        type="button"
-        onClick={() => onChange(Math.min(900, seconds + 30))}
-        className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/5 hover:bg-white/15 text-sky-300 button-press"
-        title="Add 30 seconds to rest"
-      >
-        +30s
-      </button>
-    </div>
+    <input
+      type="text"
+      value={textVal}
+      onChange={(e) => setTextVal(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      className="liquid-input w-12 text-center rounded-lg px-1 py-0.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none border-cyan-500/30"
+      placeholder="1:00"
+      title="Type rest duration (e.g. 1:00, 2:00, 2:30, 3:00)"
+    />
   );
 }
 
