@@ -3626,7 +3626,7 @@ export default function Home() {
             COLLAPSIBLE SIDEBAR (Desktop)
            ═══════════════════════════════════════════════════════════ */}
         <aside
-          className={`hidden lg:flex flex-col border-r border-sky-400/[0.12] bg-[#040914]/90 backdrop-blur-2xl transition-all duration-300 z-40 sticky top-0 h-screen ${
+          className={`hidden lg:flex flex-col border-r border-sky-400/[0.12] bg-[#040914]/90 backdrop-blur-2xl transition-all duration-300 z-40 sticky top-0 h-screen overflow-x-hidden overflow-y-auto no-scrollbar select-none ${
             sidebarCollapsed ? "w-20 p-3" : "w-64 p-5"
           }`}
         >
@@ -3713,7 +3713,7 @@ export default function Home() {
           </div>
 
           {/* Navigation Items */}
-          <div className="flex-1 space-y-1.5 py-3 overflow-y-auto">
+          <div className="flex-1 space-y-1.5 py-3 overflow-y-auto overflow-x-hidden no-scrollbar">
             {!sidebarCollapsed && (
               <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                 Navigation
@@ -3730,15 +3730,15 @@ export default function Home() {
                   className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition-all button-press ${
                     active
                       ? "bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600 text-white shadow-md shadow-sky-500/25 border border-white/20 animate-scale-in"
-                      : "text-slate-300 hover:text-white hover:bg-white/[0.05] hover:translate-x-1.5"
+                      : "text-slate-300 hover:text-white hover:bg-white/[0.06]"
                   } ${sidebarCollapsed ? "justify-center px-2" : ""}`}
                   title={item.label}
                 >
-                  <span className={`transition-transform duration-200 group-hover:scale-110 ${active ? "text-white" : "text-sky-400 group-hover:text-cyan-300"}`}>
+                  <span className={`transition-transform duration-200 group-hover:scale-110 group-hover:translate-x-0.5 ${active ? "text-white" : "text-sky-400 group-hover:text-cyan-300"}`}>
                     {item.icon}
                   </span>
                   {!sidebarCollapsed && (
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 transition-transform duration-200 group-hover:translate-x-0.5">
                       <div className="flex items-center justify-between">
                         <span className="truncate">{item.label}</span>
                         {item.badge && (
@@ -3836,7 +3836,7 @@ export default function Home() {
                   <LiveDateTime />
                 </div>
 
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-1.5 pt-1 overflow-y-auto overflow-x-hidden no-scrollbar">
                   <p className="px-2 pb-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                     Navigation Menu
                   </p>

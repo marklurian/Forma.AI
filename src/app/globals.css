@@ -51,6 +51,31 @@ body {
   overflow-x: hidden;
 }
 
+/* Custom sleek scrollbar & hide horizontal scrollbars across app */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 0px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(144, 224, 239, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(144, 224, 239, 0.35);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  height: 0px;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom select arrow */
 select {
   -webkit-appearance: none;
