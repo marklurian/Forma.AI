@@ -1408,7 +1408,7 @@ function WorkoutSummary({
 
         <div className="mt-6 grid grid-cols-2 gap-2.5">
           {stats.map((s, i) => (
-            <div key={i} className="liquid-glass rounded-2xl p-3.5 text-center">
+            <div key={i} className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 text-center">
               <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.04] mb-1.5">
                 {s.icon}
               </div>
@@ -1453,7 +1453,7 @@ function WorkoutSummary({
         <button
           type="button"
           onClick={onClose}
-          className="liquid-glass liquid-glass-interactive mt-6 flex w-full items-center justify-center rounded-xl py-3 text-xs font-bold text-white transition-all active:scale-[0.98]"
+          className="mt-6 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 py-3 text-xs font-bold text-white shadow-xl transition-all hover:from-sky-400 hover:to-teal-300 active:scale-[0.98] button-press shimmer-hover animate-gradient-flow"
         >
           Return to Dashboard
         </button>
@@ -2753,7 +2753,7 @@ function ExerciseLibraryTab({
             <div
               key={ex.id}
               onClick={() => onSelectExercise(ex)}
-              className="liquid-glass card-hover-lift cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group"
+              className="liquid-glass card-hover-lift shimmer-hover cursor-pointer rounded-3xl p-5 border border-white/10 hover:border-sky-400/40 transition-all space-y-3 group button-press"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
@@ -2764,8 +2764,9 @@ function ExerciseLibraryTab({
                     {ex.category}
                   </span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-300 transition-colors">
-                  View Guide →
+                <span className="text-[10px] font-bold text-slate-400 group-hover:text-sky-300 transition-colors flex items-center gap-1">
+                  <span>View Guide</span>
+                  <span className="group-hover-arrow">→</span>
                 </span>
               </div>
 
@@ -2884,13 +2885,13 @@ function DashboardTab({
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-5">
       {/* ── 1. Compact Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-white/[0.06] animate-fade-in-down">
         <div className="flex items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
             Training <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Command Center</span>
           </h1>
-          <span className="liquid-pill hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-sky-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#38bdf8]" />
+          <span className="liquid-pill hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-sky-300 animate-float">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#38bdf8]" />
             <span>Active Cycle</span>
           </span>
         </div>
@@ -2899,7 +2900,7 @@ function DashboardTab({
           <button
             type="button"
             onClick={onQuickStart}
-            className="flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-bold text-slate-200 border border-white/10 transition-all active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-bold text-slate-200 border border-white/10 transition-all button-press shimmer-hover"
           >
             <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
@@ -2910,7 +2911,7 @@ function DashboardTab({
           <button
             type="button"
             onClick={() => onNavigateTab("ai")}
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-sky-500/20 hover:opacity-95 transition-opacity active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-sky-500/20 hover:opacity-95 transition-opacity button-press shimmer-hover"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
@@ -2923,7 +2924,7 @@ function DashboardTab({
       {/* ── 2. Unified Streamlined 4-Stat Strip (Staggered Animation) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Streak */}
-        <div className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Consistency</span>
             <span className="text-[10px] font-bold text-sky-400">92%</span>
@@ -2938,7 +2939,7 @@ function DashboardTab({
         {/* Weight */}
         <div
           onClick={() => onNavigateTab("metrics")}
-          className="liquid-glass card-hover-lift liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
+          className="liquid-glass card-hover-lift shimmer-hover liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Weight</span>
@@ -2954,7 +2955,7 @@ function DashboardTab({
         </div>
 
         {/* Volume Time */}
-        <div className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Volume Time</span>
             <span className="text-[10px] font-bold text-cyan-300">93%</span>
@@ -2967,7 +2968,7 @@ function DashboardTab({
         </div>
 
         {/* Split */}
-        <div className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Muscle Split</span>
             <span className="text-[10px] font-bold text-emerald-400">Optimal</span>
@@ -2989,10 +2990,10 @@ function DashboardTab({
           <button
             type="button"
             onClick={onQuickStart}
-            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1 button-press"
+            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1 button-press group"
           >
             <span>Start Today&apos;s Workout</span>
-            <span>→</span>
+            <span className="group-hover-arrow">→</span>
           </button>
         </div>
 
@@ -3001,7 +3002,7 @@ function DashboardTab({
           {weeklySchedule.map((item, idx) => (
             <div
               key={idx}
-              className={`rounded-xl p-2 sm:p-2.5 text-center border card-hover-lift ${
+              className={`rounded-xl p-2 sm:p-2.5 text-center border card-hover-lift button-press ${
                 item.status === "today"
                   ? "border-cyan-400/70 bg-cyan-950/40 ring-1 ring-cyan-400/40 shadow-sm shadow-cyan-500/20"
                   : item.status === "completed"
@@ -3028,7 +3029,7 @@ function DashboardTab({
         {/* Slim AI Cue Footer */}
         <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-300">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="liquid-pill px-1.5 py-0.2 rounded text-[9px] font-bold text-cyan-300 uppercase shrink-0">
+            <span className="liquid-pill px-1.5 py-0.2 rounded text-[9px] font-bold text-cyan-300 uppercase shrink-0 animate-subtle-pulse">
               AI Cue
             </span>
             <p className="text-[11px] text-slate-300 truncate font-medium">
@@ -3038,9 +3039,10 @@ function DashboardTab({
           <button
             type="button"
             onClick={() => onNavigateTab("ai")}
-            className="text-[10px] font-bold text-sky-400 hover:text-white shrink-0 ml-2 button-press"
+            className="text-[10px] font-bold text-sky-400 hover:text-white shrink-0 ml-2 button-press flex items-center gap-1 group"
           >
-            Custom Routine →
+            <span>Custom Routine</span>
+            <span className="group-hover-arrow">→</span>
           </button>
         </div>
       </div>
@@ -3054,9 +3056,10 @@ function DashboardTab({
             <button
               type="button"
               onClick={() => onNavigateTab("templates")}
-              className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors"
+              className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors group flex items-center gap-1"
             >
-              All Templates ({userTemplates.length + EXAMPLE_TEMPLATES.length}) →
+              <span>All Templates ({userTemplates.length + EXAMPLE_TEMPLATES.length})</span>
+              <span className="group-hover-arrow">→</span>
             </button>
           </div>
 
@@ -3064,7 +3067,7 @@ function DashboardTab({
             {topTemplates.map((tmpl) => (
               <div
                 key={tmpl.id}
-                className="liquid-glass card-hover-lift rounded-2xl p-3.5 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
+                className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -3084,10 +3087,10 @@ function DashboardTab({
                 <button
                   type="button"
                   onClick={() => onStartTemplate(tmpl)}
-                  className="mt-3 w-full py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-xs font-bold transition-all button-press flex items-center justify-center gap-1"
+                  className="mt-3 w-full py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-xs font-bold transition-all button-press flex items-center justify-center gap-1 group/btn"
                 >
                   <span>Start Workout</span>
-                  <span>→</span>
+                  <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
                 </button>
               </div>
             ))}
@@ -3103,9 +3106,10 @@ function DashboardTab({
               <button
                 type="button"
                 onClick={() => onNavigateTab("metrics")}
-                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors"
+                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors group flex items-center gap-1"
               >
-                Full Analytics →
+                <span>Full Analytics</span>
+                <span className="group-hover-arrow">→</span>
               </button>
             </div>
 
@@ -3118,7 +3122,7 @@ function DashboardTab({
                 allSessions.map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/5 px-2.5 py-2 text-xs card-hover-lift"
+                    className="flex items-center justify-between rounded-xl bg-white/[0.02] border border-white/5 px-2.5 py-2 text-xs card-hover-lift transition-all hover:bg-white/[0.05]"
                   >
                     <div>
                       <p className="font-bold text-white text-[11px]">{s.exName}</p>
@@ -3143,9 +3147,10 @@ function DashboardTab({
               <button
                 type="button"
                 onClick={() => onNavigateTab("exercises")}
-                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors"
+                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors group flex items-center gap-1"
               >
-                A–Z Library (77) →
+                <span>A–Z Library (77)</span>
+                <span className="group-hover-arrow">→</span>
               </button>
             </div>
 
@@ -3154,7 +3159,7 @@ function DashboardTab({
                 <div
                   key={ex.id}
                   onClick={() => onSelectExercise(ex)}
-                  className="liquid-glass card-hover-lift cursor-pointer rounded-xl p-2 border border-white/10 text-center hover:border-cyan-400/40 transition-all group button-press"
+                  className="liquid-glass card-hover-lift shimmer-hover cursor-pointer rounded-xl p-2 border border-white/10 text-center hover:border-cyan-400/40 transition-all group button-press"
                 >
                   <p className="text-[11px] font-extrabold text-white group-hover:text-cyan-300 truncate transition-colors">
                     {ex.name}
@@ -3525,12 +3530,12 @@ export default function Home() {
             <button
               type="button"
               onClick={quickStart}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-cyan-400 active:scale-[0.98] ${
+              className={`group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:from-sky-400 hover:to-teal-300 active:scale-[0.98] button-press shimmer-hover animate-gradient-flow ${
                 sidebarCollapsed ? "px-2 text-[10px]" : "px-4"
               }`}
               title="Start workout session"
             >
-              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <svg className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-12" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
               </svg>
               {!sidebarCollapsed && <span>Quick Workout</span>}
@@ -3552,22 +3557,24 @@ export default function Home() {
                   key={item.key}
                   type="button"
                   onClick={() => navigateToTab(item.key)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition-all ${
+                  className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition-all button-press ${
                     active
-                      ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25 border border-white/20"
-                      : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600 text-white shadow-md shadow-sky-500/25 border border-white/20 animate-scale-in"
+                      : "text-slate-300 hover:text-white hover:bg-white/[0.05] hover:translate-x-1.5"
                   } ${sidebarCollapsed ? "justify-center px-2" : ""}`}
                   title={item.label}
                 >
-                  <span className={`${active ? "text-white" : "text-sky-400"}`}>{item.icon}</span>
+                  <span className={`transition-transform duration-200 group-hover:scale-110 ${active ? "text-white" : "text-sky-400 group-hover:text-cyan-300"}`}>
+                    {item.icon}
+                  </span>
                   {!sidebarCollapsed && (
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <span className="truncate">{item.label}</span>
                         {item.badge && (
                           <span
-                            className={`liquid-pill px-1.5 py-0.2 text-[9px] font-semibold rounded ${
-                              active ? "bg-white/20 text-white" : "text-sky-300"
+                            className={`liquid-pill px-1.5 py-0.2 text-[9px] font-semibold rounded transition-colors ${
+                              active ? "bg-white/20 text-white" : "text-sky-300 group-hover:text-white"
                             }`}
                           >
                             {item.badge}
@@ -3575,8 +3582,8 @@ export default function Home() {
                         )}
                       </div>
                       <span
-                        className={`text-[10px] block truncate mt-0.5 ${
-                          active ? "text-sky-100 font-medium" : "text-slate-400 font-normal"
+                        className={`text-[10px] block truncate mt-0.5 transition-colors ${
+                          active ? "text-sky-100 font-medium" : "text-slate-400 font-normal group-hover:text-slate-300"
                         }`}
                       >
                         {item.sub}
@@ -3858,7 +3865,7 @@ export default function Home() {
                           <button
                             type="submit"
                             disabled={!isReady || loading}
-                            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition-all hover:from-sky-400 hover:to-cyan-400 disabled:opacity-40 active:scale-[0.98]"
+                            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 px-5 py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition-all hover:from-sky-400 hover:to-teal-300 disabled:opacity-40 active:scale-[0.98] button-press shimmer-hover animate-gradient-flow"
                             style={isReady && !loading ? { animation: "pulse-glow 3s ease-in-out infinite" } : undefined}
                           >
                             {loading ? (
@@ -3867,7 +3874,7 @@ export default function Home() {
                               </>
                             ) : (
                               <>
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <svg className="h-4 w-4 transition-transform group-hover:rotate-12" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                                 </svg>
                                 Build 3-Day Plan
@@ -3879,7 +3886,7 @@ export default function Home() {
 
                       <div className="lg:col-span-6 space-y-4">
                         {error && (
-                          <div className="liquid-glass flex items-start gap-3 rounded-2xl border-red-500/30 bg-red-950/20 p-4 text-xs">
+                          <div className="liquid-glass flex items-start gap-3 rounded-2xl border-red-500/30 bg-red-950/20 p-4 text-xs animate-scale-in">
                             <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                             </svg>
@@ -3891,7 +3898,7 @@ export default function Home() {
                         )}
 
                         {loading && (
-                          <div className="liquid-glass rounded-3xl p-8">
+                          <div className="liquid-glass rounded-3xl p-8 animate-fade-in">
                             <div className="flex items-center gap-3">
                               <Spinner className="h-5 w-5 text-sky-400" />
                               <div>
@@ -3908,7 +3915,7 @@ export default function Home() {
                         )}
 
                         {plan && !loading && (
-                          <div className="space-y-3 animate-[fadeInUp_0.3s_ease-out_both]">
+                          <div className="space-y-3 animate-fade-in-up">
                             <div className="flex items-center justify-between px-1">
                               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-400">Custom 3-Day Plan Generated</p>
                               <span className="text-[10px] text-slate-400">Tap a day to begin</span>
@@ -3917,15 +3924,15 @@ export default function Home() {
                               <button
                                 key={i}
                                 onClick={() => startFromPlan(i)}
-                                className="liquid-glass liquid-glass-interactive group w-full overflow-hidden rounded-2xl p-5 text-left transition-all"
+                                className={`liquid-glass card-hover-lift shimmer-hover group w-full overflow-hidden rounded-2xl p-5 text-left transition-all button-press animate-fade-in-up stagger-${i + 1}`}
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="liquid-pill rounded-lg px-2.5 py-1 text-xs font-bold text-sky-300 border-sky-500/30">
                                     {day.day}
                                   </span>
-                                  <div className="flex items-center gap-1.5 text-xs font-bold text-sky-300 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+                                  <div className="flex items-center gap-1.5 text-xs font-bold text-sky-300 opacity-80 group-hover:opacity-100 transition-all">
                                     <span>Start Workout</span>
-                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                    <svg className="h-3.5 w-3.5 group-hover-arrow" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                                     </svg>
                                   </div>

@@ -201,11 +201,33 @@ input[type="number"] {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -217,7 +239,7 @@ input[type="number"] {
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(6px);
+    transform: scale(0.95) translateY(8px);
   }
   to {
     opacity: 1;
@@ -231,9 +253,31 @@ input[type="number"] {
     opacity: 1;
   }
   50% {
-    transform: scale(1.08);
-    opacity: 0.85;
+    transform: scale(1.06);
+    opacity: 0.9;
   }
+}
+
+@keyframes floatSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes shimmerSlide {
+  0% { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(250%) skewX(-15deg); }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
 }
 
 @keyframes ambientGlow {
@@ -241,16 +285,25 @@ input[type="number"] {
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.15);
   }
   50% {
-    box-shadow: 0 0 25px rgba(56, 189, 248, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 28px rgba(56, 189, 248, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
   }
 }
 
+/* Animation Utilities */
 .animate-fade-in {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-scale-in {
@@ -261,6 +314,10 @@ input[type="number"] {
   animation: checkPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+.animate-float {
+  animation: floatSubtle 4s ease-in-out infinite;
+}
+
 .animate-ambient-glow {
   animation: ambientGlow 4s ease-in-out infinite;
 }
@@ -269,28 +326,71 @@ input[type="number"] {
   animation: subtlePulse 2.5s ease-in-out infinite;
 }
 
-/* Stagger entrance delays for lists and grids */
-.stagger-1 { animation-delay: 40ms; }
-.stagger-2 { animation-delay: 80ms; }
-.stagger-3 { animation-delay: 120ms; }
-.stagger-4 { animation-delay: 160ms; }
-.stagger-5 { animation-delay: 200ms; }
+.animate-pulse-ring {
+  animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
-/* Interactive tactile lifts */
+.animate-gradient-flow {
+  background-size: 200% 200%;
+  animation: gradientShift 5s ease infinite;
+}
+
+/* Shimmer Highlight on Hover */
+.shimmer-hover {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-hover::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  transform: translateX(-150%) skewX(-15deg);
+  pointer-events: none;
+}
+.shimmer-hover:hover::after {
+  animation: shimmerSlide 0.75s ease-in-out forwards;
+}
+
+/* Stagger entrance delays for lists and grids */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+
+/* Interactive tactile lifts and transforms */
 .card-hover-lift {
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
 }
 .card-hover-lift:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -10px rgba(0, 168, 232, 0.25);
 }
 .card-hover-lift:active {
   transform: translateY(0px) scale(0.99);
 }
 
 .button-press {
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease, box-shadow 0.15s ease;
 }
 .button-press:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+}
+
+/* Smooth Icon Hover Micro-Interactions */
+.group-hover-icon {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.group:hover .group-hover-icon {
+  transform: scale(1.12) rotate(4deg);
+}
+
+.group-hover-arrow {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.group:hover .group-hover-arrow {
+  transform: translateX(4px);
 }
 
