@@ -1618,6 +1618,7 @@ function LogMetricModal({
 }) {
   const todayStr = new Date().toISOString().split("T")[0];
   const [date, setDate] = useState(todayStr);
+  const [unit, setUnit] = useState<"lbs" | "kg">("lbs");
   const [weight, setWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [calories, setCalories] = useState("");
@@ -1627,11 +1628,12 @@ function LogMetricModal({
     if (isNaN(w) || w <= 0) return;
     const bf = parseFloat(bodyFat) || 0;
     const cal = parseInt(calories) || 0;
+    const weightInLbs = unit === "kg" ? Math.round(w * 2.20462 * 10) / 10 : w;
 
     onSave({
       id: uid(),
       date,
-      weight: w,
+      weight: weightInLbs,
       bodyFat: bf,
       calories: cal,
     });
@@ -1660,11 +1662,47 @@ function LogMetricModal({
           </div>
 
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Body Weight (lbs) *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                Body Weight ({unit}) *
+              </label>
+              <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (unit === "kg" && weight) {
+                      const num = parseFloat(weight);
+                      if (!isNaN(num)) setWeight((num * 2.20462).toFixed(1));
+                    }
+                    setUnit("lbs");
+                  }}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                    unit === "lbs" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  lbs
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (unit === "lbs" && weight) {
+                      const num = parseFloat(weight);
+                      if (!isNaN(num)) setWeight((num / 2.20462).toFixed(1));
+                    }
+                    setUnit("kg");
+                  }}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                    unit === "kg" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  kg
+                </button>
+              </div>
+            </div>
             <input
               type="number"
               step="0.1"
-              placeholder="e.g. 172.5"
+              placeholder={unit === "lbs" ? "e.g. 172.5" : "e.g. 78.2"}
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               className="liquid-input mt-1 w-full rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none"
@@ -1947,38 +1985,88 @@ function MetricsChart({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BMI Calculator Component (Ocean Colors)
+   BMI Calculator Component (Independent Height & Weight Unit Selection)
    ═══════════════════════════════════════════════════════════════ */
 function BmiCalculator() {
-  const [unit, setUnit] = useState<"imperial" | "metric">("imperial");
+  const [heightUnit, setHeightUnit] = useState<"ft_in" | "cm">("ft_in");
+  const [weightUnit, setWeightUnit] = useState<"lbs" | "kg">("lbs");
+
   const [feet, setFeet] = useState(5);
   const [inches, setInches] = useState(10);
-  const [weightLbs, setWeightLbs] = useState(170);
-
   const [heightCm, setHeightCm] = useState(178);
+
+  const [weightLbs, setWeightLbs] = useState(170);
   const [weightKg, setWeightKg] = useState(77);
 
+  // Bidirectional Height Unit Switch Handler
+  function handleHeightUnitChange(nextUnit: "ft_in" | "cm") {
+    if (nextUnit === heightUnit) return;
+    if (nextUnit === "cm") {
+      const totalIn = feet * 12 + inches;
+      const convertedCm = Math.round(totalIn * 2.54);
+      setHeightCm(Math.max(100, Math.min(240, convertedCm)));
+    } else {
+      const totalIn = Math.round(heightCm / 2.54);
+      const f = Math.floor(totalIn / 12);
+      const i = totalIn % 12;
+      setFeet(Math.max(3, Math.min(7, f)));
+      setInches(Math.max(0, Math.min(11, i)));
+    }
+    setHeightUnit(nextUnit);
+  }
+
+  // Bidirectional Weight Unit Switch Handler
+  function handleWeightUnitChange(nextUnit: "lbs" | "kg") {
+    if (nextUnit === weightUnit) return;
+    if (nextUnit === "kg") {
+      const convertedKg = Math.round((weightLbs / 2.20462) * 10) / 10;
+      setWeightKg(Math.max(30, Math.min(200, convertedKg)));
+    } else {
+      const convertedLbs = Math.round(weightKg * 2.20462);
+      setWeightLbs(Math.max(60, Math.min(450, convertedLbs)));
+    }
+    setWeightUnit(nextUnit);
+  }
+
+  function applyPreset(hUnit: "ft_in" | "cm", wUnit: "lbs" | "kg") {
+    handleHeightUnitChange(hUnit);
+    handleWeightUnitChange(wUnit);
+  }
+
   const { bmi, category, color, idealRange, progressRatio } = useMemo(() => {
+    // Height in meters
+    let heightM = 0;
+    if (heightUnit === "ft_in") {
+      const totalInches = feet * 12 + inches;
+      heightM = (totalInches * 2.54) / 100;
+    } else {
+      heightM = heightCm / 100;
+    }
+
+    // Weight in kg
+    let weightInKg = 0;
+    if (weightUnit === "lbs") {
+      weightInKg = weightLbs * 0.45359237;
+    } else {
+      weightInKg = weightKg;
+    }
+
     let bmiVal = 0;
     let idealMin = 0;
     let idealMax = 0;
-    let unitLabel = "";
+    const unitLabel = weightUnit;
 
-    if (unit === "imperial") {
-      const totalInches = feet * 12 + inches;
-      if (totalInches > 0) {
-        bmiVal = (weightLbs / (totalInches * totalInches)) * 703;
-        idealMin = Math.round((18.5 * totalInches * totalInches) / 703);
-        idealMax = Math.round((24.9 * totalInches * totalInches) / 703);
-        unitLabel = "lbs";
-      }
-    } else {
-      const heightM = heightCm / 100;
-      if (heightM > 0) {
-        bmiVal = weightKg / (heightM * heightM);
-        idealMin = Math.round(18.5 * heightM * heightM * 10) / 10;
-        idealMax = Math.round(24.9 * heightM * heightM * 10) / 10;
-        unitLabel = "kg";
+    if (heightM > 0) {
+      bmiVal = weightInKg / (heightM * heightM);
+      const idealMinKg = 18.5 * (heightM * heightM);
+      const idealMaxKg = 24.9 * (heightM * heightM);
+
+      if (weightUnit === "lbs") {
+        idealMin = Math.round(idealMinKg * 2.20462);
+        idealMax = Math.round(idealMaxKg * 2.20462);
+      } else {
+        idealMin = Math.round(idealMinKg * 10) / 10;
+        idealMax = Math.round(idealMaxKg * 10) / 10;
       }
     }
 
@@ -2013,127 +2101,209 @@ function BmiCalculator() {
       idealRange: `${idealMin} – ${idealMax} ${unitLabel}`,
       progressRatio: Math.min(Math.max(ratio, 0.03), 0.97),
     };
-  }, [unit, feet, inches, weightLbs, heightCm, weightKg]);
+  }, [heightUnit, weightUnit, feet, inches, heightCm, weightLbs, weightKg]);
 
   return (
     <div className="liquid-glass rounded-3xl p-6 shadow-2xl space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Card Header & Quick Presets */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
         <div className="flex items-center gap-2.5">
           <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-400">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
             </svg>
           </span>
-          <h3 className="text-sm font-extrabold text-white">Body Mass Index (BMI)</h3>
+          <div>
+            <h3 className="text-sm font-extrabold text-white">Body Mass Index (BMI)</h3>
+            <p className="text-[10px] text-slate-400">Mix & match height & weight units freely</p>
+          </div>
         </div>
 
-        <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
+        {/* Quick Presets */}
+        <div className="liquid-pill flex items-center rounded-xl p-0.5 border-white/10 shrink-0 self-start sm:self-auto">
           <button
             type="button"
-            onClick={() => setUnit("imperial")}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
-              unit === "imperial" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
+            onClick={() => applyPreset("ft_in", "lbs")}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all button-press ${
+              heightUnit === "ft_in" && weightUnit === "lbs"
+                ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
+                : "text-slate-400 hover:text-white"
             }`}
           >
-            Imperial
+            Imperial (ft + lbs)
           </button>
           <button
             type="button"
-            onClick={() => setUnit("metric")}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
-              unit === "metric" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
+            onClick={() => applyPreset("ft_in", "kg")}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all button-press ${
+              heightUnit === "ft_in" && weightUnit === "kg"
+                ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
+                : "text-slate-400 hover:text-white"
             }`}
           >
-            Metric
+            Mixed (ft + kg)
+          </button>
+          <button
+            type="button"
+            onClick={() => applyPreset("cm", "kg")}
+            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all button-press ${
+              heightUnit === "cm" && weightUnit === "kg"
+                ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Metric (cm + kg)
           </button>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {unit === "imperial" ? (
-          <>
-            <div>
-              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
-                <span>Height</span>
-                <span className="font-mono text-cyan-300">{feet} ft {inches} in</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">Feet</label>
-                  <input
-                    type="range"
-                    min={4}
-                    max={7}
-                    value={feet}
-                    onChange={(e) => setFeet(parseInt(e.target.value))}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">Inches</label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={11}
-                    value={inches}
-                    onChange={(e) => setInches(parseInt(e.target.value))}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                </div>
-              </div>
+      <div className="space-y-5">
+        {/* ── 1. Height Controls ── */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Height</span>
+              <span className="font-mono text-xs font-black text-cyan-300 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20">
+                {heightUnit === "ft_in" ? `${feet} ft ${inches} in` : `${heightCm} cm`}
+              </span>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
-                <span>Weight</span>
-                <span className="font-mono text-sky-300">{weightLbs} lbs</span>
-              </div>
-              <input
-                type="range"
-                min={80}
-                max={350}
-                value={weightLbs}
-                onChange={(e) => setWeightLbs(parseInt(e.target.value))}
-                className="w-full accent-cyan-400 cursor-pointer"
-              />
+            {/* Height Unit Segmented Toggle */}
+            <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
+              <button
+                type="button"
+                onClick={() => handleHeightUnitChange("ft_in")}
+                className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md transition-all button-press ${
+                  heightUnit === "ft_in" ? "bg-cyan-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                ft / in
+              </button>
+              <button
+                type="button"
+                onClick={() => handleHeightUnitChange("cm")}
+                className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md transition-all button-press ${
+                  heightUnit === "cm" ? "bg-cyan-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                cm
+              </button>
             </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
-                <span>Height</span>
-                <span className="font-mono text-cyan-300">{heightCm} cm</span>
+          </div>
+
+          {heightUnit === "ft_in" ? (
+            <div className="grid grid-cols-2 gap-4 pt-1">
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Feet</span>
+                  <span className="text-white font-mono">{feet} ft</span>
+                </div>
+                <input
+                  type="range"
+                  min={3}
+                  max={7}
+                  value={feet}
+                  onChange={(e) => setFeet(parseInt(e.target.value, 10))}
+                  className="w-full accent-cyan-400 cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Inches</span>
+                  <span className="text-white font-mono">{inches} in</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={11}
+                  value={inches}
+                  onChange={(e) => setInches(parseInt(e.target.value, 10))}
+                  className="w-full accent-cyan-400 cursor-pointer"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1 pt-1">
+              <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span>Centimeters</span>
+                <span className="text-white font-mono">{heightCm} cm</span>
               </div>
               <input
                 type="range"
-                min={120}
-                max={220}
+                min={100}
+                max={240}
                 value={heightCm}
-                onChange={(e) => setHeightCm(parseInt(e.target.value))}
+                onChange={(e) => setHeightCm(parseInt(e.target.value, 10))}
                 className="w-full accent-cyan-400 cursor-pointer"
               />
             </div>
+          )}
+        </div>
 
-            <div>
-              <div className="flex justify-between text-xs font-bold text-slate-300 mb-1.5">
-                <span>Weight</span>
-                <span className="font-mono text-sky-300">{weightKg} kg</span>
-              </div>
+        {/* ── 2. Weight Controls ── */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Weight</span>
+              <span className="font-mono text-xs font-black text-sky-300 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20">
+                {weightUnit === "lbs" ? `${weightLbs} lbs` : `${weightKg} kg`}
+              </span>
+            </div>
+
+            {/* Weight Unit Segmented Toggle */}
+            <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
+              <button
+                type="button"
+                onClick={() => handleWeightUnitChange("lbs")}
+                className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md transition-all button-press ${
+                  weightUnit === "lbs" ? "bg-sky-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                lbs
+              </button>
+              <button
+                type="button"
+                onClick={() => handleWeightUnitChange("kg")}
+                className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md transition-all button-press ${
+                  weightUnit === "kg" ? "bg-sky-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                kg
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1 pt-1">
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <span>{weightUnit === "lbs" ? "Pounds (lbs)" : "Kilograms (kg)"}</span>
+              <span className="text-white font-mono">{weightUnit === "lbs" ? `${weightLbs} lbs` : `${weightKg} kg`}</span>
+            </div>
+            {weightUnit === "lbs" ? (
               <input
                 type="range"
-                min={35}
-                max={160}
-                value={weightKg}
-                onChange={(e) => setWeightKg(parseInt(e.target.value))}
-                className="w-full accent-cyan-400 cursor-pointer"
+                min={60}
+                max={450}
+                value={weightLbs}
+                onChange={(e) => setWeightLbs(parseInt(e.target.value, 10))}
+                className="w-full accent-sky-400 cursor-pointer"
               />
-            </div>
-          </>
-        )}
+            ) : (
+              <input
+                type="range"
+                min={30}
+                max={200}
+                value={weightKg}
+                onChange={(e) => setWeightKg(parseFloat(e.target.value))}
+                className="w-full accent-sky-400 cursor-pointer"
+              />
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="liquid-glass rounded-2xl p-4.5 border-white/10 space-y-3.5">
+      {/* ── 3. Calculated BMI Score Card ── */}
+      <div className="liquid-glass rounded-2xl p-4.5 border-white/10 space-y-3.5 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Calculated Score</p>
@@ -2143,7 +2313,7 @@ function BmiCalculator() {
             <span className={`liquid-pill inline-block rounded-lg px-2.5 py-1 text-xs font-bold ${color}`}>
               {category}
             </span>
-            <p className="text-[10px] text-slate-400 mt-1">Ideal: {idealRange}</p>
+            <p className="text-[10px] text-slate-400 mt-1 font-medium">Ideal: {idealRange}</p>
           </div>
         </div>
 
