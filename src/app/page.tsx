@@ -415,43 +415,253 @@ function LiveDateTime({ compact = false }: { compact?: boolean }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Clean Select Field
+   Fitness Goal Interactive Selector Card
    ═══════════════════════════════════════════════════════════════ */
-function SelectField({
-  id,
-  label,
+const GOAL_OPTIONS = [
+  { id: "Build Muscle", title: "Build Muscle", sub: "Hypertrophy & Mass" },
+  { id: "Strength", title: "Strength & Power", sub: "Heavy Compounds" },
+  { id: "Get Lean", title: "Get Lean & Cut", sub: "Fat Loss & Definition" },
+  { id: "Lose Weight", title: "Lose Weight", sub: "High Calorie Burn" },
+];
+
+function FitnessGoalSelector({
   value,
   onChange,
-  options,
-  placeholder,
 }: {
-  id: string;
-  label: string;
   value: string;
   onChange: (v: string) => void;
-  options: readonly string[];
-  placeholder: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
-        {label}
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400 block">
+        1. Target Goal
       </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="liquid-input w-full cursor-pointer rounded-xl px-3.5 py-2.5 pr-10 text-sm text-foreground transition-all focus:outline-none"
-      >
-        <option value="" disabled className="bg-[#061226] text-slate-500">
-          {placeholder}
-        </option>
-        {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-[#061226] text-slate-200">
-            {opt}
-          </option>
-        ))}
-      </select>
+      <div className="grid grid-cols-2 gap-2">
+        {GOAL_OPTIONS.map((g) => {
+          const selected = value === g.id;
+          return (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => onChange(g.id)}
+              className={`text-left p-3 rounded-2xl border transition-all ${
+                selected
+                  ? "border-sky-400/60 bg-gradient-to-r from-sky-600/30 to-cyan-600/30 shadow-md shadow-sky-500/20 ring-1 ring-sky-400/50"
+                  : "liquid-glass border-white/10 hover:border-sky-400/30 hover:bg-white/[0.04]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-extrabold ${selected ? "text-white" : "text-slate-200"}`}>
+                  {g.title}
+                </span>
+                {selected && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-cyan-400 text-slate-950 text-[10px] font-black">
+                    ✓
+                  </span>
+                )}
+              </div>
+              <p className={`text-[10px] mt-0.5 ${selected ? "text-sky-200 font-medium" : "text-slate-400"}`}>
+                {g.sub}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Experience Level Interactive Selector
+   ═══════════════════════════════════════════════════════════════ */
+const EXPERIENCE_OPTIONS = [
+  { id: "Beginner", title: "Beginner", sub: "0–1 yrs • Form Base" },
+  { id: "Intermediate", title: "Intermediate", sub: "1–3 yrs • Overload" },
+  { id: "Advanced", title: "Advanced", sub: "3+ yrs • High Volume" },
+];
+
+function ExperienceLevelSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400 block">
+        2. Experience Level
+      </label>
+      <div className="grid grid-cols-3 gap-2">
+        {EXPERIENCE_OPTIONS.map((exp) => {
+          const selected = value === exp.id;
+          return (
+            <button
+              key={exp.id}
+              type="button"
+              onClick={() => onChange(exp.id)}
+              className={`text-left p-2.5 rounded-2xl border transition-all ${
+                selected
+                  ? "border-cyan-400/60 bg-gradient-to-r from-sky-600/30 to-cyan-600/30 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400/50"
+                  : "liquid-glass border-white/10 hover:border-cyan-400/30 hover:bg-white/[0.04]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold ${selected ? "text-white" : "text-slate-200"}`}>
+                  {exp.title}
+                </span>
+                {selected && (
+                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-400 text-slate-950 text-[9px] font-black">
+                    ✓
+                  </span>
+                )}
+              </div>
+              <p className={`text-[9px] mt-0.5 line-clamp-2 ${selected ? "text-cyan-200 font-medium" : "text-slate-400"}`}>
+                {exp.sub}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Equipment Mix & Multi-Select Custom Builder
+   ═══════════════════════════════════════════════════════════════ */
+const EQUIPMENT_ITEMS = [
+  { id: "Barbell", label: "Barbell & Plates" },
+  { id: "Bodyweight", label: "Bodyweight / Calisthenics" },
+  { id: "Dumbbells", label: "Dumbbells" },
+  { id: "Pull-up Bar", label: "Pull-up Bar / Dips" },
+  { id: "Cable Machine", label: "Cables & Pulleys" },
+  { id: "Gym Machines", label: "Gym Machines" },
+  { id: "Kettlebell", label: "Kettlebells" },
+  { id: "Bench", label: "Adjustable Bench" },
+  { id: "Squat Rack", label: "Squat / Power Rack" },
+  { id: "Resistance Bands", label: "Resistance Bands" },
+];
+
+const EQUIPMENT_PRESETS = [
+  { label: "Barbell + Bodyweight", items: ["Barbell", "Bodyweight", "Pull-up Bar"] },
+  { label: "Dumbbells + Bodyweight", items: ["Dumbbells", "Bodyweight", "Pull-up Bar"] },
+  { label: "Barbell + Dumbbells + Bodyweight", items: ["Barbell", "Dumbbells", "Bodyweight", "Pull-up Bar", "Bench"] },
+  { label: "Full Commercial Gym", items: ["Barbell", "Dumbbells", "Bodyweight", "Cable Machine", "Gym Machines", "Pull-up Bar", "Bench", "Squat Rack"] },
+  { label: "Bodyweight Only", items: ["Bodyweight", "Pull-up Bar"] },
+];
+
+function EquipmentMixSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  // Parse comma-separated value into array
+  const selectedItems = useMemo(() => {
+    if (!value) return [];
+    return value.split(",").map((s) => s.trim()).filter(Boolean);
+  }, [value]);
+
+  function toggleItem(id: string) {
+    let updated: string[];
+    if (selectedItems.includes(id)) {
+      updated = selectedItems.filter((item) => item !== id);
+    } else {
+      updated = [...selectedItems, id];
+    }
+    onChange(updated.join(", "));
+  }
+
+  function applyPreset(items: string[]) {
+    onChange(items.join(", "));
+  }
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between">
+        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+          3. Available Equipment (Mix & Multi-Select)
+        </label>
+        <span className="text-[10px] font-semibold text-cyan-300">
+          {selectedItems.length > 0 ? `${selectedItems.length} selected` : "Select options"}
+        </span>
+      </div>
+
+      {/* Quick Mix Presets */}
+      <div>
+        <p className="text-[9px] uppercase font-bold text-slate-400 mb-1.5">Quick Presets</p>
+        <div className="flex flex-wrap gap-1.5">
+          {EQUIPMENT_PRESETS.map((preset) => {
+            const isMatch =
+              preset.items.length === selectedItems.length &&
+              preset.items.every((it) => selectedItems.includes(it));
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset.items)}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-xl transition-all ${
+                  isMatch
+                    ? "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20"
+                    : "liquid-pill text-slate-300 hover:text-white hover:border-sky-400/40"
+                }`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Interactive Equipment Multi-Select Chips */}
+      <div>
+        <p className="text-[9px] uppercase font-bold text-slate-400 mb-1.5">Customize Your Equipment Mix</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {EQUIPMENT_ITEMS.map((item) => {
+            const isSelected = selectedItems.includes(item.id);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => toggleItem(item.id)}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-semibold border transition-all ${
+                  isSelected
+                    ? "border-sky-400/60 bg-sky-950/40 text-white shadow-sm shadow-sky-500/20 ring-1 ring-sky-400/40"
+                    : "liquid-glass border-white/10 text-slate-300 hover:text-white hover:border-white/20"
+                }`}
+              >
+                <span className="truncate">{item.label}</span>
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md text-[9px] font-black transition-colors ${
+                    isSelected ? "bg-cyan-400 text-slate-950" : "border border-white/20 text-transparent"
+                  }`}
+                >
+                  ✓
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Active Selection Summary */}
+      {selectedItems.length > 0 && (
+        <div className="liquid-glass rounded-xl px-3 py-2 border-cyan-500/20 bg-cyan-950/15 flex items-center justify-between text-xs">
+          <div className="min-w-0 pr-2">
+            <span className="text-[9px] uppercase font-bold text-cyan-300 block">Active Mix</span>
+            <p className="font-semibold text-white truncate text-[11px]">{selectedItems.join(", ")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="text-[10px] text-slate-400 hover:text-red-400 transition-colors shrink-0 underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -3361,7 +3571,7 @@ export default function Home() {
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-12 items-start">
-                      <form id="workout-form" onSubmit={handleGenerate} className="lg:col-span-5">
+                      <form id="workout-form" onSubmit={handleGenerate} className="lg:col-span-6">
                         <div className="liquid-glass relative overflow-hidden rounded-3xl p-6 shadow-2xl">
                           <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
 
@@ -3377,10 +3587,10 @@ export default function Home() {
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Groq LLM</span>
                           </div>
 
-                          <div className="space-y-4">
-                            <SelectField id="fitness-goal" label="Target Goal" value={goal} onChange={setGoal} options={FITNESS_GOALS} placeholder="Select fitness goal…" />
-                            <SelectField id="experience-level" label="Experience Level" value={experience} onChange={setExperience} options={EXPERIENCE_LEVELS} placeholder="Select experience…" />
-                            <SelectField id="equipment" label="Equipment Available" value={equipment} onChange={setEquipment} options={EQUIPMENT_OPTIONS} placeholder="Select equipment…" />
+                          <div className="space-y-5">
+                            <FitnessGoalSelector value={goal} onChange={setGoal} />
+                            <ExperienceLevelSelector value={experience} onChange={setExperience} />
+                            <EquipmentMixSelector value={equipment} onChange={setEquipment} />
                           </div>
 
                           <button
@@ -3405,7 +3615,7 @@ export default function Home() {
                         </div>
                       </form>
 
-                      <div className="lg:col-span-7 space-y-4">
+                      <div className="lg:col-span-6 space-y-4">
                         {error && (
                           <div className="liquid-glass flex items-start gap-3 rounded-2xl border-red-500/30 bg-red-950/20 p-4 text-xs">
                             <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
