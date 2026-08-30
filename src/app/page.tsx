@@ -72,11 +72,11 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Chest & Shoulders",
     isExample: true,
     exercises: [
-      { name: "Barbell Bench Press", sets: 4, reps: "8-10" },
-      { name: "Overhead Dumbbell Press", sets: 3, reps: "8-10" },
+      { name: "Bench Press", sets: 4, reps: "8-10" },
+      { name: "Seated Shoulder Press", sets: 3, reps: "8-10" },
       { name: "Incline Dumbbell Press", sets: 3, reps: "10-12" },
-      { name: "Cable Lateral Raises", sets: 3, reps: "12-15" },
-      { name: "Tricep Rope Pushdowns", sets: 3, reps: "12-15" },
+      { name: "Lateral Raise", sets: 3, reps: "12-15" },
+      { name: "Tricep Pushdown", sets: 3, reps: "12-15" },
       { name: "Overhead Tricep Extension", sets: 3, reps: "10-12" },
     ],
   },
@@ -86,12 +86,12 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Back & Biceps",
     isExample: true,
     exercises: [
-      { name: "Barbell Deadlift", sets: 4, reps: "5-6" },
-      { name: "Chest-Supported Row", sets: 4, reps: "8-10" },
+      { name: "Deadlift", sets: 4, reps: "5-6" },
+      { name: "Bent-Over Row", sets: 4, reps: "8-10" },
       { name: "Lat Pulldown", sets: 3, reps: "8-10" },
-      { name: "Rear Delt Face Pulls", sets: 3, reps: "15-20" },
-      { name: "Incline Dumbbell Curl", sets: 3, reps: "10-12" },
-      { name: "Hammer Curls", sets: 3, reps: "10-12" },
+      { name: "Face Pull", sets: 3, reps: "15-20" },
+      { name: "Incline Curl", sets: 3, reps: "10-12" },
+      { name: "Hammer Curl", sets: 3, reps: "10-12" },
     ],
   },
   {
@@ -100,12 +100,12 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Lower Body",
     isExample: true,
     exercises: [
-      { name: "Barbell Back Squat", sets: 4, reps: "6-8" },
-      { name: "Romanian Deadlift", sets: 4, reps: "8-10" },
+      { name: "Back Squat", sets: 4, reps: "6-8" },
+      { name: "Romanian Deadlift (RDL)", sets: 4, reps: "8-10" },
       { name: "Bulgarian Split Squat", sets: 3, reps: "10 each" },
       { name: "Leg Extension", sets: 3, reps: "12-15" },
-      { name: "Seated Hamstring Curl", sets: 3, reps: "12-15" },
-      { name: "Standing Calf Raises", sets: 4, reps: "15-20" },
+      { name: "Seated Leg Curl", sets: 3, reps: "12-15" },
+      { name: "Standing Calf Raise", sets: 4, reps: "15-20" },
     ],
   },
   {
@@ -114,12 +114,12 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Complete Upper",
     isExample: true,
     exercises: [
-      { name: "Incline Barbell Bench", sets: 4, reps: "6-8" },
+      { name: "Incline Bench Press", sets: 4, reps: "6-8" },
       { name: "Pull-Ups", sets: 4, reps: "6-8" },
-      { name: "Standing Overhead Press", sets: 3, reps: "8-10" },
+      { name: "Overhead Press", sets: 3, reps: "8-10" },
       { name: "Seated Cable Row", sets: 3, reps: "10-12" },
-      { name: "Dumbbell Lateral Raise", sets: 3, reps: "12-15" },
-      { name: "Tricep Rope Pushdowns", sets: 3, reps: "10-12" },
+      { name: "Lateral Raise", sets: 3, reps: "12-15" },
+      { name: "Tricep Pushdown", sets: 3, reps: "10-12" },
     ],
   },
   {
@@ -128,11 +128,11 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Total Body",
     isExample: true,
     exercises: [
-      { name: "Barbell Back Squat", sets: 3, reps: "8-10" },
-      { name: "Barbell Bench Press", sets: 3, reps: "8-10" },
-      { name: "Barbell Bent-Over Row", sets: 3, reps: "8-10" },
-      { name: "Romanian Deadlift", sets: 3, reps: "10-12" },
-      { name: "Dumbbell Lateral Raise", sets: 3, reps: "12-15" },
+      { name: "Back Squat", sets: 3, reps: "8-10" },
+      { name: "Bench Press", sets: 3, reps: "8-10" },
+      { name: "Bent-Over Row", sets: 3, reps: "8-10" },
+      { name: "Romanian Deadlift (RDL)", sets: 3, reps: "10-12" },
+      { name: "Lateral Raise", sets: 3, reps: "12-15" },
       { name: "Hanging Leg Raise", sets: 3, reps: "12-15" },
     ],
   },
@@ -142,7 +142,7 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
     category: "Cardio & Stamina",
     isExample: true,
     exercises: [
-      { name: "Dumbbell Thrusters", sets: 4, reps: "12" },
+      { name: "Thrusters", sets: 4, reps: "12" },
       { name: "Push-Ups", sets: 4, reps: "15" },
       { name: "Mountain Climbers", sets: 4, reps: "40s" },
       { name: "Hanging Leg Raise", sets: 4, reps: "12" },
@@ -165,7 +165,7 @@ const SEEDED_METRICS: MetricEntry[] = [
 ];
 
 const SEEDED_EXERCISE_HISTORY: Record<string, ExerciseHistoryItem[]> = {
-  "lib-bench": [
+  "lib-bench-press": [
     {
       id: "h-b1",
       date: "2026-08-28",
@@ -188,7 +188,7 @@ const SEEDED_EXERCISE_HISTORY: Record<string, ExerciseHistoryItem[]> = {
       ]
     }
   ],
-  "lib-barbell-squat": [
+  "lib-back-squat": [
     {
       id: "h-s1",
       date: "2026-08-26",
