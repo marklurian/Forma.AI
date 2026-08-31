@@ -22,65 +22,102 @@ const ROTATING_PHRASES = [
 
 function RotatingHeadline() {
   const [index, setIndex] = useState(0);
-  const [animate, setAnimate] = useState(true);
-
-  // Extend with clone of first item for seamless infinite loop
-  const extendedPhrases = [...ROTATING_PHRASES, ROTATING_PHRASES[0]];
+  const [fade, setFade] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => {
-        if (prev >= ROTATING_PHRASES.length) {
-          return 1;
-        }
-        return prev + 1;
-      });
-    }, 3000);
+      // 1. Fade out
+      setFade(false);
+
+      // 2. Change phrase and Fade in after fade-out window
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % ROTATING_PHRASES.length);
+        setFade(true);
+      }, 450);
+    }, 3200);
 
     return () => clearInterval(interval);
   }, []);
 
-  // When reaching the clone, seamlessly reset to index 0 with no animation
-  useEffect(() => {
-    if (index === ROTATING_PHRASES.length) {
-      const timer = setTimeout(() => {
-        setAnimate(false);
-        setIndex(0);
-        setTimeout(() => setAnimate(true), 40);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [index]);
-
   return (
-    <span className="relative inline-flex items-center justify-center overflow-hidden h-[1.15em] sm:h-[1.2em] align-top px-1">
+    <span className="relative inline-flex items-center justify-center px-1">
+      {/* Razor-Sharp, High-Contrast Neon Cyan Headline with Zero Blur */}
       <span
-        className={`flex flex-col ${
-          animate
-            ? "transition-transform duration-700 ease-[cubic-bezier(0.65,0,0.35,1)]"
-            : "transition-none"
+        className={`inline-block font-black text-[#38bdf8] transition-all duration-400 ease-in-out whitespace-nowrap tracking-tight ${
+          fade
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-2"
         }`}
-        style={{
-          transform: `translateY(-${(index * 100) / extendedPhrases.length}%)`,
-          height: `${extendedPhrases.length * 100}%`,
-        }}
       >
-        {extendedPhrases.map((phrase, i) => {
-          const isActive =
-            i === index || (index === ROTATING_PHRASES.length && i === 0);
-          return (
-            <span
-              key={i}
-              className={`h-[1.15em] sm:h-[1.2em] flex items-center justify-center bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(56,189,248,0.4)] transition-opacity duration-500 whitespace-nowrap px-1 ${
-                isActive ? "opacity-100 scale-100" : "opacity-25 scale-95"
-              }`}
-            >
-              {phrase}
-            </span>
-          );
-        })}
+        {ROTATING_PHRASES[index]}
       </span>
     </span>
+  );
+}
+
+function ScrollReveal({
+  children,
+  animation = "fade-up",
+  delay = 0,
+  className = "",
+}: {
+  children: React.ReactNode;
+  animation?: "fade-up" | "fade-left" | "fade-right" | "zoom-in" | "glow";
+  delay?: number;
+  className?: string;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const getAnimationClass = () => {
+    if (!isVisible) {
+      switch (animation) {
+        case "fade-up":
+          return "opacity-0 translate-y-12 blur-sm";
+        case "fade-left":
+          return "opacity-0 -translate-x-12 blur-sm";
+        case "fade-right":
+          return "opacity-0 translate-x-12 blur-sm";
+        case "zoom-in":
+          return "opacity-0 scale-90 blur-sm";
+        case "glow":
+          return "opacity-0 scale-95 blur-md";
+        default:
+          return "opacity-0 translate-y-8";
+      }
+    }
+    return "opacity-100 translate-y-0 translate-x-0 scale-100 blur-none";
+  };
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        transitionDuration: "800ms",
+        transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+        transitionDelay: `${delay}ms`,
+      }}
+      className={`transition-all ${getAnimationClass()} ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -155,10 +192,12 @@ function InteractiveDeepDive() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all button-press ${
                 activeTab === "routine"
                   ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-                  : "text-slate-400 hover:text-white"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
-              <span>⚡</span>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
               <span>AI Architect</span>
             </button>
 
@@ -168,10 +207,12 @@ function InteractiveDeepDive() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all button-press ${
                 activeTab === "coach"
                   ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-                  : "text-slate-400 hover:text-white"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
-              <span>🤖</span>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.774-.954c.264-.954.512-1.928.484-2.903C3.654 15.656 3 13.918 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
               <span>Live Coach AI</span>
             </button>
 
@@ -181,10 +222,12 @@ function InteractiveDeepDive() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all button-press ${
                 activeTab === "telemetry"
                   ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-                  : "text-slate-400 hover:text-white"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
-              <span>📈</span>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
               <span>Telemetry Matrix</span>
             </button>
           </div>
@@ -207,7 +250,7 @@ function InteractiveDeepDive() {
                     className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                       selectedSplit === "ppl"
                         ? "bg-cyan-500/20 border border-cyan-400 text-cyan-200"
-                        : "bg-white/5 text-slate-400 border border-white/10 hover:text-white"
+                        : "bg-white/5 text-slate-300 border border-white/10 hover:text-white"
                     }`}
                   >
                     PPL Hypertrophy
@@ -218,7 +261,7 @@ function InteractiveDeepDive() {
                     className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                       selectedSplit === "upper"
                         ? "bg-cyan-500/20 border border-cyan-400 text-cyan-200"
-                        : "bg-white/5 text-slate-400 border border-white/10 hover:text-white"
+                        : "bg-white/5 text-slate-300 border border-white/10 hover:text-white"
                     }`}
                   >
                     Upper / Lower
@@ -229,7 +272,7 @@ function InteractiveDeepDive() {
                     className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                       selectedSplit === "full"
                         ? "bg-cyan-500/20 border border-cyan-400 text-cyan-200"
-                        : "bg-white/5 text-slate-400 border border-white/10 hover:text-white"
+                        : "bg-white/5 text-slate-300 border border-white/10 hover:text-white"
                     }`}
                   >
                     Full Body Power
@@ -250,7 +293,7 @@ function InteractiveDeepDive() {
                       </span>
                       <div className="min-w-0">
                         <p className="text-xs sm:text-sm font-black text-white truncate">{ex.name}</p>
-                        <p className="text-[10px] text-slate-400 truncate">{ex.muscle}</p>
+                        <p className="text-[10px] text-slate-300 truncate">{ex.muscle}</p>
                       </div>
                     </div>
 
@@ -258,7 +301,7 @@ function InteractiveDeepDive() {
                       <span className="px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-400/30 font-mono text-xs font-black text-sky-200">
                         {ex.sets}
                       </span>
-                      <span className="hidden sm:inline-block px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs text-slate-300">
+                      <span className="hidden sm:inline-block px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 font-mono text-xs text-slate-200">
                         {ex.load}
                       </span>
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold text-teal-300 bg-teal-500/15 border border-teal-400/30">
@@ -280,7 +323,7 @@ function InteractiveDeepDive() {
 
                 <div className="mt-4 space-y-3">
                   <div>
-                    <div className="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs font-bold text-slate-200 mb-1">
                       <span>Biomechanical Fit</span>
                       <span className="text-cyan-300 font-mono">{currentSplit.aiScore}</span>
                     </div>
@@ -294,8 +337,8 @@ function InteractiveDeepDive() {
                     <span className="text-xl font-black text-white font-mono">{currentSplit.volumeTonnage}</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-xs text-cyan-200 leading-relaxed">
-                    ✨ <strong className="text-white">AI Note:</strong> Frequency calibrated for 48h myofibrillar protein synthesis reset between overlapping motor units.
+                  <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-xs text-cyan-100 leading-relaxed">
+                    <span className="text-cyan-300 font-bold uppercase text-[10px] tracking-wider block mb-0.5">Note:</span> Frequency calibrated for 48h myofibrillar protein synthesis reset between overlapping motor units.
                   </div>
                 </div>
               </div>
@@ -317,14 +360,16 @@ function InteractiveDeepDive() {
             <div className="lg:col-span-2 rounded-2xl bg-[#030917]/90 border border-white/10 p-5 space-y-4 shadow-inner">
               <div className="flex items-center gap-3 pb-3 border-b border-white/[0.08]">
                 <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
-                  ✨
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.774-.954c.264-.954.512-1.928.484-2.903C3.654 15.656 3 13.918 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                  </svg>
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-white flex items-center gap-2">
                     <span>Coach Fostura Dialogue Simulation</span>
                     <span className="px-2 py-0.2 rounded text-[8px] font-bold text-cyan-300 bg-cyan-500/20">LIVE</span>
                   </h4>
-                  <p className="text-[10px] text-slate-400">Contextual sports nutritionist & biomechanics expert</p>
+                  <p className="text-[10px] text-slate-300">Contextual sports nutritionist & biomechanics expert</p>
                 </div>
               </div>
 
@@ -339,7 +384,7 @@ function InteractiveDeepDive() {
                   <div className="liquid-glass border border-cyan-400/30 text-slate-200 rounded-2xl rounded-tl-sm p-4 max-w-[88%] space-y-2 shadow-lg">
                     <p className="font-bold text-cyan-300 text-xs">Coach Fostura:</p>
                     <p>
-                      Looking at your past logs, you crushed <strong>190 lbs × 8 reps</strong> at RPE 8.0 last week with pristine bar velocity.
+                      Looking at your past logs, you crushed <strong className="text-white">190 lbs × 8 reps</strong> at RPE 8.0 last week with pristine bar velocity.
                     </p>
                     <p>
                       Today, let&apos;s apply <strong className="text-white">double progressive overload</strong>:
@@ -368,16 +413,22 @@ function InteractiveDeepDive() {
                 </p>
 
                 <div className="mt-4 space-y-2">
-                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-slate-300 flex items-center gap-2">
-                    <span>🥗</span>
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-slate-200 flex items-center gap-2">
+                    <svg className="h-3.5 w-3.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    </svg>
                     <span>Actionable high-protein meal recipes</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-slate-300 flex items-center gap-2">
-                    <span>⏱️</span>
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-slate-200 flex items-center gap-2">
+                    <svg className="h-3.5 w-3.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
                     <span>Scientifically timed rest intervals</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-slate-300 flex items-center gap-2">
-                    <span>⚡</span>
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-[11px] text-slate-200 flex items-center gap-2">
+                    <svg className="h-3.5 w-3.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                    </svg>
                     <span>Multi-turn contextual conversation memory</span>
                   </div>
                 </div>
@@ -401,23 +452,23 @@ function InteractiveDeepDive() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
                   <span className="text-[9px] uppercase font-bold text-slate-400">Total Tonnage</span>
-                  <p className="text-xl font-black text-white mt-1">18,450 lbs</p>
+                  <p className="text-xl font-black text-white mt-1 font-mono">18,450 lbs</p>
                   <p className="text-[10px] text-emerald-400 font-bold mt-0.5">↑ 12.4% vs last week</p>
                 </div>
                 <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
                   <span className="text-[9px] uppercase font-bold text-slate-400">Sets Completed</span>
-                  <p className="text-xl font-black text-cyan-300 mt-1">32 Sets</p>
+                  <p className="text-xl font-black text-cyan-300 mt-1 font-mono">32 Sets</p>
                   <p className="text-[10px] text-sky-300 font-bold mt-0.5">100% Target Hit</p>
                 </div>
                 <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
                   <span className="text-[9px] uppercase font-bold text-slate-400">Average RIR</span>
-                  <p className="text-xl font-black text-teal-300 mt-1">1.8 RIR</p>
+                  <p className="text-xl font-black text-teal-300 mt-1 font-mono">1.8 RIR</p>
                   <p className="text-[10px] text-teal-400 font-bold mt-0.5">Optimal Fatigue</p>
                 </div>
                 <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
                   <span className="text-[9px] uppercase font-bold text-slate-400">Active Streak</span>
-                  <p className="text-xl font-black text-amber-300 mt-1">5 Days</p>
-                  <p className="text-[10px] text-amber-400 font-bold mt-0.5">🔥 On Fire</p>
+                  <p className="text-xl font-black text-amber-300 mt-1 font-mono">5 Days</p>
+                  <p className="text-[10px] text-amber-400 font-bold mt-0.5">Consistent</p>
                 </div>
               </div>
 
@@ -437,7 +488,7 @@ function InteractiveDeepDive() {
 
                 <div className="space-y-2 pt-2">
                   <div>
-                    <div className="flex justify-between text-xs font-semibold text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs font-semibold text-slate-200 mb-1">
                       <span>Chest & Anterior Delts (Incline Bench)</span>
                       <span className="font-mono text-cyan-300">6,840 lbs (37%)</span>
                     </div>
@@ -447,7 +498,7 @@ function InteractiveDeepDive() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs font-semibold text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs font-semibold text-slate-200 mb-1">
                       <span>Back & Upper Latissimus (Cable Rows)</span>
                       <span className="font-mono text-sky-300">5,920 lbs (32%)</span>
                     </div>
@@ -457,7 +508,7 @@ function InteractiveDeepDive() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-xs font-semibold text-slate-300 mb-1">
+                    <div className="flex justify-between text-xs font-semibold text-slate-200 mb-1">
                       <span>Triceps & Medial Delts (Accessories)</span>
                       <span className="font-mono text-teal-300">5,690 lbs (31%)</span>
                     </div>
@@ -482,8 +533,10 @@ function InteractiveDeepDive() {
                 <div className="mt-4 p-3 rounded-xl bg-[#030914]/80 border border-white/10 space-y-1 text-xs">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Recent Milestone</span>
                   <p className="font-black text-white flex items-center gap-1.5 text-xs">
-                    <span>🏆</span>
-                    <span>Incline Bench: 195 lbs × 8 (New PR!)</span>
+                    <svg className="h-4 w-4 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.003 0H9.497m5.003 0A3.375 3.375 0 0 0 17.875 12V6.75A2.25 2.25 0 0 0 15.625 4.5h-7.25A2.25 2.25 0 0 0 6.125 6.75V12a3.375 3.375 0 0 0 3.372 3.375" />
+                    </svg>
+                    <span>Incline Bench: 195 lbs × 8 (New PR)</span>
                   </p>
                 </div>
               </div>
@@ -503,9 +556,294 @@ function InteractiveDeepDive() {
   );
 }
 
+function ComparisonShowcase() {
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "ai" | "progression" | "cost"
+  >("all");
+
+  const comparisonData = [
+    {
+      category: "ai",
+      feature: "Routine Generation",
+      traditional: {
+        title: "Static Cookie-Cutter PDFs",
+        desc: "Rigid templates that ignore individual muscle recovery, equipment access, or previous session fatigue.",
+      },
+      fostura: {
+        title: "Groq Llama 3.3 AI Architect",
+        desc: "Sub-second physiological periodization tailored to your exact target muscle focus, available gear, and recovery state.",
+        badge: "Adaptive",
+      },
+    },
+    {
+      category: "progression",
+      feature: "Progressive Overload",
+      traditional: {
+        title: "Manual Mental Math",
+        desc: "You must memorize previous sets and calculate target jumps manually, leading to premature plateaus.",
+      },
+      fostura: {
+        title: "Automated +5 lbs Overload Targets",
+        desc: "Prescriptive double-progression algorithms calculate your exact load and rep goals before you unrack the weight.",
+        badge: "Prescriptive",
+      },
+    },
+    {
+      category: "progression",
+      feature: "Form & Biomechanics",
+      traditional: {
+        title: "Blind Set Logging",
+        desc: "Zero real-time cues during sets; static stock illustrations that offer no practical bar-path or joint angle advice.",
+      },
+      fostura: {
+        title: "Live Contextual Biomechanical Cues",
+        desc: "Real-time actionable cues (e.g. elbow angles, controlled eccentrics) delivered right inside your active set logging HUD.",
+        badge: "Real-Time",
+      },
+    },
+    {
+      category: "progression",
+      feature: "Rest Interval Management",
+      traditional: {
+        title: "Basic Dumb Stopwatches",
+        desc: "Generic 60-second countdowns that treat heavy deadlifts the same as light bicep curls.",
+      },
+      fostura: {
+        title: "Metabolic ATP Timers",
+        desc: "Scientifically calibrated rest intervals based on movement intensity, motor unit recruitment, and target RIR.",
+        badge: "Calibrated",
+      },
+    },
+    {
+      category: "cost",
+      feature: "Cost & Access",
+      traditional: {
+        title: "Recurring Monthly Paywalls",
+        desc: "Basic logging, historical charts, and routine templates locked behind $15–$30/month subscription barriers.",
+      },
+      fostura: {
+        title: "Free Forever with Cloud Sync",
+        desc: "Unlimited AI generation, real-time telemetry, PR tracking, and encrypted Supabase cloud synchronization at no cost.",
+        badge: "Free Access",
+      },
+    },
+  ];
+
+  const filteredData =
+    selectedCategory === "all"
+      ? comparisonData
+      : comparisonData.filter((item) => item.category === selectedCategory);
+
+  return (
+    <section id="comparison" className="py-24 px-4 sm:px-8 max-w-7xl mx-auto z-10 relative">
+      {/* Header */}
+      <div className="text-center max-w-3xl mx-auto mb-16">
+        <span className="text-[11px] font-extrabold uppercase tracking-widest text-cyan-400 block mb-3">
+          FOSTURA VS. TRADITIONAL WORKOUT APPS
+        </span>
+        <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
+          Engineered for athletes who outgrew generic spreadsheets.
+        </h2>
+        <p className="text-sm sm:text-base text-slate-300 mt-4 leading-relaxed max-w-2xl mx-auto">
+          Most workout apps are just digitized spiral notebooks with expensive paywalls. Fostura is an active biomechanical intelligence system.
+        </p>
+
+        {/* Category Filter Chips */}
+        <div className="flex items-center justify-center gap-2 mt-8 flex-wrap">
+          {[
+            { id: "all", label: "All Comparisons" },
+            { id: "ai", label: "AI Routine Architecture" },
+            { id: "progression", label: "Live Overload & Form Cues" },
+            { id: "cost", label: "Cost & Cloud Freedom" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setSelectedCategory(tab.id as any)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all button-press ${
+                selectedCategory === tab.id
+                  ? "bg-cyan-500/25 text-cyan-200 border border-cyan-400/60 shadow-md shadow-cyan-500/20"
+                  : "bg-white/5 text-slate-400 border border-white/10 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Comparison Arena: Dual Side-by-Side Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        {/* Left Side: Traditional Workout Apps (Sleek Neutral Slate) */}
+        <div className="rounded-3xl p-6 sm:p-8 bg-slate-900/40 border border-white/10 backdrop-blur-2xl flex flex-col justify-between space-y-6">
+          <div>
+            <div className="flex items-center justify-between pb-6 border-b border-white/[0.08]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.06] border border-white/10 text-slate-400 text-sm font-bold">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-slate-200">The Traditional Way</h4>
+                  <p className="text-xs text-slate-400 font-medium">Standard Loggers & Cookie-Cutter Apps</p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-slate-400 text-[10px] font-bold">
+                Legacy Method
+              </span>
+            </div>
+
+            <div className="space-y-4 pt-6">
+              {filteredData.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                      {item.feature}
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08]">
+                      Manual
+                    </span>
+                  </div>
+                  <h5 className="text-sm font-bold text-slate-300">
+                    {item.traditional.title}
+                  </h5>
+                  <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                    {item.traditional.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-xs text-slate-400 flex items-center gap-3">
+            <svg className="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            <span>Creates tracking friction, plateaus, and unnecessary subscription overhead.</span>
+          </div>
+        </div>
+
+        {/* Right Side: The Fostura AI Advantage */}
+        <div className="relative rounded-3xl p-1 bg-gradient-to-b from-cyan-400/40 via-sky-500/15 to-transparent shadow-[0_0_50px_rgba(56,189,248,0.2)] flex flex-col">
+          <div className="rounded-[22px] bg-[#030c22]/95 border border-cyan-400/30 p-6 sm:p-8 backdrop-blur-2xl flex-1 flex flex-col justify-between space-y-6">
+            <div>
+              <div className="flex items-center justify-between pb-6 border-b border-cyan-400/20">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-sm font-bold shadow-[0_0_20px_rgba(56,189,248,0.35)]">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-black text-white flex items-center gap-2">
+                      <span>Fostura AI Studio</span>
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 text-[10px] font-extrabold">
+                        NEW
+                      </span>
+                    </h4>
+                    <p className="text-xs text-cyan-300 font-semibold">Active Biomechanical Intelligence</p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 text-[10px] font-extrabold shadow-sm shadow-cyan-500/20">
+                  The Modern Standard
+                </span>
+              </div>
+
+              <div className="space-y-4 pt-6">
+                {filteredData.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/30 to-sky-950/20 border border-cyan-400/30 hover:border-cyan-400/60 transition-all space-y-1.5 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">
+                        {item.feature}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 text-[10px] font-extrabold">
+                        {item.fostura.badge}
+                      </span>
+                    </div>
+                    <h5 className="text-sm font-black text-white flex items-center gap-2">
+                      <svg className="h-4 w-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                      <span>{item.fostura.title}</span>
+                    </h5>
+                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                      {item.fostura.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-cyan-950/60 border border-cyan-400/40 text-xs text-cyan-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+                <span className="font-bold">Zero guesswork. Scientifically optimized growth.</span>
+              </div>
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-400 text-[11px] font-black text-white shadow-md shadow-cyan-500/20 hover:scale-105 transition-transform"
+              >
+                Try Free →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Impact Pillars Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+        <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 text-center sm:text-left">
+          <div className="text-2xl font-mono font-black text-cyan-300">01. Sub-Second Speed</div>
+          <h5 className="text-base font-bold text-white">Instant AI Periodization</h5>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Generate complex periodized splits calibrated to your muscle focus and available equipment in under 2 seconds.
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 text-center sm:text-left">
+          <div className="text-2xl font-mono font-black text-cyan-300">02. Precision Progression</div>
+          <h5 className="text-base font-bold text-white">+14.2% Growth Velocity</h5>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Eliminate plateaus with automated double-progression targets and live form cues tailored to every set.
+          </p>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 text-center sm:text-left">
+          <div className="text-2xl font-mono font-black text-cyan-300">03. $0 Forever</div>
+          <h5 className="text-base font-bold text-white">Zero Subscription Paywalls</h5>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Full access to Groq AI routine generation, telemetry analytics, PR portals, and encrypted Supabase cloud backup.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // ── Scroll Progress & Parallax Telemetry ──
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
+      if (totalScroll > 0) {
+        setScrollProgress((window.scrollY / totalScroll) * 100);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // ── Auth Redirect: Automatically route logged-in users to /dashboard ──
   useEffect(() => {
@@ -536,8 +874,14 @@ export default function LandingPage() {
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"
       />
 
-      {/* ── Top Navigation Bar ── */}
+      {/* ── Top Navigation Bar with Real-Time Glowing Scroll Progress Bar ── */}
       <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#030914]/80 backdrop-blur-xl transition-all">
+        {/* Glowing Scroll Progress Line */}
+        <div
+          className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-sky-500 via-cyan-400 to-teal-300 shadow-[0_0_12px_rgba(56,189,248,0.85)] transition-all duration-100 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 sm:h-20 flex items-center justify-between">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group button-press">
@@ -566,6 +910,9 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-slate-300">
             <a href="#features" className="hover:text-cyan-300 transition-colors">
               Features
+            </a>
+            <a href="#comparison" className="hover:text-cyan-300 transition-colors">
+              Why Fostura
             </a>
             <a href="#ai-studio" className="hover:text-cyan-300 transition-colors">
               AI Studio
@@ -632,13 +979,7 @@ export default function LandingPage() {
         {/* ═══════════════════════════════════════════════════════════════
             HERO SECTION
             ═══════════════════════════════════════════════════════════════ */}
-        <section className="relative pt-16 pb-20 sm:pt-24 sm:pb-32 px-4 sm:px-8 max-w-5xl mx-auto text-center z-10">
-          {/* Innovation Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-400/40 text-cyan-300 text-xs font-bold shadow-[0_0_25px_rgba(56,189,248,0.25)] backdrop-blur-xl mb-8 animate-fade-in-down">
-            <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>✨ Live Biomechanical AI Telemetry</span>
-          </div>
-
+        <section className="relative pt-20 pb-20 sm:pt-28 sm:pb-32 px-4 sm:px-8 max-w-5xl mx-auto text-center z-10">
           {/* Main Headline with Animated Rotating Phrases */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.12] max-w-4xl mx-auto">
             Intelligent Training.{" "}
@@ -648,7 +989,7 @@ export default function LandingPage() {
           </h1>
 
           {/* Sub-headline */}
-          <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+          <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-slate-200 max-w-2xl mx-auto leading-relaxed font-normal">
             Your 24/7 AI-powered fitness coach. Stop guessing and start building with
             perfectly optimized routines and real-time telemetry.
           </p>
@@ -669,29 +1010,39 @@ export default function LandingPage() {
 
             <Link
               href="/dashboard"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/15 hover:border-cyan-400/50 text-sm font-bold text-slate-200 hover:text-white transition-all button-press backdrop-blur-xl"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/15 hover:border-cyan-400/50 text-sm font-bold text-slate-100 hover:text-white transition-all button-press backdrop-blur-xl"
             >
               <span>Explore Live Studio</span>
-              <span className="text-cyan-400">⚡</span>
+              <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+              </svg>
             </Link>
           </div>
 
           {/* Micro-Features Strip */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-semibold text-slate-400">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-semibold text-slate-300">
             <div className="flex items-center gap-2">
-              <span className="text-cyan-400">✓</span>
+              <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
               <span>100% Free Forever</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-cyan-400">✓</span>
+              <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
               <span>77+ Biomechanical Movements</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-cyan-400">✓</span>
+              <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
               <span>Zero Spreadsheets Needed</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-cyan-400">✓</span>
+              <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
               <span>Cloud History & Metrics Sync</span>
             </div>
           </div>
@@ -701,349 +1052,633 @@ export default function LandingPage() {
             INTERACTIVE HERO DEMO PREVIEW (Glassmorphic Mockup)
             ═══════════════════════════════════════════════════════════════ */}
         <section className="px-4 sm:px-8 max-w-5xl mx-auto pb-24 z-10 relative">
-          <div className="relative rounded-3xl p-1 bg-gradient-to-b from-cyan-400/30 via-white/10 to-transparent shadow-[0_0_50px_rgba(0,168,232,0.15)]">
-            <div className="rounded-[22px] bg-[#040a17]/90 border border-white/10 p-4 sm:p-8 backdrop-blur-2xl overflow-hidden space-y-6">
-              {/* Studio Header Bar */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-3 w-3 rounded-full bg-red-400/80" />
-                  <span className="flex h-3 w-3 rounded-full bg-amber-400/80" />
-                  <span className="flex h-3 w-3 rounded-full bg-emerald-400/80" />
-                  <span className="text-xs font-mono font-bold text-slate-400 pl-2">fostura-telemetry-engine v2.4</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 text-[10px] font-bold">
-                    LIVE HUD
-                  </span>
-                  <span className="text-xs font-mono text-slate-400">00:48:12</span>
-                </div>
-              </div>
-
-              {/* Mockup Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Active Movement Card */}
-                <div className="md:col-span-2 rounded-2xl bg-white/[0.03] border border-white/10 p-4 sm:p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-sky-400 tracking-wider">Active Movement 1 of 5</span>
-                      <h4 className="text-lg font-black text-white flex items-center gap-2 mt-0.5">
-                        <span>Incline Barbell Bench Press</span>
-                        <span className="px-2 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 text-[10px] border border-cyan-400/40">
-                          ✨ +5 lbs AI Target
-                        </span>
-                      </h4>
-                    </div>
-                    <span className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300">
-                      3 / 4 sets done
+          <ScrollReveal animation="glow" delay={100}>
+            <div className="relative rounded-3xl p-1 bg-gradient-to-b from-cyan-400/30 via-white/10 to-transparent shadow-[0_0_50px_rgba(0,168,232,0.15)]">
+              <div className="rounded-[22px] bg-[#040a17]/90 border border-white/10 p-4 sm:p-8 backdrop-blur-2xl overflow-hidden space-y-6">
+                {/* Studio Header Bar */}
+                <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-3 w-3 rounded-full bg-red-400/80" />
+                    <span className="flex h-3 w-3 rounded-full bg-amber-400/80" />
+                    <span className="flex h-3 w-3 rounded-full bg-emerald-400/80" />
+                    <span className="text-xs font-mono font-bold text-slate-300 pl-2">fostura-telemetry-engine v2.4</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 text-[10px] font-bold">
+                      LIVE HUD
                     </span>
-                  </div>
-
-                  {/* Sets Progress Table */}
-                  <div className="space-y-2 text-xs">
-                    <div className="grid grid-cols-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
-                      <span>Set</span>
-                      <span>Weight</span>
-                      <span>Target Reps</span>
-                      <span className="text-right">Status</span>
-                    </div>
-                    <div className="grid grid-cols-4 items-center bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 text-white font-semibold">
-                      <span className="text-cyan-300 font-bold">1</span>
-                      <span>185 lbs</span>
-                      <span>10 reps</span>
-                      <span className="text-right text-emerald-400 font-bold">✓ 10 Done</span>
-                    </div>
-                    <div className="grid grid-cols-4 items-center bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 text-white font-semibold">
-                      <span className="text-cyan-300 font-bold">2</span>
-                      <span>195 lbs</span>
-                      <span>8 reps</span>
-                      <span className="text-right text-emerald-400 font-bold">✓ 8 Done</span>
-                    </div>
-                    <div className="grid grid-cols-4 items-center bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-white font-semibold">
-                      <span className="text-slate-400 font-bold">3</span>
-                      <span>205 lbs</span>
-                      <span>6 reps</span>
-                      <span className="text-right text-sky-300 animate-pulse font-bold">In Progress</span>
-                    </div>
+                    <span className="text-xs font-mono text-slate-300">00:48:12</span>
                   </div>
                 </div>
 
-                {/* AI Coach Live Insight Snippet */}
-                <div className="rounded-2xl bg-gradient-to-b from-sky-950/60 to-cyan-950/40 border border-cyan-400/30 p-4 sm:p-5 flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🤖</span>
-                      <span className="text-xs font-black uppercase tracking-wider text-cyan-300">Coach Fostura Live AI</span>
+                {/* Mockup Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Active Movement Card */}
+                  <div className="md:col-span-2 rounded-2xl bg-white/[0.03] border border-white/10 p-4 sm:p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-sky-400 tracking-wider">Active Movement 1 of 5</span>
+                        <h4 className="text-lg font-black text-white flex items-center gap-2 mt-0.5">
+                          <span>Incline Barbell Bench Press</span>
+                          <span className="px-2 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 text-[10px] border border-cyan-400/40">
+                            +5 lbs AI Target
+                          </span>
+                        </h4>
+                      </div>
+                      <span className="px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300">
+                        3 / 4 sets done
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-200 leading-relaxed mt-3">
-                      &quot;Great tempo on Set 2! Rest 90 seconds, then focus on tucking elbows at 45° on Set 3 to maximize upper pec recruitment.&quot;
-                    </p>
+
+                    {/* Sets Progress Table */}
+                    <div className="space-y-2 text-xs">
+                      <div className="grid grid-cols-4 text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
+                        <span>Set</span>
+                        <span>Weight</span>
+                        <span>Target Reps</span>
+                        <span className="text-right">Status</span>
+                      </div>
+                      <div className="grid grid-cols-4 items-center bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 text-white font-semibold">
+                        <span className="text-cyan-300 font-bold">1</span>
+                        <span>185 lbs</span>
+                        <span>10 reps</span>
+                        <span className="text-right text-emerald-400 font-bold">10 Done</span>
+                      </div>
+                      <div className="grid grid-cols-4 items-center bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 text-white font-semibold">
+                        <span className="text-cyan-300 font-bold">2</span>
+                        <span>195 lbs</span>
+                        <span>8 reps</span>
+                        <span className="text-right text-emerald-400 font-bold">8 Done</span>
+                      </div>
+                      <div className="grid grid-cols-4 items-center bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-white font-semibold">
+                        <span className="text-slate-400 font-bold">3</span>
+                        <span>205 lbs</span>
+                        <span>6 reps</span>
+                        <span className="text-right text-sky-300 animate-pulse font-bold">In Progress</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-[#030914]/80 border border-white/10 text-[11px] text-slate-300 flex items-center justify-between">
-                    <span className="font-bold text-cyan-400">⏱️ Active Rest Timer</span>
-                    <span className="font-mono font-bold text-white text-sm">01:14</span>
+                  {/* AI Coach Live Insight Snippet */}
+                  <div className="rounded-2xl bg-gradient-to-b from-sky-950/60 to-cyan-950/40 border border-cyan-400/30 p-4 sm:p-5 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <svg className="h-4 w-4 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.774-.954c.264-.954.512-1.928.484-2.903C3.654 15.656 3 13.918 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                        </svg>
+                        <span className="text-xs font-black uppercase tracking-wider text-cyan-300">Coach Fostura Live AI</span>
+                      </div>
+                      <p className="text-xs text-slate-200 leading-relaxed mt-3">
+                        &quot;Great tempo on Set 2! Rest 90 seconds, then focus on tucking elbows at 45° on Set 3 to maximize upper pec recruitment.&quot;
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-[#030914]/80 border border-white/10 text-[11px] text-slate-200 flex items-center justify-between">
+                      <span className="font-bold text-cyan-400 flex items-center gap-1.5">
+                        <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <span>Active Rest Timer</span>
+                      </span>
+                      <span className="font-mono font-bold text-white text-sm">01:14</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </section>
 
         {/* ═══════════════════════════════════════════════════════════════
-            FEATURES GRID (3-Column Glassmorphic Cards)
+            FEATURE SPOTLIGHTS (Each with its own dedicated spotlight)
             ═══════════════════════════════════════════════════════════════ */}
-        <section id="features" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto z-10 relative">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-cyan-400">
-              ENGINEERED FOR PROGRESS
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mt-2">
-              Everything you need to surpass your limits.
-            </h2>
-            <p className="text-sm sm:text-base text-slate-400 mt-4">
-              Designed with precision mechanics, sports science data, and high-performance glassmorphism.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-            {/* ── CARD 1: AI STUDIO ── */}
-            <div
-              id="ai-studio"
-              className="group relative rounded-3xl p-6 sm:p-7 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent hover:from-white/[0.08] border border-white/10 hover:border-cyan-400/50 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 shadow-2xl flex flex-col justify-between overflow-hidden"
-            >
-              <div aria-hidden className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-cyan-500/15 blur-3xl group-hover:bg-cyan-500/30 transition-all" />
-
-              <div>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/15 border border-cyan-400/40 text-xl text-cyan-300 shadow-[0_0_20px_rgba(56,189,248,0.25)] group-hover:scale-110 transition-transform">
-                    ✨
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-[9px] font-extrabold uppercase tracking-widest text-cyan-300 flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span>Llama 3.3 Engine</span>
-                  </span>
-                </div>
-
-                <span className="text-[10px] uppercase font-black tracking-widest text-cyan-400">
-                  SMART WORKOUT ARCHITECT
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1 mb-2">
-                  AI Studio
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-5">
-                  Algorithmic routine generation that tailors volume, sets, and rep schemes to your exact equipment and target recovery windows.
-                </p>
-
-                {/* ── GRAPHIC: Live AI Split Flow Visualizer ── */}
-                <div className="rounded-2xl bg-[#030917]/90 border border-white/10 p-3.5 space-y-2.5 shadow-inner">
-                  {/* Split Chips */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-lg bg-cyan-500/25 border border-cyan-400/50 text-[9px] font-bold text-cyan-200 shadow-sm shadow-cyan-500/20">
-                      ⚡ Hypertrophy PPL
-                    </span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-slate-400">
-                      Upper / Lower
-                    </span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold text-slate-400">
-                      Strength 5×5
-                    </span>
-                  </div>
-
-                  {/* Flow Nodes */}
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[11px]">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-cyan-500/20 text-[8px] font-bold text-cyan-300">1</span>
-                        <span className="font-bold text-white truncate">Incline Barbell Press</span>
-                      </div>
-                      <span className="font-mono text-[10px] font-extrabold text-cyan-300 shrink-0">3 × 8–10</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[11px]">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-sky-500/20 text-[8px] font-bold text-sky-300">2</span>
-                        <span className="font-bold text-white truncate">Seated Cable Row</span>
-                      </div>
-                      <span className="font-mono text-[10px] font-extrabold text-sky-300 shrink-0">3 × 10–12</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[11px]">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-teal-500/20 text-[8px] font-bold text-teal-300">3</span>
-                        <span className="font-bold text-white truncate">Dumbbell Lateral Raise</span>
-                      </div>
-                      <span className="font-mono text-[10px] font-extrabold text-teal-300 shrink-0">4 × 12–15</span>
-                    </div>
-                  </div>
-
-                  {/* Calibration Progress Bar */}
-                  <div className="pt-1">
-                    <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 mb-1">
-                      <span className="text-cyan-400">Biomechanics Optimization</span>
-                      <span className="font-mono text-cyan-300">100%</span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-300 animate-pulse rounded-full" style={{ width: "100%" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs font-bold text-cyan-300">
-                <span>Personalized Routines</span>
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </div>
+        <section id="features" className="py-20 px-4 sm:px-8 max-w-7xl mx-auto z-10 relative space-y-28 sm:space-y-36">
+          {/* Main Section Header */}
+          <ScrollReveal animation="fade-up">
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-cyan-400 block mb-3">
+                ENGINEERED FOR PEAK HYPERTROPHY & STRENGTH
+              </span>
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
+                Every feature given its own spotlight.
+              </h2>
+              <p className="text-sm sm:text-base text-slate-300 mt-4 leading-relaxed max-w-2xl mx-auto">
+                Precision mechanics, sports science data, and real-time biomechanics—engineered with spacious clarity.
+              </p>
             </div>
+          </ScrollReveal>
 
-            {/* ── CARD 2: LIVE FORM & PROGRESSION ── */}
-            <div className="group relative rounded-3xl p-6 sm:p-7 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent hover:from-white/[0.08] border border-white/10 hover:border-sky-400/50 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 shadow-2xl flex flex-col justify-between overflow-hidden">
-              <div aria-hidden className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-sky-500/15 blur-3xl group-hover:bg-sky-500/30 transition-all" />
-
-              <div>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 border border-sky-400/40 text-xl text-sky-300 shadow-[0_0_20px_rgba(14,165,233,0.25)] group-hover:scale-110 transition-transform">
-                    🎯
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-[9px] font-extrabold uppercase tracking-widest text-sky-300 flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-ping" />
-                    <span>Real-Time Telemetry</span>
-                  </span>
-                </div>
-
-                <span className="text-[10px] uppercase font-black tracking-widest text-sky-400">
-                  ADAPTIVE OVERLOAD ENGINE
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1 mb-2">
-                  Live Form & Progression
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-5">
-                  Intelligent progressive overload triggers automatically calculate weight increments and optimal set rest periods as you lift.
-                </p>
-
-                {/* ── GRAPHIC: Live Progression Comparative Bars & Form Telemetry ── */}
-                <div className="rounded-2xl bg-[#030917]/90 border border-white/10 p-3.5 space-y-3 shadow-inner">
-                  {/* Visual Bar Comparison Chart */}
-                  <div className="grid grid-cols-3 gap-2 items-end h-24 pt-2 border-b border-white/[0.06] pb-2">
-                    {/* W1 */}
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-[9px] font-mono text-slate-400 font-bold">185</span>
-                      <div className="w-full bg-slate-700/50 rounded-t-lg h-10 transition-all group-hover:bg-slate-600/60" />
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Wk 1</span>
-                    </div>
-                    {/* W2 */}
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-[9px] font-mono text-slate-300 font-bold">190</span>
-                      <div className="w-full bg-sky-600/60 rounded-t-lg h-14 transition-all group-hover:bg-sky-500/70" />
-                      <span className="text-[8px] font-bold text-slate-400 uppercase">Wk 2</span>
-                    </div>
-                    {/* Today (AI Target) */}
-                    <div className="flex flex-col items-center gap-1 relative">
-                      <span className="absolute -top-4 text-[8px] font-black text-cyan-300 uppercase px-1 py-0.2 rounded bg-cyan-500/30 border border-cyan-400/40 whitespace-nowrap animate-bounce">
-                        +5 lbs ✨
-                      </span>
-                      <span className="text-[10px] font-mono text-cyan-200 font-black">195</span>
-                      <div className="w-full bg-gradient-to-t from-sky-500 to-cyan-400 rounded-t-lg h-20 shadow-[0_0_15px_rgba(56,189,248,0.5)]" />
-                      <span className="text-[8px] font-extrabold text-cyan-300 uppercase">Today</span>
-                    </div>
-                  </div>
-
-                  {/* Form Cue Pill */}
-                  <div className="flex items-center gap-2 p-2 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[10px]">
-                    <span className="text-xs">✨</span>
-                    <span className="font-semibold text-slate-200 truncate">
-                      Cue: <span className="text-cyan-300 font-bold">Tuck elbows at 45°</span> for peak chest recruitment.
-                    </span>
-                  </div>
-                </div>
+          {/* ══════════════════════════════════════════════════════════════
+              SPOTLIGHT 1: AI STUDIO (Smart Workout Architect)
+              ══════════════════════════════════════════════════════════════ */}
+          <div
+            id="ai-studio"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center"
+          >
+            {/* Left: Pitch & Narrative */}
+            <ScrollReveal animation="fade-right" className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 text-[11px] font-extrabold tracking-wider uppercase">
+                <span>Spotlight 01 • Intelligent Architect</span>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs font-bold text-sky-300">
-                <span>Automated Overload</span>
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </div>
-            </div>
+              <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-snug">
+                Routines built for your exact biology, not generic PDFs.
+              </h3>
 
-            {/* ── CARD 3: ADVANCED TELEMETRY ── */}
-            <div
-              id="telemetry"
-              className="group relative rounded-3xl p-6 sm:p-7 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent hover:from-white/[0.08] border border-white/10 hover:border-teal-400/50 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 shadow-2xl flex flex-col justify-between overflow-hidden"
-            >
-              <div aria-hidden className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-teal-500/15 blur-3xl group-hover:bg-teal-500/30 transition-all" />
+              <p className="text-sm sm:text-base text-slate-200 leading-relaxed">
+                Stop guessing your split. Fostura&apos;s AI analyzes your target muscle priorities, available equipment mix, and historical fatigue to generate a periodized, high-impact routine in seconds.
+              </p>
 
-              <div>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-500/15 border border-teal-400/40 text-xl text-teal-300 shadow-[0_0_20px_rgba(45,212,191,0.25)] group-hover:scale-110 transition-transform">
-                    📊
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-400/30 text-[9px] font-extrabold uppercase tracking-widest text-teal-300 flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
-                    <span>Cloud Sync</span>
-                  </span>
-                </div>
-
-                <span className="text-[10px] uppercase font-black tracking-widest text-teal-400">
-                  DEEP VOLUME & VELOCITY ANALYTICS
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1 mb-2">
-                  Advanced Telemetry
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-5">
-                  Visual volume tonnage, microcycle completion charts, calorie burn estimates, and personal record tracking keep you accountable every session.
-                </p>
-
-                {/* ── GRAPHIC: SVG Animated Volume Curve & Metrics Strip ── */}
-                <div className="rounded-2xl bg-[#030917]/90 border border-white/10 p-3.5 space-y-3 shadow-inner">
-                  {/* Volume Metric & Spike Badge */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] uppercase font-bold text-slate-400 block">Weekly Volume</span>
-                      <span className="font-mono text-base font-black text-white">18,450 lbs</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] font-black">
-                      +14.2% Spike
-                    </span>
-                  </div>
-
-                  {/* SVG Wave / Line Chart */}
-                  <div className="relative h-16 w-full overflow-hidden">
-                    <svg className="h-full w-full overflow-visible" viewBox="0 0 200 60" fill="none">
-                      <defs>
-                        <linearGradient id="telemetryGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        d="M 0 50 Q 30 45, 60 35 T 120 25 T 160 15 T 200 8 L 200 60 L 0 60 Z"
-                        fill="url(#telemetryGrad)"
-                      />
-                      <path
-                        d="M 0 50 Q 30 45, 60 35 T 120 25 T 160 15 T 200 8"
-                        stroke="#2dd4bf"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                      />
-                      <circle cx="200" cy="8" r="4" fill="#2dd4bf" className="animate-ping" />
-                      <circle cx="200" cy="8" r="3" fill="#ffffff" />
+              {/* Value Highlights */}
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
                     </svg>
                   </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Groq Llama 3.3 Engine</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Sub-second generation calibrated on exercise physiology principles.</p>
+                  </div>
+                </div>
 
-                  {/* 7-Day Consistency Microcycle Streak */}
-                  <div className="pt-1 border-t border-white/[0.06] flex items-center justify-between">
-                    <span className="text-[8px] font-bold uppercase text-slate-400">Microcycle Streak</span>
-                    <div className="flex gap-1">
-                      {["M", "T", "W", "T", "F", "S", "S"].map((d, di) => {
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Volume & Recovery Optimization</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Automatic 48-hour motor unit recovery spacing to prevent overtraining.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-cyan-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Universal Equipment Matching</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Seamless adaptation for home gyms, barbells, dumbbells, or commercial machines.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-xs font-black text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] transition-all button-press"
+                >
+                  <span>Launch Workout Architect</span>
+                  <span>→</span>
+                </Link>
+              </div>
+            </ScrollReveal>
+
+            {/* Right: Rich Large Visual Terminal Graphic */}
+            <ScrollReveal animation="fade-left" delay={150} className="lg:col-span-7">
+              <div className="relative rounded-3xl p-1 bg-gradient-to-b from-cyan-400/30 via-white/10 to-transparent shadow-[0_0_50px_rgba(0,168,232,0.2)]">
+                <div className="rounded-[22px] bg-[#030917]/95 border border-white/10 p-6 sm:p-8 backdrop-blur-2xl space-y-6">
+                  {/* Visual Terminal Header */}
+                  <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-sm font-bold">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-white block">AI Routine Generator HUD</span>
+                        <span className="text-[10px] text-cyan-400 font-mono">Status: Calibrated (100% Fit)</span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold">
+                      ● Active Engine
+                    </span>
+                  </div>
+
+                  {/* Split Selection Bar */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-3 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-xs font-black text-cyan-200 shadow-sm shadow-cyan-500/20">
+                      Push / Pull / Legs (Hypertrophy)
+                    </span>
+                    <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300">
+                      Upper / Lower Split
+                    </span>
+                    <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-300">
+                      Full Body Strength
+                    </span>
+                  </div>
+
+                  {/* Flow Nodes Pipeline */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-cyan-400/40 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-xs font-bold text-cyan-300">
+                          1
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-white truncate">Incline Barbell Bench Press</p>
+                          <p className="text-[10px] text-slate-300">Upper Sternal Pecs • Primary Compound</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-400/30 font-mono text-xs font-black text-cyan-200">
+                          3 × 8–10
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold text-teal-300 bg-teal-500/15 border border-teal-400/30">
+                          RPE 8.5
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-sky-400/40 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-xs font-bold text-sky-300">
+                          2
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-white truncate">Weighted Chest Dips</p>
+                          <p className="text-[10px] text-slate-300">Lower Pec & Triceps • Mechanical Drop</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-400/30 font-mono text-xs font-black text-sky-200">
+                          3 × 10–12
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold text-teal-300 bg-teal-500/15 border border-teal-400/30">
+                          RPE 8.0
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-teal-400/40 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-teal-500/20 text-xs font-bold text-teal-300">
+                          3
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-white truncate">Dumbbell Lateral Raise</p>
+                          <p className="text-[10px] text-slate-300">Medial Deltoids • Constant Tension</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-400/30 font-mono text-xs font-black text-teal-200">
+                          4 × 12–15
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold text-teal-300 bg-teal-500/15 border border-teal-400/30">
+                          RPE 9.0
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calibration Bar & Specs */}
+                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+                      <span className="font-semibold text-slate-200">Biomechanics Optimization: 100% Calibrated</span>
+                    </div>
+                    <span className="font-mono text-cyan-300 font-bold">480 kcal • 52 min</span>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              SPOTLIGHT 2: LIVE FORM & PROGRESSION (Adaptive Overload Engine)
+              ══════════════════════════════════════════════════════════════ */}
+          <div
+            id="live-progression"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center"
+          >
+            {/* Left: Rich Large Visual Terminal Graphic (Flipped on Desktop) */}
+            <ScrollReveal animation="fade-right" delay={150} className="lg:col-span-7 order-2 lg:order-1">
+              <div className="relative rounded-3xl p-1 bg-gradient-to-b from-sky-400/30 via-white/10 to-transparent shadow-[0_0_50px_rgba(14,165,233,0.2)]">
+                <div className="rounded-[22px] bg-[#030917]/95 border border-white/10 p-6 sm:p-8 backdrop-blur-2xl space-y-6">
+                  {/* Visual Terminal Header */}
+                  <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-300 text-sm font-bold">
+                        <svg className="h-4 w-4 text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-white block">Adaptive Progressive Overload Telemetry</span>
+                        <span className="text-[10px] text-sky-400 font-mono">Target: Incline Bench +5 lbs PR</span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30 text-[10px] font-bold">
+                      ● Real-Time HUD
+                    </span>
+                  </div>
+
+                  {/* 3-Week Progression Overload Bar Visualizer */}
+                  <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-5 space-y-3">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-300 block">
+                      3-Week Progressive Overload Trajectory
+                    </span>
+
+                    <div className="grid grid-cols-3 gap-4 items-end h-32 pt-4 border-b border-white/[0.06] pb-3">
+                      {/* Week 1 */}
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span className="text-xs font-mono text-slate-300 font-bold">185 lbs</span>
+                        <div className="w-full bg-slate-700/50 rounded-t-xl h-14 transition-all" />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Week 1</span>
+                      </div>
+                      {/* Week 2 */}
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span className="text-xs font-mono text-slate-200 font-bold">190 lbs</span>
+                        <div className="w-full bg-sky-600/60 rounded-t-xl h-20 transition-all" />
+                        <span className="text-[10px] font-bold text-slate-300 uppercase">Week 2</span>
+                      </div>
+                      {/* Today (AI Target) */}
+                      <div className="flex flex-col items-center gap-1.5 relative">
+                        <span className="absolute -top-6 text-[9px] font-black text-cyan-200 uppercase px-2 py-0.5 rounded-full bg-cyan-500/30 border border-cyan-400/50 whitespace-nowrap shadow-md shadow-cyan-500/30">
+                          +5 lbs Target Overload
+                        </span>
+                        <span className="text-sm font-mono text-cyan-200 font-black">195 lbs</span>
+                        <div className="w-full bg-gradient-to-t from-sky-500 via-cyan-400 to-teal-300 rounded-t-xl h-28 shadow-[0_0_25px_rgba(56,189,248,0.55)]" />
+                        <span className="text-[10px] font-extrabold text-cyan-300 uppercase">Today</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Form Cue Callout Badge */}
+                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 shadow-inner">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.508 1.333 1.508 2.316V18" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase text-cyan-400 block tracking-wider">
+                        Live Biomechanical Form Cue
+                      </span>
+                      <p className="text-xs text-slate-200 font-medium">
+                        Tuck elbows at 45° and maintain a 2-second controlled eccentric to maximize upper clavicular recruitment.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Rest Timer & RPE Status Strip */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="p-3 rounded-xl bg-[#020713]/80 border border-white/10 flex items-center justify-between text-xs">
+                      <span className="text-slate-300 font-medium flex items-center gap-1.5">
+                        <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <span>Rest Interval</span>
+                      </span>
+                      <span className="font-mono font-black text-white text-sm">01:30</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#020713]/80 border border-white/10 flex items-center justify-between text-xs">
+                      <span className="text-slate-300 font-medium flex items-center gap-1.5">
+                        <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <span>Target RIR</span>
+                      </span>
+                      <span className="font-mono font-black text-cyan-300 text-sm">1–2 RIR</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Right: Pitch & Narrative */}
+            <ScrollReveal animation="fade-left" className="lg:col-span-5 space-y-6 order-1 lg:order-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-sky-500/10 border border-sky-400/30 text-sky-300 text-[11px] font-extrabold tracking-wider uppercase">
+                <span>Spotlight 02 • Adaptive Overload</span>
+              </div>
+
+              <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-snug">
+                Automated progression. Zero math in the gym.
+              </h3>
+
+              <p className="text-sm sm:text-base text-slate-200 leading-relaxed">
+                The hardest part of training is knowing when to push. Fostura tracks your historical weight and reps, automatically prescribing optimal progressive overload targets and biomechanical cues for every set.
+              </p>
+
+              {/* Value Highlights */}
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Double Progression Algorithms</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Weight and rep targets adaptively scale as your strength capacity increases.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.508 1.333 1.508 2.316V18" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Contextual Biomechanical Cues</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Real-time posture and bar-path tips placed right where you log your sets.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-sky-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Active Rest Timers</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Scientifically calculated rest periods to optimize ATP recovery between sets.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-xs font-black text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 hover:scale-[1.02] transition-all button-press"
+                >
+                  <span>Explore Active Tracker</span>
+                  <span>→</span>
+                </Link>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              SPOTLIGHT 3: ADVANCED TELEMETRY (Volume & Velocity Cloud Analytics)
+              ══════════════════════════════════════════════════════════════ */}
+          <div
+            id="telemetry"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center"
+          >
+            {/* Left: Pitch & Narrative */}
+            <ScrollReveal animation="fade-right" className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-teal-500/10 border border-teal-400/30 text-teal-300 text-[11px] font-extrabold tracking-wider uppercase">
+                <span>Spotlight 03 • Deep Telemetry</span>
+              </div>
+
+              <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-snug">
+                Clinical volume tracking and permanent PR history.
+              </h3>
+
+              <p className="text-sm sm:text-base text-slate-200 leading-relaxed">
+                Watch your strength curve rise over time. Track total tonnage moved, microcycle completion streaks, and workout density—automatically synced to your private cloud profile with zero manual spreadsheet entry.
+              </p>
+
+              {/* Value Highlights */}
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-teal-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.003 0H9.497m5.003 0A3.375 3.375 0 0 0 17.875 12V6.75A2.25 2.25 0 0 0 15.625 4.5h-7.25A2.25 2.25 0 0 0 6.125 6.75V12a3.375 3.375 0 0 0 3.372 3.375" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Automated PR Detection</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Instant celebration alerts whenever you hit a new weight or rep personal record.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-teal-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Volume Tonnage Velocity</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Accurate mathematical tracking of total poundage lifted week over week.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs mt-0.5">
+                    <svg className="h-3.5 w-3.5 text-teal-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Encrypted Cloud Synchronization</h5>
+                    <p className="text-xs text-slate-300 mt-0.5">Secure cloud backups powered by Supabase so your training history is always safe.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  href="/history"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 text-xs font-black text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-[1.02] transition-all button-press"
+                >
+                  <span>View History & PR Portal</span>
+                  <span>→</span>
+                </Link>
+              </div>
+            </ScrollReveal>
+
+            {/* Right: Rich Large Visual Terminal Graphic */}
+            <ScrollReveal animation="fade-left" delay={150} className="lg:col-span-7">
+              <div className="relative rounded-3xl p-1 bg-gradient-to-b from-teal-400/30 via-white/10 to-transparent shadow-[0_0_50px_rgba(45,212,191,0.2)]">
+                <div className="rounded-[22px] bg-[#030917]/95 border border-white/10 p-6 sm:p-8 backdrop-blur-2xl space-y-6">
+                  {/* Visual Terminal Header */}
+                  <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-500/20 border border-teal-400/40 text-teal-300 text-sm font-bold">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-white block">Volume & Velocity Telemetry Engine</span>
+                        <span className="text-[10px] text-teal-400 font-mono">Microcycle: +14.2% Growth Spike</span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30 text-[10px] font-bold">
+                      ● Cloud Synced
+                    </span>
+                  </div>
+
+                  {/* SVG Wave Chart Area */}
+                  <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-300 block">Weekly Volume Tonnage</span>
+                        <span className="font-mono text-2xl font-black text-white">18,450 lbs</span>
+                      </div>
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-black">
+                        +14.2% Growth Velocity
+                      </span>
+                    </div>
+
+                    <div className="relative h-28 w-full overflow-hidden pt-2">
+                      <svg className="h-full w-full overflow-visible" viewBox="0 0 300 80" fill="none">
+                        <defs>
+                          <linearGradient id="spotlightTelemetryGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.45" />
+                            <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d="M 0 65 Q 45 60, 90 45 T 180 30 T 240 18 T 300 8 L 300 80 L 0 80 Z"
+                          fill="url(#spotlightTelemetryGrad)"
+                        />
+                        <path
+                          d="M 0 65 Q 45 60, 90 45 T 180 30 T 240 18 T 300 8"
+                          stroke="#2dd4bf"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                        <circle cx="300" cy="8" r="6" fill="#2dd4bf" fillOpacity="0.25" stroke="#2dd4bf" strokeWidth="1.5" />
+                        <circle cx="300" cy="8" r="3.5" fill="#ffffff" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* 4-Metric Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block">Sets Done</span>
+                      <span className="text-base font-black text-white font-mono mt-0.5 block">32 Sets</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block">Average RIR</span>
+                      <span className="text-base font-black text-cyan-300 font-mono mt-0.5 block">1.8 RIR</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block">Active Streak</span>
+                      <span className="text-base font-black text-amber-300 font-mono mt-0.5 block">5 Days Active</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block">PRs Hit</span>
+                      <span className="text-base font-black text-emerald-300 font-mono mt-0.5 block">3 New PRs</span>
+                    </div>
+                  </div>
+
+                  {/* Consistency Microcycle Streak */}
+                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                    <span className="text-slate-300 font-semibold">Weekly Consistency Tracker:</span>
+                    <div className="flex gap-1.5">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d, di) => {
                         const isDone = di < 5;
                         return (
                           <span
                             key={di}
-                            className={`flex h-4 w-4 items-center justify-center rounded text-[8px] font-extrabold ${
+                            className={`px-2 py-1 rounded-lg text-[9px] font-extrabold ${
                               isDone
                                 ? "bg-teal-500/25 border border-teal-400/50 text-teal-200"
-                                : "bg-white/5 text-slate-600"
+                                : "bg-white/5 text-slate-400 border border-white/5"
                             }`}
                           >
                             {d}
@@ -1054,48 +1689,52 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-5 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs font-bold text-teal-300">
-                <span>Volume & PR Analytics</span>
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
+        {/* ── Direct Head-to-Head Comparison Showcase (Why Fostura vs. Traditional Apps) ── */}
+        <ScrollReveal animation="fade-up">
+          <ComparisonShowcase />
+        </ScrollReveal>
+
         {/* ── Interactive Live Deep Dive Showcase ── */}
-        <InteractiveDeepDive />
+        <ScrollReveal animation="fade-up">
+          <InteractiveDeepDive />
+        </ScrollReveal>
 
         {/* ═══════════════════════════════════════════════════════════════
             CALL TO ACTION BANNER (Bottom)
             ═══════════════════════════════════════════════════════════════ */}
         <section className="py-20 px-4 sm:px-8 max-w-5xl mx-auto z-10 relative">
-          <div className="relative rounded-3xl p-8 sm:p-14 bg-gradient-to-r from-sky-950/70 via-[#061838]/90 to-cyan-950/70 border border-cyan-400/40 shadow-[0_0_60px_rgba(56,189,248,0.25)] backdrop-blur-2xl text-center overflow-hidden">
-            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-400/15 via-transparent to-transparent" />
+          <ScrollReveal animation="zoom-in">
+            <div className="relative rounded-3xl p-8 sm:p-14 bg-gradient-to-r from-sky-950/70 via-[#061838]/90 to-cyan-950/70 border border-cyan-400/40 shadow-[0_0_60px_rgba(56,189,248,0.25)] backdrop-blur-2xl text-center overflow-hidden">
+              <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-400/15 via-transparent to-transparent" />
 
-            <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-              <span className="text-xs uppercase font-extrabold tracking-widest text-cyan-300">
-                JOIN THE FUTURE OF STRENGTH TRAINING
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-                Ready to transform your physique with AI precision?
-              </h2>
-              <p className="text-xs sm:text-base text-slate-300 max-w-lg mx-auto">
-                No credit card required. Start building custom routines, tracking sets, and smashing personal records today.
-              </p>
+              <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+                <span className="text-xs uppercase font-extrabold tracking-widest text-cyan-300">
+                  JOIN THE FUTURE OF STRENGTH TRAINING
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                  Ready to transform your physique with AI precision?
+                </h2>
+                <p className="text-xs sm:text-base text-slate-300 max-w-lg mx-auto">
+                  No credit card required. Start building custom routines, tracking sets, and smashing personal records today.
+                </p>
 
-              <div className="pt-2">
-                <SignUpButton mode="modal">
-                  <button
-                    type="button"
-                    className="px-8 py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 text-sm font-black text-white shadow-xl hover:shadow-[0_0_40px_rgba(56,189,248,0.6)] hover:scale-105 transition-all button-press"
-                  >
-                    Start Training for Free →
-                  </button>
-                </SignUpButton>
+                <div className="pt-2">
+                  <SignUpButton mode="modal">
+                    <button
+                      type="button"
+                      className="px-8 py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 text-sm font-black text-white shadow-xl hover:shadow-[0_0_40px_rgba(56,189,248,0.6)] hover:scale-105 transition-all button-press"
+                    >
+                      Start Training for Free →
+                    </button>
+                  </SignUpButton>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </section>
       </main>
 
@@ -1129,6 +1768,9 @@ export default function LandingPage() {
             </Link>
             <a href="#features" className="hover:text-white transition-colors">
               Features
+            </a>
+            <a href="#comparison" className="hover:text-white transition-colors">
+              Why Fostura
             </a>
           </div>
 
