@@ -1,7 +1,20 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import {
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
+import {
+  saveWorkoutToSupabase,
+  getUserWorkoutsFromSupabase,
+  deleteWorkoutFromSupabase,
+  SupabaseWorkout,
+} from "@/lib/supabaseClient";
 import {
   EXERCISE_LIBRARY,
   BodyPart,
@@ -337,6 +350,16 @@ function UnitTogglePill({
    Liquid Background with Ambient Fluid Orbs (Ocean Blue Serenity)
    ═══════════════════════════════════════════════════════════════ */
 function LiquidBackground() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#020713]" />;
+  }
+
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div className="animate-blob-1 absolute -left-[10%] top-[8%] h-[580px] w-[580px] rounded-full bg-[#003b73]/25 blur-[130px]" />
@@ -784,20 +807,46 @@ function AddExerciseInline({ onAdd }: { onAdd: (ex: Exercise) => void }) {
 function playTimerChime() {
   if (typeof window === "undefined") return;
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
-    gain.gain.setValueAtTime(0.18, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.6);
+
+    // Helper to synthesize a smooth melodic bell tone
+    const playTone = (
+      freq: number,
+      startTime: number,
+      duration: number,
+      peakGain = 0.22,
+      type: OscillatorType = "sine"
+    ) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + startTime);
+      gain.gain.linearRampToValueAtTime(peakGain, ctx.currentTime + startTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + startTime);
+      osc.stop(ctx.currentTime + startTime + duration + 0.05);
+    };
+
+    // 4-Stage Ascending Gym Recovery Completion Chime (~2.4 seconds total)
+    // Pulse 1 (D5)
+    playTone(587.33, 0.0, 0.35, 0.20, "sine");
+    // Pulse 2 (F#5)
+    playTone(739.99, 0.38, 0.35, 0.22, "sine");
+    // Pulse 3 (A5)
+    playTone(880.0, 0.76, 0.4, 0.24, "sine");
+    // Final Sustained Resolving Chime (D6 + High Harmonic A6)
+    playTone(1174.66, 1.2, 1.2, 0.28, "sine");
+    playTone(1760.0, 1.2, 0.9, 0.12, "triangle");
   } catch {
     // Ignore audio errors if blocked
   }
@@ -1159,32 +1208,34 @@ function ActiveWorkout({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-                  {/* Digital Clock Display */}
-                  <span className={`font-mono text-lg sm:text-xl font-black tabular-nums ${
-                    restTimer.remainingSeconds === 0 ? "text-emerald-300" : "text-cyan-300"
-                  }`}>
-                    {formatTime(restTimer.remainingSeconds)}
-                  </span>
-
-                  {/* Timer Controls */}
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 flex-wrap">
+                  {/* Left: -30s, Center: Digital Clock, Right: +30s */}
+                  <div className="flex items-center gap-1.5 liquid-pill px-2 py-0.5 rounded-xl border-cyan-400/30 bg-cyan-950/40">
                     <button
                       type="button"
                       onClick={() => adjustRestTimer(-30)}
-                      className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+                      className="px-1.5 py-0.5 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press hover:bg-white/10"
                       title="Lessen rest timer by 30 seconds"
                     >
                       -30s
                     </button>
+                    <span className={`font-mono text-base sm:text-lg font-black tabular-nums min-w-[40px] text-center ${
+                      restTimer.remainingSeconds === 0 ? "text-emerald-300" : "text-cyan-300"
+                    }`}>
+                      {formatMinSec(restTimer.remainingSeconds)}
+                    </span>
                     <button
                       type="button"
                       onClick={() => adjustRestTimer(30)}
-                      className="liquid-pill px-2 py-1 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press"
+                      className="px-1.5 py-0.5 text-[10px] font-bold text-sky-300 hover:text-white rounded-lg button-press hover:bg-white/10"
                       title="Add 30 seconds to rest timer"
                     >
                       +30s
                     </button>
+                  </div>
+
+                  {/* Pause / Resume & Skip Buttons */}
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={toggleRestTimerPause}
@@ -1363,27 +1414,25 @@ function ActiveWorkout({
                           <div className="flex items-center gap-1.5">
                             {isThisSetTimerActive && restTimer ? (
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shadow-[0_0_10px_rgba(56,189,248,0.2)] animate-scale-in">
-                                <span className="font-mono text-xs font-black tabular-nums text-cyan-200">
+                                <button
+                                  type="button"
+                                  onClick={() => adjustRestTimer(-30)}
+                                  className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                                  title="Lessen rest by 30 seconds"
+                                >
+                                  -30s
+                                </button>
+                                <span className="font-mono text-xs font-black tabular-nums text-cyan-200 min-w-[32px] text-center">
                                   {formatMinSec(restTimer.remainingSeconds)}
                                 </span>
-                                <div className="flex items-center gap-1 ml-0.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => adjustRestTimer(-30)}
-                                    className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
-                                    title="Lessen rest by 30 seconds"
-                                  >
-                                    -30s
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => adjustRestTimer(30)}
-                                    className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
-                                    title="Add 30 seconds to rest"
-                                  >
-                                    +30s
-                                  </button>
-                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => adjustRestTimer(30)}
+                                  className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                                  title="Add 30 seconds to rest"
+                                >
+                                  +30s
+                                </button>
                               </div>
                             ) : (
                               <MinSecRestInput
@@ -1438,27 +1487,25 @@ function ActiveWorkout({
                         <svg className="h-3.5 w-3.5 text-cyan-400 animate-pulse" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
-                        <span className="font-mono text-xs font-black tabular-nums text-cyan-200">
+                        <button
+                          type="button"
+                          onClick={() => adjustRestTimer(-30)}
+                          className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                          title="Lessen rest by 30 seconds"
+                        >
+                          -30s
+                        </button>
+                        <span className="font-mono text-xs font-black tabular-nums text-cyan-200 min-w-[32px] text-center">
                           {formatMinSec(restTimer.remainingSeconds)}
                         </span>
-                        <div className="flex items-center gap-1 ml-0.5">
-                          <button
-                            type="button"
-                            onClick={() => adjustRestTimer(-30)}
-                            className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
-                            title="Lessen rest by 30 seconds"
-                          >
-                            -30s
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => adjustRestTimer(30)}
-                            className="px-1.5 py-0.2 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
-                            title="Add 30 seconds to rest"
-                          >
-                            +30s
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => adjustRestTimer(30)}
+                          className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/10 hover:bg-white/20 text-sky-200 button-press"
+                          title="Add 30 seconds to rest"
+                        >
+                          +30s
+                        </button>
                       </div>
                     ) : (
                       <MinSecRestInput
@@ -1504,13 +1551,20 @@ function WorkoutSummary({
   dayTitle,
   trackedExercises,
   elapsedSeconds,
+  unit,
   onClose,
 }: {
   dayTitle: string;
   trackedExercises: TrackedExercise[];
   elapsedSeconds: number;
+  unit: "lbs" | "kg";
   onClose: () => void;
 }) {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [isCloud, setIsCloud] = useState(false);
+  const savedRef = useRef(false);
+
   const completedSets = trackedExercises.flatMap((ex) => ex.trackedSets).filter((s) => s.completed);
   const totalVolume = completedSets.reduce((sum, s) => {
     const w = parseFloat(s.weight) || 0;
@@ -1518,6 +1572,31 @@ function WorkoutSummary({
     return sum + w * r;
   }, 0);
   const estimatedCalories = Math.round(totalVolume * 0.05 + elapsedSeconds * 0.12);
+
+  useEffect(() => {
+    async function doSave() {
+      if (isSignedIn && user?.id && !savedRef.current) {
+        savedRef.current = true;
+        setSaveStatus("saving");
+        const res = await saveWorkoutToSupabase({
+          user_id: user.id,
+          day_title: dayTitle,
+          duration_seconds: elapsedSeconds,
+          completed_sets: completedSets.length,
+          total_sets: trackedExercises.flatMap((ex) => ex.trackedSets).length,
+          exercises: trackedExercises,
+          calories: estimatedCalories,
+          unit,
+        });
+        setIsCloud(res.isCloud);
+        setSaveStatus("saved");
+      }
+    }
+
+    if (isLoaded) {
+      doSave();
+    }
+  }, [isLoaded, isSignedIn, user?.id, dayTitle, elapsedSeconds, completedSets.length, trackedExercises, estimatedCalories, unit]);
 
   const stats = [
     {
@@ -1540,7 +1619,7 @@ function WorkoutSummary({
     },
     {
       label: "Total Volume",
-      value: `${totalVolume.toLocaleString()} lbs`,
+      value: `${totalVolume.toLocaleString()} ${unit}`,
       icon: (
         <svg className="h-5 w-5 text-teal-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-.75m0-10.5v10.5m0-10.5H4.5a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h2.25m10.5-10.5h-.75a.75.75 0 0 0-.75.75v9c0 .414.336.75.75.75h.75m0-10.5v10.5m0-10.5h2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-.75.75h-2.25M12 6v12" />
@@ -1575,6 +1654,22 @@ function WorkoutSummary({
           </div>
           <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Workout Complete</h2>
           <p className="mt-1 text-xs text-slate-400">{dayTitle}</p>
+
+          {/* Cloud Sync Status */}
+          {saveStatus === "saving" && (
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-sky-400 animate-pulse">
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+              <span>Saving workout session...</span>
+            </div>
+          )}
+          {saveStatus === "saved" && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-300 animate-fade-in">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span>{isCloud ? "Saved to Cloud History" : "Workout Saved"}</span>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-2.5">
@@ -1608,9 +1703,42 @@ function WorkoutSummary({
           </div>
         </div>
 
+        {/* ── Guest Mode Upsell Callout ── */}
+        {isLoaded && !isSignedIn && (
+          <div className="mt-5 rounded-2xl border border-cyan-400/30 bg-cyan-950/40 p-4 text-center space-y-2.5 animate-fade-in">
+            <div className="flex items-center justify-center gap-1.5 text-cyan-300">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+              </svg>
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">Save Your Progress</h4>
+            </div>
+            <p className="text-xs text-slate-300 font-medium">
+              Create an account to save your history and track your progress!
+            </p>
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <SignUpButton mode="modal">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-md shadow-cyan-500/20 hover:opacity-95 transition-opacity button-press"
+                >
+                  Create Free Account
+                </button>
+              </SignUpButton>
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-slate-200 font-bold text-xs transition-all button-press"
+                >
+                  Sign In
+                </button>
+              </SignInButton>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 rounded-2xl border border-sky-500/20 bg-sky-950/20 p-5 text-center">
           <div className="flex items-center justify-center gap-2">
-            <svg className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <svg className="h-4 w-4 text-rose-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
             </svg>
             <h3 className="text-sm font-bold tracking-tight text-white">Support Development</h3>
@@ -2199,11 +2327,6 @@ function BmiCalculator() {
     setWeightUnit(nextUnit);
   }
 
-  function applyPreset(hUnit: "ft_in" | "cm", wUnit: "lbs" | "kg") {
-    handleHeightUnitChange(hUnit);
-    handleWeightUnitChange(wUnit);
-  }
-
   const { bmi, category, color, idealRange, progressRatio } = useMemo(() => {
     // Height in meters
     let heightM = 0;
@@ -2276,8 +2399,8 @@ function BmiCalculator() {
 
   return (
     <div className="liquid-glass rounded-3xl p-6 shadow-2xl space-y-6">
-      {/* Card Header & Quick Presets */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
+      {/* Card Header */}
+      <div className="flex items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
         <div className="flex items-center gap-2.5">
           <span className="liquid-pill flex h-7 w-7 items-center justify-center rounded-xl text-sky-400">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -2288,43 +2411,6 @@ function BmiCalculator() {
             <h3 className="text-sm font-extrabold text-white">Body Mass Index (BMI)</h3>
             <p className="text-[10px] text-slate-400">Mix & match height & weight units freely</p>
           </div>
-        </div>
-
-        {/* Quick Presets */}
-        <div className="liquid-pill flex items-center rounded-xl p-0.5 border-white/10 shrink-0 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => applyPreset("ft_in", "lbs")}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all button-press ${
-              heightUnit === "ft_in" && weightUnit === "lbs"
-                ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Imperial (ft + lbs)
-          </button>
-          <button
-            type="button"
-            onClick={() => applyPreset("ft_in", "kg")}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all button-press ${
-              heightUnit === "ft_in" && weightUnit === "kg"
-                ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Mixed (ft + kg)
-          </button>
-          <button
-            type="button"
-            onClick={() => applyPreset("cm", "kg")}
-            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all button-press ${
-              heightUnit === "cm" && weightUnit === "kg"
-                ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Metric (cm + kg)
-          </button>
         </div>
       </div>
 
@@ -3132,6 +3218,26 @@ function ExerciseLibraryTab({
   );
 }
 
+function formatDashboardDate(dateStr?: string): string {
+  if (!dateStr) return "Recent";
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+      return `Today, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return `Yesterday, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    }
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Minimalist Executive Fitness Dashboard
    ═══════════════════════════════════════════════════════════════ */
@@ -3139,6 +3245,7 @@ function DashboardTab({
   onNavigateTab,
   onQuickStart,
   onStartTemplate,
+  onStartHistoryWorkout,
   onSelectExercise,
   metrics,
   exerciseHistory,
@@ -3147,11 +3254,29 @@ function DashboardTab({
   onNavigateTab: (t: HomeTab) => void;
   onQuickStart: () => void;
   onStartTemplate: (t: WorkoutTemplate) => void;
+  onStartHistoryWorkout: (w: SupabaseWorkout) => void;
   onSelectExercise: (ex: ExerciseLibraryItem) => void;
   metrics: MetricEntry[];
   exerciseHistory: Record<string, ExerciseHistoryItem[]>;
   userTemplates: WorkoutTemplate[];
 }) {
+  const { isLoaded: userLoaded, isSignedIn, user } = useUser();
+  const [workouts, setWorkouts] = useState<SupabaseWorkout[]>([]);
+  const [loadingWorkouts, setLoadingWorkouts] = useState(true);
+
+  useEffect(() => {
+    async function loadWorkouts() {
+      setLoadingWorkouts(true);
+      const uid = isSignedIn && user?.id ? user.id : "";
+      const { data } = await getUserWorkoutsFromSupabase(uid);
+      setWorkouts(data || []);
+      setLoadingWorkouts(false);
+    }
+    if (userLoaded !== false) {
+      loadWorkouts();
+    }
+  }, [userLoaded, isSignedIn, user?.id]);
+
   const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
   const initialMetric = metrics.length > 0 ? metrics[0] : null;
   const weightDelta =
@@ -3226,57 +3351,41 @@ function DashboardTab({
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-5">
       {/* ── 1. Compact Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-white/[0.06] animate-fade-in-down">
+      <div className="flex items-center justify-between gap-3 pb-1 border-b border-white/[0.06] animate-fade-in-down">
         <div className="flex items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
             Training <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Command Center</span>
           </h1>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onQuickStart}
-            className="flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/15 px-3 py-1.5 text-xs font-bold text-slate-200 border border-white/10 transition-all button-press shimmer-hover"
-          >
-            <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-            </svg>
-            <span>+ Quick Workout</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab("ai")}
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-sky-500/20 hover:opacity-95 transition-opacity button-press shimmer-hover"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
-            </svg>
-            <span>AI Studio</span>
-          </button>
-        </div>
       </div>
 
       {/* ── 2. Unified Streamlined 4-Stat Strip (Staggered Animation) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Streak */}
-        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
+        {/* Streak / Total Workouts */}
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Consistency</span>
             <span className="text-[10px] font-bold text-sky-400">92%</span>
           </div>
           <div className="mt-1">
-            <span className="text-2xl font-black text-white">5</span>
-            <span className="text-xs font-bold text-sky-400 ml-1">Day Streak</span>
+            <span className="text-2xl font-black text-white">
+              {workouts.length > 0 ? workouts.length : 5}
+            </span>
+            <span className="text-xs font-bold text-sky-400 ml-1">
+              {workouts.length > 0 ? (workouts.length === 1 ? "Session" : "Sessions") : "Day Streak"}
+            </span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">4 sessions logged this week</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            {workouts.length > 0
+              ? `${workouts.length} total workout${workouts.length === 1 ? "" : "s"} logged`
+              : "4 sessions logged this week"}
+          </p>
         </div>
 
         {/* Weight */}
         <div
           onClick={() => onNavigateTab("metrics")}
-          className="liquid-glass card-hover-lift shimmer-hover liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
+          className="liquid-glass card-hover-lift shimmer-hover liquid-glass-interactive cursor-pointer rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Weight</span>
@@ -3292,20 +3401,24 @@ function DashboardTab({
         </div>
 
         {/* Volume Time */}
-        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Volume Time</span>
             <span className="text-[10px] font-bold text-cyan-300">93%</span>
           </div>
           <div className="mt-1">
-            <span className="text-2xl font-black text-white">225</span>
+            <span className="text-2xl font-black text-white">
+              {workouts.length > 0
+                ? Math.round(workouts.reduce((acc, w) => acc + (w.duration_seconds || 0), 0) / 60)
+                : 225}
+            </span>
             <span className="text-xs font-bold text-cyan-400 ml-1">mins</span>
           </div>
           <p className="text-[10px] text-slate-400 mt-0.5">Target: 240 mins / week</p>
         </div>
 
         {/* Split */}
-        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Muscle Split</span>
             <span className="text-[10px] font-bold text-emerald-400">Optimal</span>
@@ -3318,7 +3431,7 @@ function DashboardTab({
       </div>
 
       {/* ── 3. Combined Microcycle Tracker & AI Training Cue ── */}
-      <div className="liquid-glass rounded-2xl p-4 border border-white/10 space-y-3 animate-fade-in-up stagger-2">
+      <div className="liquid-glass rounded-2xl p-4 sm:p-5 border border-white/10 space-y-3.5 animate-fade-in-up stagger-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-extrabold text-white">Weekly Microcycle</span>
@@ -3335,11 +3448,11 @@ function DashboardTab({
         </div>
 
         {/* 7-Day Microcycle Strip */}
-        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-7 gap-2 sm:gap-2.5 xl:gap-3.5">
           {weeklySchedule.map((item, idx) => (
             <div
               key={idx}
-              className={`rounded-xl p-2 sm:p-2.5 text-center border card-hover-lift button-press ${
+              className={`rounded-xl p-2.5 sm:p-3 text-center border card-hover-lift button-press ${
                 item.status === "today"
                   ? "border-cyan-400/70 bg-cyan-950/40 ring-1 ring-cyan-400/40 shadow-sm shadow-cyan-500/20"
                   : item.status === "completed"
@@ -3348,7 +3461,7 @@ function DashboardTab({
               }`}
             >
               <div className="flex items-center justify-center gap-1">
-                <span className="text-[11px] font-bold text-white">{item.day}</span>
+                <span className="text-[11px] sm:text-xs font-bold text-white">{item.day}</span>
                 {item.status === "completed" && (
                   <span className="text-cyan-400 text-[9px] font-black animate-check-pop">✓</span>
                 )}
@@ -3356,7 +3469,7 @@ function DashboardTab({
                   <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#38bdf8]" />
                 )}
               </div>
-              <p className={`text-[10px] font-bold mt-1 truncate ${item.status === "today" ? "text-cyan-300 font-extrabold" : "text-slate-400"}`}>
+              <p className={`text-[10px] sm:text-[11px] font-bold mt-1 truncate ${item.status === "today" ? "text-cyan-300 font-extrabold" : "text-slate-400"}`}>
                 {item.title}
               </p>
             </div>
@@ -3384,10 +3497,10 @@ function DashboardTab({
         </div>
       </div>
 
-      {/* ── 4. Main Two-Column Hub (Workouts on Left, Telemetry on Right) ── */}
-      <div className="grid gap-5 lg:grid-cols-12 items-start animate-fade-in-up stagger-3">
-        {/* Left Column (7 cols): Quick Launch Blueprints */}
-        <div className="lg:col-span-7 space-y-3">
+      {/* ── 4. Main Two-Column Hub (Workouts on Left, History & Telemetry on Right) ── */}
+      <div className="grid gap-5 lg:grid-cols-12 xl:gap-6 items-start animate-fade-in-up stagger-3">
+        {/* Left Column: Quick Launch Blueprints */}
+        <div className="lg:col-span-7 xl:col-span-7 2xl:col-span-8 space-y-3.5">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Quick Launch Routines</h3>
             <button
@@ -3400,11 +3513,11 @@ function DashboardTab({
             </button>
           </div>
 
-          <div className="grid gap-2.5 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             {topTemplates.map((tmpl) => (
               <div
                 key={tmpl.id}
-                className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
+                className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 hover:border-sky-400/40 transition-all flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -3434,12 +3547,107 @@ function DashboardTab({
           </div>
         </div>
 
-        {/* Right Column (5 cols): Activity Stream & Quick Guides */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Recent Performance */}
+        {/* Right Column: Workout History & Telemetry */}
+        <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-4 space-y-4">
+          {/* Recent Workout History Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Recent Performance</h3>
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#38bdf8]" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-200">
+                  Recent Workout History
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateTab("history")}
+                className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors group flex items-center gap-1"
+              >
+                <span>Full History ({workouts.length})</span>
+                <span className="group-hover-arrow">→</span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {loadingWorkouts ? (
+                <div className="liquid-glass rounded-2xl p-4 border border-white/10 flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+                  <span>Loading history...</span>
+                </div>
+              ) : workouts.length === 0 ? (
+                <div className="liquid-glass rounded-2xl p-4 border border-white/10 text-center space-y-2">
+                  <p className="text-xs font-bold text-slate-300">No workout logs recorded yet</p>
+                  <p className="text-[10px] text-slate-400">
+                    Complete your first workout to track duration, volume, and sets here.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onQuickStart}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-[11px] font-bold transition-all button-press"
+                  >
+                    <span>Start Quick Workout</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              ) : (
+                workouts.slice(0, 3).map((w, idx) => {
+                  const durationMins = Math.max(1, Math.round((w.duration_seconds || 0) / 60));
+                  const exNames = (w.exercises || []).map((e) => e.name);
+                  return (
+                    <div
+                      key={w.id || idx}
+                      onClick={() => onNavigateTab("history")}
+                      className="liquid-glass card-hover-lift shimmer-hover cursor-pointer rounded-2xl p-3 border border-white/10 hover:border-sky-400/40 transition-all space-y-1.5 group"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">
+                            {w.day_title}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            {formatDashboardDate(w.created_at)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="liquid-pill px-1.5 py-0.5 rounded text-[9px] font-bold text-sky-300">
+                            {durationMins}m
+                          </span>
+                          <span className="liquid-pill px-1.5 py-0.5 rounded text-[9px] font-bold text-teal-300">
+                            {w.completed_sets} sets
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.05]">
+                        <p className="text-[10px] text-slate-400 truncate max-w-[180px] sm:max-w-[220px]">
+                          {exNames.length > 0 ? exNames.slice(0, 3).join(" • ") + (exNames.length > 3 ? ` +${exNames.length - 3}` : "") : "Workout session"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStartHistoryWorkout(w);
+                          }}
+                          className="liquid-pill flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-cyan-300 hover:text-white border-cyan-500/30 hover:border-cyan-400 rounded-lg transition-all button-press shrink-0"
+                          title="Repeat this workout with pre-filled weights"
+                        >
+                          <svg className="h-3 w-3 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                          </svg>
+                          <span>Repeat</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Recent Performance Telemetry */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Exercise Lifts Telemetry</h3>
               <button
                 type="button"
                 onClick={() => onNavigateTab("metrics")}
@@ -3452,8 +3660,8 @@ function DashboardTab({
 
             <div className="liquid-glass rounded-2xl p-3 border border-white/10 space-y-1.5">
               {allSessions.length === 0 ? (
-                <div className="py-4 text-center text-xs text-slate-400">
-                  No recorded lifts yet. Start a session to see telemetry!
+                <div className="py-3 text-center text-xs text-slate-400">
+                  No exercise PRs recorded yet. Start a session to see telemetry!
                 </div>
               ) : (
                 allSessions.map((s) => (
@@ -3513,14 +3721,336 @@ function DashboardTab({
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Cloud Workout History Tab (Supabase & Clerk Integration)
+   ═══════════════════════════════════════════════════════════════ */
+function HistoryTab({
+  onQuickStart,
+  onStartHistoryWorkout,
+}: {
+  onQuickStart: () => void;
+  onStartHistoryWorkout: (w: SupabaseWorkout) => void;
+}) {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [workouts, setWorkouts] = useState<SupabaseWorkout[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchHistory() {
+      if (isSignedIn && user?.id) {
+        setLoading(true);
+        const { data, error } = await getUserWorkoutsFromSupabase(user.id);
+        if (!error && data) {
+          setWorkouts(data);
+        }
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    }
+
+    if (isLoaded) {
+      fetchHistory();
+    }
+  }, [isLoaded, isSignedIn, user?.id]);
+
+  async function handleDelete(id: string) {
+    if (!user?.id) return;
+    if (!confirm("Are you sure you want to delete this workout log?")) return;
+    setDeletingId(id);
+    const { success } = await deleteWorkoutFromSupabase(id, user.id);
+    if (success) {
+      setWorkouts((prev) => prev.filter((w) => w.id !== id));
+    }
+    setDeletingId(null);
+  }
+
+  const totalWorkouts = workouts.length;
+  const totalDurationMinutes = Math.round(
+    workouts.reduce((sum, w) => sum + (w.duration_seconds || 0), 0) / 60
+  );
+  const totalCompletedSets = workouts.reduce(
+    (sum, w) => sum + (w.completed_sets || 0),
+    0
+  );
+  const totalCalories = workouts.reduce((sum, w) => sum + (w.calories || 0), 0);
+
+  function formatDuration(sec: number) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m === 0) return `${s}s`;
+    return `${m}m ${s < 10 ? "0" : ""}${s}s`;
+  }
+
+  function formatDate(isoString?: string) {
+    if (!isoString) return "Recent Session";
+    const date = new Date(isoString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300 mb-2">
+            <span>Cloud Logs</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            Workout <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">History</span>
+          </h1>
+          <p className="mt-1 text-xs text-slate-400">
+            Review completed sessions and repeat previous routines with pre-filled weights.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/history"
+            className="liquid-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all button-press"
+          >
+            <span>Full Page View</span>
+            <span className="text-cyan-400">↗</span>
+          </Link>
+          <button
+            type="button"
+            onClick={onQuickStart}
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-500/20 hover:opacity-95 transition-opacity button-press"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>New Workout</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Guest Mode Notice */}
+      {isLoaded && !isSignedIn && (
+        <div className="liquid-glass rounded-2xl p-4 sm:p-5 border border-cyan-500/30 bg-cyan-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
+          <div className="space-y-1">
+            <h3 className="text-sm font-extrabold text-white">Enable Real-Time Cloud Sync</h3>
+            <p className="text-xs text-slate-300">
+              Sign in to sync your workout history across all devices and prevent data loss.
+            </p>
+          </div>
+          <SignInButton mode="modal">
+            <button
+              type="button"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-md shrink-0 button-press"
+            >
+              Sign In to Sync
+            </button>
+          </SignInButton>
+        </div>
+      )}
+
+      {/* Stats Summary Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-in-up">
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Workouts</span>
+          <p className="text-2xl font-black text-white mt-1">{totalWorkouts}</p>
+          <p className="text-[10px] text-sky-400 mt-0.5">Sessions logged</p>
+        </div>
+
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Time Spent</span>
+          <p className="text-2xl font-black text-cyan-300 mt-1">{totalDurationMinutes}m</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Total duration</p>
+        </div>
+
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sets Completed</span>
+          <p className="text-2xl font-black text-teal-300 mt-1">{totalCompletedSets}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Total volume sets</p>
+        </div>
+
+        <div className="liquid-glass rounded-2xl p-3.5 border border-white/10">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Energy Expended</span>
+          <p className="text-2xl font-black text-amber-300 mt-1">{totalCalories}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">Est. kcal burned</p>
+        </div>
+      </div>
+
+      {/* Workouts List */}
+      {loading ? (
+        <div className="p-12 text-center text-slate-400">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+          <p className="text-xs font-semibold mt-3">Fetching workout history from cloud...</p>
+        </div>
+      ) : workouts.length === 0 ? (
+        <div className="liquid-glass rounded-3xl p-10 border border-white/10 text-center space-y-4 animate-fade-in-up">
+          <p className="text-base font-extrabold text-white">No workouts recorded yet</p>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Complete your first workout in the Active Tracker to start logging your cloud history!
+          </p>
+          <button
+            type="button"
+            onClick={onQuickStart}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white text-xs font-bold shadow-md button-press"
+          >
+            Start Workout Now
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3.5 animate-fade-in-up">
+          {workouts.map((w) => {
+            const isExpanded = expandedWorkoutId === w.id;
+
+            return (
+              <div
+                key={w.id}
+                className="liquid-glass rounded-2xl border border-white/10 overflow-hidden transition-all duration-300 hover:border-cyan-500/40"
+              >
+                {/* Header Row */}
+                <div
+                  onClick={() => setExpandedWorkoutId(isExpanded ? null : (w.id || null))}
+                  className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-extrabold text-sm">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                      </svg>
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-extrabold text-white truncate">{w.day_title}</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">{formatDate(w.created_at)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="liquid-pill px-2.5 py-1 text-xs font-bold text-slate-300 rounded-lg">
+                        ⏱ {formatDuration(w.duration_seconds)}
+                      </span>
+                      <span className="liquid-pill px-2.5 py-1 text-xs font-bold text-teal-300 rounded-lg">
+                        ✓ {w.completed_sets}/{w.total_sets} sets
+                      </span>
+                      <span className="liquid-pill px-2.5 py-1 text-xs font-bold text-amber-300 rounded-lg">
+                        🔥 {w.calories} kcal
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Repeat Workout Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStartHistoryWorkout(w);
+                        }}
+                        className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:text-white border-cyan-500/40 hover:border-cyan-400 rounded-xl transition-all button-press"
+                        title="Repeat this workout with pre-filled weights"
+                      >
+                        <svg className="h-3.5 w-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        <span>Repeat</span>
+                      </button>
+
+                      {w.id && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(w.id!);
+                          }}
+                          disabled={deletingId === w.id}
+                          className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                          title="Delete workout log"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                          </svg>
+                        </button>
+                      )}
+                      <span className="text-slate-400 p-1">
+                        <svg
+                          className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2.5}
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable Exercise Details */}
+                {isExpanded && w.exercises && w.exercises.length > 0 && (
+                  <div className="border-t border-white/[0.06] bg-white/[0.015] p-4 sm:p-5 space-y-4 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                        Exercises Breakdown
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => onStartHistoryWorkout(w)}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-xs font-bold transition-all button-press"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        <span>Repeat Workout</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {w.exercises.map((ex, ei) => (
+                        <div
+                          key={ei}
+                          className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2"
+                        >
+                          <p className="text-xs font-bold text-cyan-200 truncate">{ex.name}</p>
+                          <div className="divide-y divide-white/[0.04] text-[11px]">
+                            {ex.trackedSets.map((s, si) => (
+                              <div key={si} className="py-1 flex items-center justify-between text-slate-300">
+                                <span className="font-semibold text-slate-400">Set {si + 1}</span>
+                                <span className="font-mono text-cyan-300">
+                                  {s.weight ? `${s.weight} ${w.unit}` : "Bodyweight"} × {s.actualReps || s.targetReps} reps
+                                </span>
+                                <span className={s.completed ? "text-emerald-400 font-bold" : "text-slate-500"}>
+                                  {s.completed ? "✓ Done" : "—"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    ╔═══════════════════════════════════════════════════════════╗
    ║                      MAIN DASHBOARD                      ║
    ╚═══════════════════════════════════════════════════════════════╝
    ═══════════════════════════════════════════════════════════════ */
 type AppPhase = "home" | "tracking" | "summary";
-type HomeTab = "dashboard" | "ai" | "quick" | "templates" | "exercises" | "metrics";
+type HomeTab = "dashboard" | "ai" | "quick" | "templates" | "exercises" | "metrics" | "history";
 
 export default function Home() {
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
+
   /* ── Sidebar & Navigation state ───────── */
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -3679,6 +4209,59 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function startFromHistoryWorkout(workout: SupabaseWorkout) {
+    setWorkoutTitle(workout.day_title || "Repeated Workout");
+    if (workout.unit) {
+      setPreferredUnit(workout.unit);
+    }
+
+    const formattedTracked: TrackedExercise[] = (workout.exercises || []).map((ex) => {
+      const rawSets = ex.trackedSets || [];
+      const targetSets = rawSets.length > 0 ? rawSets.length : 3;
+      const firstTargetReps = rawSets[0]?.targetReps || rawSets[0]?.actualReps || "8–12";
+      const restSeconds = rawSets[0]?.restSeconds || 90;
+
+      const newTrackedSets = rawSets.map((s) => ({
+        targetReps: s.targetReps || s.actualReps || "10",
+        weight: s.weight || "",
+        actualReps: "",
+        completed: false,
+        restSeconds: s.restSeconds || restSeconds,
+      }));
+
+      return {
+        name: ex.name,
+        targetSets,
+        targetReps: firstTargetReps,
+        restSeconds,
+        trackedSets: newTrackedSets.length > 0 ? newTrackedSets : [
+          { targetReps: "10", weight: "", actualReps: "", completed: false, restSeconds: 90 },
+          { targetReps: "10", weight: "", actualReps: "", completed: false, restSeconds: 90 },
+          { targetReps: "10", weight: "", actualReps: "", completed: false, restSeconds: 90 },
+        ],
+      };
+    });
+
+    setTrackedExercises(formattedTracked);
+    setPhase("tracking");
+    setMobileDrawerOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Check for repeat workout payload from /history page
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("forma_repeat_workout_payload");
+      if (raw) {
+        localStorage.removeItem("forma_repeat_workout_payload");
+        const workout: SupabaseWorkout = JSON.parse(raw);
+        startFromHistoryWorkout(workout);
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   function quickStart() {
     setWorkoutTitle("Quick Session");
     setTrackedExercises([]);
@@ -3777,6 +4360,17 @@ export default function Home() {
       icon: (
         <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+        </svg>
+      ),
+    },
+    {
+      key: "history",
+      label: "History",
+      sub: "Cloud Logged Sessions",
+      badge: "Cloud",
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
       ),
     },
@@ -4037,7 +4631,33 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/10 space-y-3">
+              <div className="pt-4 border-t border-white/10 space-y-2.5">
+                {isSignedIn ? (
+                  <div className="flex items-center gap-3 p-2.5 liquid-glass rounded-xl border border-white/10">
+                    <UserButton
+                      appearance={{
+                        elements: {
+                          avatarBox: "h-8 w-8 ring-2 ring-cyan-500/40 rounded-xl",
+                        },
+                      }}
+                    />
+                    <span className="text-xs font-bold text-slate-200">Account Profile</span>
+                  </div>
+                ) : (
+                  <SignInButton mode="modal">
+                    <button
+                      type="button"
+                      onClick={() => setMobileDrawerOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-md button-press"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                      <span>Sign In / Create Account</span>
+                    </button>
+                  </SignInButton>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -4062,7 +4682,7 @@ export default function Home() {
         <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
           {/* Top Sticky App Header */}
           <header className="sticky top-0 z-40 border-b border-sky-400/[0.12] bg-[#040914]/85 backdrop-blur-2xl">
-            <div className="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6">
+            <div className="mx-auto flex h-16 w-full max-w-[100rem] items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10">
               {/* Left: Sidebar Toggle & Breadcrumb Navigation */}
               <div className="flex items-center gap-3">
                 <button
@@ -4112,7 +4732,6 @@ export default function Home() {
 
               {/* Right: Actions */}
               <div className="flex items-center gap-3">
-
                 {phase === "tracking" ? (
                   <div className="flex items-center gap-2">
                     <button
@@ -4134,12 +4753,35 @@ export default function Home() {
                     </div>
                   </div>
                 ) : null}
+
+                {/* Authentication Controls: Sign In button when logged out, UserButton when logged in */}
+                {isSignedIn ? (
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        avatarBox: "h-8 w-8 ring-2 ring-cyan-500/40 rounded-xl",
+                      },
+                    }}
+                  />
+                ) : (
+                  <SignInButton mode="modal">
+                    <button
+                      type="button"
+                      className="liquid-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border-cyan-400/40 text-cyan-300 hover:text-white text-xs font-bold transition-all button-press"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                      <span>Sign In</span>
+                    </button>
+                  </SignInButton>
+                )}
               </div>
             </div>
           </header>
 
           {/* Main Content Area */}
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-6 sm:px-6">
+          <main className="mx-auto w-full max-w-[100rem] flex-1 px-4 sm:px-6 lg:px-8 xl:px-10 pb-16 pt-6">
             {phase === "home" && (
               <>
                 {/* ─── TAB 0: DASHBOARD ─── */}
@@ -4148,6 +4790,7 @@ export default function Home() {
                     onNavigateTab={navigateToTab}
                     onQuickStart={quickStart}
                     onStartTemplate={startFromTemplate}
+                    onStartHistoryWorkout={startFromHistoryWorkout}
                     onSelectExercise={setSelectedExercise}
                     metrics={metrics}
                     exerciseHistory={exerciseHistory}
@@ -4667,12 +5310,20 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
+                {/* ─── TAB 6: CLOUD HISTORY ─── */}
+                {tab === "history" && (
+                  <HistoryTab
+                    onQuickStart={quickStart}
+                    onStartHistoryWorkout={startFromHistoryWorkout}
+                  />
+                )}
               </>
             )}
 
             {/* ══════════════ TRACKING VIEW ══════════════ */}
             {phase === "tracking" && (
-              <div className="mx-auto w-full max-w-2xl">
+              <div className="mx-auto w-full max-w-3xl">
                 <ActiveWorkout
                   dayTitle={workoutTitle}
                   tracked={trackedExercises}
@@ -4714,6 +5365,7 @@ export default function Home() {
           dayTitle={workoutTitle}
           trackedExercises={trackedExercises}
           elapsedSeconds={elapsedSeconds}
+          unit={preferredUnit}
           onClose={resetHome}
         />
       )}

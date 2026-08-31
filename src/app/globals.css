@@ -40,6 +40,18 @@
 html {
   scroll-behavior: smooth;
   color-scheme: dark;
+  font-size: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROPORTIONAL LANDSCAPE DESKTOP RESOLUTION SCALING
+   Ensures 2560x1440 (2K), 3840x2160 (4K), and Ultrawides match
+   the exact readability, proportions, and layout of 1920x1080.
+   ═══════════════════════════════════════════════════════════════ */
+@media screen and (min-width: 1921px) and (orientation: landscape) {
+  html {
+    font-size: clamp(16px, min(0.83333vw, 1.48148vh), 32px);
+  }
 }
 
 body {
