@@ -165,71 +165,6 @@ const EXAMPLE_TEMPLATES: WorkoutTemplate[] = [
   },
 ];
 
-const SEEDED_METRICS: MetricEntry[] = [
-  { id: "m-1", date: "2026-03-01", weight: 184.2, bodyFat: 19.4, calories: 2650 },
-  { id: "m-2", date: "2026-04-01", weight: 181.8, bodyFat: 18.6, calories: 2500 },
-  { id: "m-3", date: "2026-05-01", weight: 179.5, bodyFat: 17.8, calories: 2420 },
-  { id: "m-4", date: "2026-06-01", weight: 177.0, bodyFat: 16.9, calories: 2380 },
-  { id: "m-5", date: "2026-07-01", weight: 175.4, bodyFat: 16.1, calories: 2350 },
-  { id: "m-6", date: "2026-08-01", weight: 173.8, bodyFat: 15.5, calories: 2300 },
-  { id: "m-7", date: "2026-08-15", weight: 172.9, bodyFat: 15.1, calories: 2280 },
-  { id: "m-8", date: "2026-08-22", weight: 172.1, bodyFat: 14.8, calories: 2260 },
-  { id: "m-9", date: "2026-08-25", weight: 171.6, bodyFat: 14.7, calories: 2250 },
-  { id: "m-10", date: "2026-08-28", weight: 171.0, bodyFat: 14.5, calories: 2200 },
-  { id: "m-11", date: "2026-08-30", weight: 170.4, bodyFat: 14.2, calories: 2180 },
-];
-
-const SEEDED_EXERCISE_HISTORY: Record<string, ExerciseHistoryItem[]> = {
-  "lib-bench-press": [
-    {
-      id: "h-b1",
-      date: "2026-08-28",
-      unit: "lbs",
-      sets: [
-        { setNum: 1, weight: 185, reps: 10 },
-        { setNum: 2, weight: 205, reps: 8 },
-        { setNum: 3, weight: 225, reps: 6 },
-        { setNum: 4, weight: 225, reps: 5 }
-      ]
-    },
-    {
-      id: "h-b2",
-      date: "2026-08-21",
-      unit: "lbs",
-      sets: [
-        { setNum: 1, weight: 185, reps: 8 },
-        { setNum: 2, weight: 205, reps: 8 },
-        { setNum: 3, weight: 215, reps: 6 }
-      ]
-    }
-  ],
-  "lib-back-squat": [
-    {
-      id: "h-s1",
-      date: "2026-08-26",
-      unit: "lbs",
-      sets: [
-        { setNum: 1, weight: 225, reps: 8 },
-        { setNum: 2, weight: 275, reps: 6 },
-        { setNum: 3, weight: 295, reps: 5 },
-        { setNum: 4, weight: 315, reps: 3 }
-      ]
-    }
-  ],
-  "lib-deadlift": [
-    {
-      id: "h-d1",
-      date: "2026-08-24",
-      unit: "lbs",
-      sets: [
-        { setNum: 1, weight: 275, reps: 5 },
-        { setNum: 2, weight: 315, reps: 5 },
-        { setNum: 3, weight: 365, reps: 4 }
-      ]
-    }
-  ]
-};
-
 /* ═══════════════════════════════════════════════════════════════
    Helpers & Persistence
    ═══════════════════════════════════════════════════════════════ */
@@ -275,14 +210,21 @@ function saveUserTemplates(t: WorkoutTemplate[]) {
 }
 
 function loadUserMetrics(): MetricEntry[] {
-  if (typeof window === "undefined") return SEEDED_METRICS;
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem("forma-metrics");
-    if (!raw) return SEEDED_METRICS;
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEEDED_METRICS;
+    if (!Array.isArray(parsed)) return [];
+    // Auto-clean legacy dummy mock ids if any were cached in local storage
+    const isLegacySeed = parsed.length > 0 && parsed.every((p: any) => typeof p.id === "string" && p.id.startsWith("m-"));
+    if (isLegacySeed) {
+      localStorage.removeItem("forma-metrics");
+      return [];
+    }
+    return parsed;
   } catch {
-    return SEEDED_METRICS;
+    return [];
   }
 }
 
@@ -291,13 +233,23 @@ function saveUserMetrics(m: MetricEntry[]) {
 }
 
 function loadExerciseHistory(): Record<string, ExerciseHistoryItem[]> {
-  if (typeof window === "undefined") return SEEDED_EXERCISE_HISTORY;
+  if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem("forma-exercise-history");
-    if (!raw) return SEEDED_EXERCISE_HISTORY;
-    return JSON.parse(raw);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+    // Auto-clean legacy dummy mock sets if any were cached in local storage
+    const isLegacySeed = Object.values(parsed).some((arr: any) =>
+      Array.isArray(arr) && arr.some((item: any) => typeof item.id === "string" && item.id.startsWith("h-"))
+    );
+    if (isLegacySeed) {
+      localStorage.removeItem("forma-exercise-history");
+      return {};
+    }
+    return parsed;
   } catch {
-    return SEEDED_EXERCISE_HISTORY;
+    return {};
   }
 }
 
@@ -2066,10 +2018,12 @@ function MetricsChart({
   metrics,
   activeMetric,
   timelineFilter,
+  onLogClick,
 }: {
   metrics: MetricEntry[];
   activeMetric: ActiveMetricType;
   timelineFilter: TimelineFilter;
+  onLogClick?: () => void;
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
@@ -2104,8 +2058,30 @@ function MetricsChart({
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center text-xs text-slate-500">
-        No metric data available to display.
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.01] p-8 text-center space-y-3 min-h-[220px]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-white">No progression measurements recorded yet</p>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            Log your body weight, body fat %, or caloric intake to visualize your progression curve over time!
+          </p>
+        </div>
+        {onLogClick && (
+          <button
+            type="button"
+            onClick={onLogClick}
+            className="mt-1 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white text-xs font-bold shadow-md shadow-cyan-500/20 hover:opacity-95 transition-opacity button-press"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>Log Your First Entry</span>
+          </button>
+        )}
       </div>
     );
   }
@@ -3284,6 +3260,10 @@ function DashboardTab({
       ? Math.round((latestMetric.weight - initialMetric.weight) * 10) / 10
       : 0;
 
+  const totalWorkoutMinutes = Math.round(
+    workouts.reduce((acc, w) => acc + (w.duration_seconds || 0), 0) / 60
+  );
+
   // Flattened session history items
   const allSessions = useMemo(() => {
     const list: { id: string; exName: string; date: string; setsCount: number; maxWeight: number; unit: string }[] = [];
@@ -3311,36 +3291,53 @@ function DashboardTab({
 
   const weeklySchedule = useMemo(() => {
     const daysConfig = [
-      { dayKey: 1, day: "Mon", title: "Push", duration: "48m" },
-      { dayKey: 2, day: "Tue", title: "Pull", duration: "52m" },
-      { dayKey: 3, day: "Wed", title: "Recovery", duration: "25m" },
-      { dayKey: 4, day: "Thu", title: "Legs", duration: "55m" },
-      { dayKey: 5, day: "Fri", title: "Upper", duration: "45m" },
-      { dayKey: 6, day: "Sat", title: "Conditioning", duration: "50m" },
-      { dayKey: 0, day: "Sun", title: "Mobility", duration: "Active" },
+      { dayKey: 1, day: "Mon", title: "Push" },
+      { dayKey: 2, day: "Tue", title: "Pull" },
+      { dayKey: 3, day: "Wed", title: "Recovery" },
+      { dayKey: 4, day: "Thu", title: "Legs" },
+      { dayKey: 5, day: "Fri", title: "Upper" },
+      { dayKey: 6, day: "Sat", title: "Conditioning" },
+      { dayKey: 0, day: "Sun", title: "Mobility" },
     ];
 
-    const todayDay = new Date().getDay(); // 0 is Sunday
+    const now = new Date();
+    const todayDay = now.getDay(); // 0 is Sunday
     const normalizedToday = todayDay === 0 ? 7 : todayDay;
+
+    // Get current Monday of the active week
+    const currentMonday = new Date(now);
+    const diffToMonday = (todayDay === 0 ? -6 : 1) - todayDay;
+    currentMonday.setDate(now.getDate() + diffToMonday);
+    currentMonday.setHours(0, 0, 0, 0);
+
+    const workoutDates = new Set(
+      workouts
+        .map((w) => (w.created_at ? new Date(w.created_at).toDateString() : null))
+        .filter(Boolean)
+    );
 
     return daysConfig.map((item) => {
       const normalizedDay = item.dayKey === 0 ? 7 : item.dayKey;
+      const dayDate = new Date(currentMonday);
+      dayDate.setDate(currentMonday.getDate() + (normalizedDay - 1));
+      const isCompleted = workoutDates.has(dayDate.toDateString());
+
       let status: "completed" | "today" | "upcoming";
-      if (normalizedDay < normalizedToday) {
+      if (isCompleted) {
         status = "completed";
       } else if (normalizedDay === normalizedToday) {
         status = "today";
       } else {
         status = "upcoming";
       }
+
       return {
         day: item.day,
         title: item.title,
-        duration: item.duration,
         status,
       };
     });
-  }, []);
+  }, [workouts]);
 
   // Top 4 curated templates for quick launch
   const topTemplates = useMemo(() => {
@@ -3350,83 +3347,154 @@ function DashboardTab({
 
   return (
     <div className="animate-[fadeInUp_0.3s_ease-out_both] space-y-5">
-      {/* ── 1. Compact Header Bar ── */}
-      <div className="flex items-center justify-between gap-3 pb-1 border-b border-white/[0.06] animate-fade-in-down">
-        <div className="flex items-center gap-3">
+      {/* ── 1. Header Bar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-white/[0.06] animate-fade-in-down">
+        <div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
             Training <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">Command Center</span>
           </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {isSignedIn && user?.firstName
+              ? `Welcome back, ${user.firstName}! Track sessions, log PRs, and reach your goals.`
+              : "Intelligent fitness studio & live workout tracker."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onQuickStart}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-md shadow-cyan-500/20 hover:opacity-95 transition-opacity button-press"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+            </svg>
+            <span>Start Session</span>
+          </button>
         </div>
       </div>
 
-      {/* ── 2. Unified Streamlined 4-Stat Strip (Staggered Animation) ── */}
+      {/* ── Welcome Banner for New Users (0 Workouts Logged) ── */}
+      {workouts.length === 0 && !loadingWorkouts && (
+        <div className="relative overflow-hidden rounded-3xl border border-sky-400/30 bg-gradient-to-br from-sky-950/60 via-[#06142a]/80 to-teal-950/40 p-5 sm:p-7 shadow-2xl animate-fade-in-up">
+          <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+                <span>Tailored For You</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Welcome to Forma.AI{isSignedIn && user?.firstName ? `, ${user.firstName}` : ""}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Your intelligent performance studio is ready. Generate a tailored AI routine based on your equipment, start with a blueprint template, or track live sets with plate calculators.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => onNavigateTab("ai")}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-opacity button-press"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                </svg>
+                <span>Generate AI Routine</span>
+              </button>
+              <button
+                type="button"
+                onClick={onQuickStart}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-all button-press"
+              >
+                <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                </svg>
+                <span>Quick Workout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. Unified Streamlined 4-Stat Strip (Real dynamic data) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
-        {/* Streak / Total Workouts */}
+        {/* Total Workouts */}
         <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Consistency</span>
-            <span className="text-[10px] font-bold text-sky-400">92%</span>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Workouts Logged</span>
+            <span className="text-[10px] font-bold text-sky-400">{workouts.length > 0 ? `${workouts.length} total` : "Day 1"}</span>
           </div>
           <div className="mt-1">
             <span className="text-2xl font-black text-white">
-              {workouts.length > 0 ? workouts.length : 5}
+              {workouts.length}
             </span>
             <span className="text-xs font-bold text-sky-400 ml-1">
-              {workouts.length > 0 ? (workouts.length === 1 ? "Session" : "Sessions") : "Day Streak"}
+              {workouts.length === 1 ? "Session" : "Sessions"}
             </span>
           </div>
           <p className="text-[10px] text-slate-400 mt-0.5">
             {workouts.length > 0
-              ? `${workouts.length} total workout${workouts.length === 1 ? "" : "s"} logged`
-              : "4 sessions logged this week"}
+              ? `${workouts.length} completed session${workouts.length === 1 ? "" : "s"}`
+              : "Ready for your first workout"}
           </p>
         </div>
 
-        {/* Weight */}
+        {/* Body Weight */}
         <div
           onClick={() => onNavigateTab("metrics")}
           className="liquid-glass card-hover-lift shimmer-hover liquid-glass-interactive cursor-pointer rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Weight</span>
-            <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-bold text-teal-300 rounded">BMI 23.8</span>
+            <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-bold text-teal-300 rounded">
+              {latestMetric ? "Calibrated" : "Track"}
+            </span>
           </div>
           <div className="mt-1">
-            <span className="text-2xl font-black text-white">{latestMetric ? latestMetric.weight : "175.4"}</span>
+            <span className="text-2xl font-black text-white">{latestMetric ? latestMetric.weight : "—"}</span>
             <span className="text-xs font-bold text-teal-400 ml-1">lbs</span>
           </div>
           <p className="text-[10px] text-slate-400 mt-0.5">
-            {weightDelta !== 0 ? `${weightDelta > 0 ? "+" : ""}${weightDelta} lbs baseline` : "Baseline calibrated"}
+            {latestMetric
+              ? weightDelta !== 0
+                ? `${weightDelta > 0 ? "+" : ""}${weightDelta} lbs delta`
+                : "Baseline calibrated"
+              : "Set initial weight in Metrics →"}
           </p>
         </div>
 
         {/* Volume Time */}
         <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Volume Time</span>
-            <span className="text-[10px] font-bold text-cyan-300">93%</span>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Training Time</span>
+            <span className="text-[10px] font-bold text-cyan-300">
+              {workouts.length > 0 ? `${Math.min(100, Math.round((totalWorkoutMinutes / 240) * 100))}%` : "0%"}
+            </span>
           </div>
           <div className="mt-1">
             <span className="text-2xl font-black text-white">
-              {workouts.length > 0
-                ? Math.round(workouts.reduce((acc, w) => acc + (w.duration_seconds || 0), 0) / 60)
-                : 225}
+              {totalWorkoutMinutes}
             </span>
             <span className="text-xs font-bold text-cyan-400 ml-1">mins</span>
           </div>
           <p className="text-[10px] text-slate-400 mt-0.5">Target: 240 mins / week</p>
         </div>
 
-        {/* Split */}
+        {/* Split / Focus */}
         <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Muscle Split</span>
-            <span className="text-[10px] font-bold text-emerald-400">Optimal</span>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Training Focus</span>
+            <span className="text-[10px] font-bold text-emerald-400">{workouts.length > 0 ? "Active" : "Ready"}</span>
           </div>
           <div className="mt-1">
-            <span className="text-base font-black text-white">Push / Pull / Legs</span>
+            <span className="text-base font-black text-white truncate block">
+              {workouts.length > 0 ? workouts[0].day_title : "Personalized Split"}
+            </span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">35% Push • 35% Pull • 30% Legs</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            {workouts.length > 0 ? "Latest logged workout" : "AI Studio & Blueprints ready"}
+          </p>
         </div>
       </div>
 
@@ -3483,7 +3551,9 @@ function DashboardTab({
               AI Cue
             </span>
             <p className="text-[11px] text-slate-300 truncate font-medium">
-              Overload phase: target +2.5 lbs or +1 rep on primary compound movements. Rest 2–3 min between sets.
+              {workouts.length > 0
+                ? "Great momentum! Target progressive overload (+2.5 lbs or +1 rep) on primary compound movements."
+                : "Welcome! Choose a quick launch blueprint below or synthesize a personalized 3-day split in AI Studio."}
             </p>
           </div>
           <button
@@ -4272,6 +4342,41 @@ export default function Home() {
 
   function finishWorkout() {
     if (timerRef.current) clearInterval(timerRef.current);
+
+    // Record completed sets into exerciseHistory for telemetry and PR tracking
+    const todayStr = new Date().toISOString().split("T")[0];
+    const updatedHist = { ...exerciseHistory };
+    let hasUpdates = false;
+
+    trackedExercises.forEach((tex) => {
+      const completed = tex.trackedSets.filter((s) => s.completed && (parseFloat(s.weight) > 0 || s.actualReps));
+      if (completed.length > 0) {
+        const libMatch = EXERCISE_LIBRARY.find((e) => e.name.toLowerCase() === tex.name.toLowerCase());
+        const exKey = libMatch ? libMatch.id : `custom-${tex.name.toLowerCase().replace(/\s+/g, "-")}`;
+        const currentSets = completed.map((s, idx) => ({
+          setNum: idx + 1,
+          weight: parseFloat(s.weight) || 0,
+          reps: parseInt(s.actualReps) || parseInt(s.targetReps) || 0,
+        }));
+
+        const existingForEx = updatedHist[exKey] || [];
+        const sessionEntry: ExerciseHistoryItem = {
+          id: uid(),
+          date: todayStr,
+          unit: preferredUnit,
+          sets: currentSets,
+        };
+
+        updatedHist[exKey] = [sessionEntry, ...existingForEx.filter((s) => s.date !== todayStr)];
+        hasUpdates = true;
+      }
+    });
+
+    if (hasUpdates) {
+      setExerciseHistory(updatedHist);
+      saveExerciseHistory(updatedHist);
+    }
+
     setPhase("summary");
   }
 
@@ -5272,7 +5377,12 @@ export default function Home() {
                         </div>
 
                         <div className="pt-2">
-                          <MetricsChart metrics={metrics} activeMetric={activeMetric} timelineFilter={timelineFilter} />
+                          <MetricsChart
+                            metrics={metrics}
+                            activeMetric={activeMetric}
+                            timelineFilter={timelineFilter}
+                            onLogClick={() => setShowLogModal(true)}
+                          />
                         </div>
 
                         <div className="pt-4 border-t border-white/[0.06]">
@@ -5280,27 +5390,36 @@ export default function Home() {
                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Logs</p>
                             <span className="text-[10px] text-slate-500">{metrics.length} recorded</span>
                           </div>
-                          <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                            {[...metrics].reverse().slice(0, 5).map((m) => (
-                              <div key={m.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
-                                <span className="font-mono text-slate-400">{m.date}</span>
-                                <div className="flex items-center gap-3">
-                                  <span className="font-bold text-white">{m.weight} lbs</span>
-                                  {m.bodyFat > 0 && <span className="text-teal-300">{m.bodyFat}%</span>}
-                                  {m.calories > 0 && <span className="text-cyan-300">{m.calories} kcal</span>}
-                                  <button
-                                    onClick={() => deleteMetricEntry(m.id)}
-                                    className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
-                                    title="Delete"
-                                  >
-                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
+
+                          {metrics.length === 0 ? (
+                            <div className="rounded-2xl border border-white/[0.05] bg-white/[0.01] p-4 text-center">
+                              <p className="text-xs text-slate-400">
+                                No measurement logs recorded yet. Tap <strong className="text-cyan-300">+ Log</strong> above to add your first weight entry!
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                              {[...metrics].reverse().slice(0, 5).map((m) => (
+                                <div key={m.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
+                                  <span className="font-mono text-slate-400">{m.date}</span>
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-bold text-white">{m.weight} lbs</span>
+                                    {m.bodyFat > 0 && <span className="text-teal-300">{m.bodyFat}%</span>}
+                                    {m.calories > 0 && <span className="text-cyan-300">{m.calories} kcal</span>}
+                                    <button
+                                      onClick={() => deleteMetricEntry(m.id)}
+                                      className="text-slate-500 hover:text-red-400 transition-colors p-0.5"
+                                      title="Delete"
+                                    >
+                                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
