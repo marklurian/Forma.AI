@@ -98,7 +98,7 @@ export default function HistoryPage() {
       <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#090f1d]/85 backdrop-blur-xl px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all button-press"
           >
             <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -185,7 +185,7 @@ export default function HistoryPage() {
               </div>
 
               <Link
-                href="/"
+                href="/dashboard"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white text-xs font-bold shadow-md shadow-cyan-500/20 hover:opacity-95 transition-opacity button-press self-start sm:self-auto"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -235,7 +235,7 @@ export default function HistoryPage() {
                   Complete your first workout in the Active Tracker to start logging your cloud history!
                 </p>
                 <Link
-                  href="/"
+                  href="/dashboard"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white text-xs font-bold shadow-md button-press"
                 >
                   Start Workout Now

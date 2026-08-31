@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Forma.AI — Your AI Fitness Coach",
+  title: "Fostura — Your AI Fitness Coach",
   description:
     "Generate a personalized workout schedule powered by AI. Input your goals, experience level, and available equipment to get a custom plan in seconds.",
   icons: {
