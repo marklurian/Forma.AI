@@ -431,3 +431,16 @@ input[type="number"] {
   transform: translateX(4px);
 }
 
+/* Mobile Safe Area & Touch Support */
+.safe-area-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS smooth scrolling and tap highlight disable */
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+

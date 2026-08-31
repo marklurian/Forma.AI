@@ -257,6 +257,24 @@ function saveExerciseHistory(h: Record<string, ExerciseHistoryItem[]>) {
   localStorage.setItem("forma-exercise-history", JSON.stringify(h));
 }
 
+function loadPreferredUnit(): "lbs" | "kg" {
+  if (typeof window === "undefined") return "lbs";
+  try {
+    const raw = localStorage.getItem("forma-unit");
+    if (raw === "kg" || raw === "lbs") return raw;
+    return "lbs";
+  } catch {
+    return "lbs";
+  }
+}
+
+function savePreferredUnit(unit: "lbs" | "kg") {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("forma-unit", unit);
+  } catch {}
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Segmented Unit Selector Component [ LBS | KG ]
    ═══════════════════════════════════════════════════════════════ */
@@ -1863,13 +1881,17 @@ function CreateTemplateModal({
 function LogMetricModal({
   onSave,
   onClose,
+  defaultUnit = "lbs",
+  onSetUnit,
 }: {
   onSave: (entry: MetricEntry) => void;
   onClose: () => void;
+  defaultUnit?: "lbs" | "kg";
+  onSetUnit?: (u: "lbs" | "kg") => void;
 }) {
   const todayStr = new Date().toISOString().split("T")[0];
   const [date, setDate] = useState(todayStr);
-  const [unit, setUnit] = useState<"lbs" | "kg">("lbs");
+  const [unit, setUnit] = useState<"lbs" | "kg">(defaultUnit);
   const [weight, setWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [calories, setCalories] = useState("");
@@ -1879,7 +1901,11 @@ function LogMetricModal({
     if (isNaN(w) || w <= 0) return;
     const bf = parseFloat(bodyFat) || 0;
     const cal = parseInt(calories) || 0;
-    const weightInLbs = unit === "kg" ? Math.round(w * 2.20462 * 10) / 10 : w;
+    const weightInLbs = unit === "kg" ? w * 2.20462262 : w;
+
+    if (onSetUnit) {
+      onSetUnit(unit);
+    }
 
     onSave({
       id: uid(),
@@ -1888,6 +1914,22 @@ function LogMetricModal({
       bodyFat: bf,
       calories: cal,
     });
+  }
+
+  function handleSwitchUnit(nextUnit: "lbs" | "kg") {
+    if (nextUnit === unit) return;
+    if (weight) {
+      const num = parseFloat(weight);
+      if (!isNaN(num)) {
+        if (nextUnit === "kg") {
+          setWeight((num / 2.20462262).toFixed(1));
+        } else {
+          setWeight((num * 2.20462262).toFixed(1));
+        }
+      }
+    }
+    setUnit(nextUnit);
+    if (onSetUnit) onSetUnit(nextUnit);
   }
 
   return (
@@ -1920,33 +1962,21 @@ function LogMetricModal({
               <div className="liquid-pill flex rounded-lg p-0.5 border-white/10">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (unit === "kg" && weight) {
-                      const num = parseFloat(weight);
-                      if (!isNaN(num)) setWeight((num * 2.20462).toFixed(1));
-                    }
-                    setUnit("lbs");
-                  }}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
-                    unit === "lbs" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
+                  onClick={() => handleSwitchUnit("lbs")}
+                  className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-md transition-all ${
+                    unit === "lbs" ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-sm" : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  lbs
+                  LBS
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (unit === "lbs" && weight) {
-                      const num = parseFloat(weight);
-                      if (!isNaN(num)) setWeight((num / 2.20462).toFixed(1));
-                    }
-                    setUnit("kg");
-                  }}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
-                    unit === "kg" ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white"
+                  onClick={() => handleSwitchUnit("kg")}
+                  className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-md transition-all ${
+                    unit === "kg" ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-sm" : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  kg
+                  KG
                 </button>
               </div>
             </div>
@@ -2018,11 +2048,13 @@ function MetricsChart({
   metrics,
   activeMetric,
   timelineFilter,
+  unit = "lbs",
   onLogClick,
 }: {
   metrics: MetricEntry[];
   activeMetric: ActiveMetricType;
   timelineFilter: TimelineFilter;
+  unit?: "lbs" | "kg";
   onLogClick?: () => void;
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -2031,19 +2063,27 @@ function MetricsChart({
     if (metrics.length === 0) return [];
     const sorted = [...metrics].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    const getVal = (m: MetricEntry) => {
+      if (activeMetric === "weight") {
+        return unit === "kg" ? Math.round((m.weight / 2.20462262) * 10) / 10 : Math.round(m.weight * 10) / 10;
+      }
+      if (activeMetric === "bodyFat") return m.bodyFat;
+      return m.calories;
+    };
+
     if (timelineFilter === "days") {
       const slice = sorted.slice(-14);
       return slice.map((m) => ({
         label: new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
         fullDate: m.date,
-        val: activeMetric === "weight" ? m.weight : activeMetric === "bodyFat" ? m.bodyFat : m.calories,
+        val: getVal(m),
       }));
     } else {
       const monthlyMap = new Map<string, { total: number; count: number; dateStr: string }>();
       sorted.forEach((m) => {
         const d = new Date(m.date);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const val = activeMetric === "weight" ? m.weight : activeMetric === "bodyFat" ? m.bodyFat : m.calories;
+        const val = getVal(m);
         const current = monthlyMap.get(key) || { total: 0, count: 0, dateStr: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) };
         monthlyMap.set(key, { total: current.total + val, count: current.count + 1, dateStr: current.dateStr });
       });
@@ -2054,7 +2094,7 @@ function MetricsChart({
         val: Math.round((data.total / data.count) * 10) / 10,
       }));
     }
-  }, [metrics, activeMetric, timelineFilter]);
+  }, [metrics, activeMetric, timelineFilter, unit]);
 
   if (chartData.length === 0) {
     return (
@@ -2089,10 +2129,12 @@ function MetricsChart({
   const values = chartData.map((d) => d.val);
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
-  const range = maxVal - minVal === 0 ? 1 : maxVal - minVal;
-  const padding = range * 0.15;
-  const chartMin = Math.max(0, Math.floor(minVal - padding));
-  const chartMax = Math.ceil(maxVal + padding);
+  const rawRange = maxVal - minVal;
+  const minSpan = activeMetric === "weight" ? (unit === "kg" ? 4 : 8) : activeMetric === "bodyFat" ? 3 : 200;
+  const effectiveRange = Math.max(rawRange, minSpan);
+  const padding = Math.max(effectiveRange * 0.15, 0.5);
+  const chartMin = Math.max(0, Math.floor((minVal - (rawRange === 0 ? effectiveRange * 0.4 : padding)) * 10) / 10);
+  const chartMax = Math.ceil((maxVal + (rawRange === 0 ? effectiveRange * 0.4 : padding)) * 10) / 10;
 
   const width = 640;
   const height = 220;
@@ -2121,7 +2163,7 @@ function MetricsChart({
   const areaD = `${pathD} L ${points[points.length - 1].x} ${topPad + plotHeight} L ${points[0].x} ${topPad + plotHeight} Z`;
 
   const metricConfig = {
-    weight: { unit: "lbs", color: "#00a8e8", gradId: "weightGrad", stroke: "url(#oceanLineGrad)" },
+    weight: { unit, color: "#00a8e8", gradId: "weightGrad", stroke: "url(#oceanLineGrad)" },
     bodyFat: { unit: "%", color: "#2dd4bf", gradId: "bfGrad", stroke: "url(#seafoamLineGrad)" },
     calories: { unit: "kcal", color: "#38bdf8", gradId: "calGrad", stroke: "url(#skyLineGrad)" },
   }[activeMetric];
@@ -2159,7 +2201,8 @@ function MetricsChart({
 
         {[0, 0.33, 0.66, 1].map((ratio, idx) => {
           const y = topPad + plotHeight * (1 - ratio);
-          const valLabel = Math.round(chartMin + (chartMax - chartMin) * ratio);
+          const rawVal = chartMin + (chartMax - chartMin) * ratio;
+          const valLabel = (chartMax - chartMin) <= 8 ? rawVal.toFixed(1) : Math.round(rawVal).toString();
           return (
             <g key={idx}>
               <line
@@ -3069,13 +3112,13 @@ function ExerciseLibraryTab({
               Showing {filteredExercises.length} of {EXERCISE_LIBRARY.length}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="flex overflow-x-auto gap-1 no-scrollbar pb-1 -mx-1 px-1 sm:flex-wrap">
             {availableLetters.map((letter) => (
               <button
                 key={letter}
                 type="button"
                 onClick={() => setSelectedLetter(letter)}
-                className={`min-w-[28px] h-7 px-1.5 text-xs font-bold rounded-lg button-press transition-all ${
+                className={`min-w-[28px] h-7 px-1.5 text-xs font-bold rounded-lg button-press transition-all shrink-0 ${
                   selectedLetter === letter
                     ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/25"
                     : "liquid-glass text-slate-400 hover:text-white"
@@ -3088,15 +3131,15 @@ function ExerciseLibraryTab({
         </div>
 
         {/* Body Part & Equipment Categories */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.06]">
+        <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
           {/* Target Body Parts */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex overflow-x-auto gap-1.5 no-scrollbar pb-0.5 -mx-1 px-1 sm:flex-wrap">
             {bodyParts.map((bp) => (
               <button
                 key={bp}
                 type="button"
                 onClick={() => setSelectedBodyPart(bp)}
-                className={`px-3 py-1 text-xs font-bold rounded-xl button-press transition-all ${
+                className={`px-3 py-1 text-xs font-bold rounded-xl button-press transition-all shrink-0 ${
                   selectedBodyPart === bp
                     ? "bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-md shadow-sky-500/20"
                     : "liquid-glass text-slate-400 hover:text-white"
@@ -3108,13 +3151,13 @@ function ExerciseLibraryTab({
           </div>
 
           {/* Equipment Types */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex overflow-x-auto gap-1.5 no-scrollbar pb-0.5 -mx-1 px-1 sm:flex-wrap">
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-xl button-press transition-all ${
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-xl button-press transition-all shrink-0 ${
                   selectedCategory === cat
                     ? "bg-cyan-600 text-white shadow-md shadow-cyan-500/20"
                     : "liquid-glass text-slate-400 hover:text-white"
@@ -3226,6 +3269,7 @@ function DashboardTab({
   metrics,
   exerciseHistory,
   userTemplates,
+  unit = "lbs",
 }: {
   onNavigateTab: (t: HomeTab) => void;
   onQuickStart: () => void;
@@ -3235,6 +3279,7 @@ function DashboardTab({
   metrics: MetricEntry[];
   exerciseHistory: Record<string, ExerciseHistoryItem[]>;
   userTemplates: WorkoutTemplate[];
+  unit?: "lbs" | "kg";
 }) {
   const { isLoaded: userLoaded, isSignedIn, user } = useUser();
   const [workouts, setWorkouts] = useState<SupabaseWorkout[]>([]);
@@ -3255,9 +3300,17 @@ function DashboardTab({
 
   const latestMetric = metrics.length > 0 ? metrics[metrics.length - 1] : null;
   const initialMetric = metrics.length > 0 ? metrics[0] : null;
-  const weightDelta =
+  const displayWeight = latestMetric
+    ? unit === "kg"
+      ? Math.round((latestMetric.weight / 2.20462262) * 10) / 10
+      : Math.round(latestMetric.weight * 10) / 10
+    : null;
+
+  const displayDelta =
     latestMetric && initialMetric
-      ? Math.round((latestMetric.weight - initialMetric.weight) * 10) / 10
+      ? unit === "kg"
+        ? Math.round(((latestMetric.weight - initialMetric.weight) / 2.20462262) * 10) / 10
+        : Math.round((latestMetric.weight - initialMetric.weight) * 10) / 10
       : 0;
 
   const totalWorkoutMinutes = Math.round(
@@ -3376,14 +3429,14 @@ function DashboardTab({
 
       {/* ── Welcome Banner for New Users (0 Workouts Logged) ── */}
       {workouts.length === 0 && !loadingWorkouts && (
-        <div className="relative overflow-hidden rounded-3xl border border-sky-400/30 bg-gradient-to-br from-sky-950/60 via-[#06142a]/80 to-teal-950/40 p-5 sm:p-7 shadow-2xl animate-fade-in-up">
+        <div className="relative overflow-hidden rounded-3xl border border-sky-400/30 bg-gradient-to-br from-sky-950/60 via-[#06142a]/80 to-teal-950/40 p-4 sm:p-7 shadow-2xl animate-fade-in-up">
           <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-500/20 blur-3xl" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div className="space-y-2 max-w-xl">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
+            <div className="space-y-1.5 sm:space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
                 <span>Tailored For You</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
                 Welcome to Forma.AI{isSignedIn && user?.firstName ? `, ${user.firstName}` : ""}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -3391,13 +3444,13 @@ function DashboardTab({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
               <button
                 type="button"
                 onClick={() => onNavigateTab("ai")}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-opacity button-press"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-opacity button-press"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
                 </svg>
                 <span>Generate AI Routine</span>
@@ -3405,9 +3458,9 @@ function DashboardTab({
               <button
                 type="button"
                 onClick={onQuickStart}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-all button-press"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-all button-press"
               >
-                <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg className="h-4 w-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
                 </svg>
                 <span>Quick Workout</span>
@@ -3418,109 +3471,109 @@ function DashboardTab({
       )}
 
       {/* ── 2. Unified Streamlined 4-Stat Strip (Real dynamic data) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 xl:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 xl:gap-4">
         {/* Total Workouts */}
-        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Workouts Logged</span>
-            <span className="text-[10px] font-bold text-sky-400">{workouts.length > 0 ? `${workouts.length} total` : "Day 1"}</span>
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 sm:p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-1 min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 truncate">Workouts</span>
+            <span className="text-[9px] sm:text-[10px] font-bold text-sky-400 shrink-0">{workouts.length > 0 ? `${workouts.length} tot` : "Day 1"}</span>
           </div>
           <div className="mt-1">
-            <span className="text-2xl font-black text-white">
+            <span className="text-xl sm:text-2xl font-black text-white">
               {workouts.length}
             </span>
             <span className="text-xs font-bold text-sky-400 ml-1">
               {workouts.length === 1 ? "Session" : "Sessions"}
             </span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">
             {workouts.length > 0
-              ? `${workouts.length} completed session${workouts.length === 1 ? "" : "s"}`
-              : "Ready for your first workout"}
+              ? `${workouts.length} completed`
+              : "Ready for first workout"}
           </p>
         </div>
 
         {/* Body Weight */}
         <div
           onClick={() => onNavigateTab("metrics")}
-          className="liquid-glass card-hover-lift shimmer-hover liquid-glass-interactive cursor-pointer rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2"
+          className="liquid-glass card-hover-lift shimmer-hover liquid-glass-interactive cursor-pointer rounded-2xl p-3.5 sm:p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-2 min-w-0"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Body Weight</span>
-            <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-bold text-teal-300 rounded">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 truncate">Body Weight</span>
+            <span className="liquid-pill px-1.5 py-0.2 text-[9px] font-bold text-teal-300 rounded shrink-0">
               {latestMetric ? "Calibrated" : "Track"}
             </span>
           </div>
           <div className="mt-1">
-            <span className="text-2xl font-black text-white">{latestMetric ? latestMetric.weight : "—"}</span>
-            <span className="text-xs font-bold text-teal-400 ml-1">lbs</span>
+            <span className="text-xl sm:text-2xl font-black text-white">{displayWeight !== null ? displayWeight : "—"}</span>
+            <span className="text-xs font-bold text-teal-400 ml-1">{unit}</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">
             {latestMetric
-              ? weightDelta !== 0
-                ? `${weightDelta > 0 ? "+" : ""}${weightDelta} lbs delta`
+              ? displayDelta !== 0
+                ? `${displayDelta > 0 ? "+" : ""}${displayDelta} ${unit} delta`
                 : "Baseline calibrated"
-              : "Set initial weight in Metrics →"}
+              : "Set weight in Metrics →"}
           </p>
         </div>
 
         {/* Volume Time */}
-        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Training Time</span>
-            <span className="text-[10px] font-bold text-cyan-300">
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 sm:p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-3 min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 truncate">Training Time</span>
+            <span className="text-[9px] sm:text-[10px] font-bold text-cyan-300 shrink-0">
               {workouts.length > 0 ? `${Math.min(100, Math.round((totalWorkoutMinutes / 240) * 100))}%` : "0%"}
             </span>
           </div>
           <div className="mt-1">
-            <span className="text-2xl font-black text-white">
+            <span className="text-xl sm:text-2xl font-black text-white">
               {totalWorkoutMinutes}
             </span>
             <span className="text-xs font-bold text-cyan-400 ml-1">mins</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">Target: 240 mins / week</p>
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">Target: 240m / week</p>
         </div>
 
         {/* Split / Focus */}
-        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Training Focus</span>
-            <span className="text-[10px] font-bold text-emerald-400">{workouts.length > 0 ? "Active" : "Ready"}</span>
+        <div className="liquid-glass card-hover-lift shimmer-hover rounded-2xl p-3.5 sm:p-4 border border-white/10 flex flex-col justify-between animate-fade-in-up stagger-4 min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-slate-400 truncate">Training Split</span>
+            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 shrink-0">{workouts.length > 0 ? "Active" : "Ready"}</span>
           </div>
           <div className="mt-1">
-            <span className="text-base font-black text-white truncate block">
-              {workouts.length > 0 ? workouts[0].day_title : "Personalized Split"}
+            <span className="text-sm sm:text-base font-black text-white truncate block">
+              {workouts.length > 0 ? workouts[0].day_title : "Custom Split"}
             </span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            {workouts.length > 0 ? "Latest logged workout" : "AI Studio & Blueprints ready"}
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 truncate">
+            {workouts.length > 0 ? "Latest logged workout" : "AI Studio & Blueprints"}
           </p>
         </div>
       </div>
 
       {/* ── 3. Combined Microcycle Tracker & AI Training Cue ── */}
-      <div className="liquid-glass rounded-2xl p-4 sm:p-5 border border-white/10 space-y-3.5 animate-fade-in-up stagger-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-extrabold text-white">Weekly Microcycle</span>
-            <span className="text-[10px] text-slate-400">• Mon to Sun</span>
+      <div className="liquid-glass rounded-2xl p-3.5 sm:p-5 border border-white/10 space-y-3 animate-fade-in-up stagger-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-xs sm:text-sm font-extrabold text-white">Weekly Microcycle</span>
+            <span className="text-[10px] text-slate-400">• Mon–Sun</span>
           </div>
           <button
             type="button"
             onClick={onQuickStart}
-            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1 button-press group"
+            className="text-[11px] font-bold text-sky-400 hover:text-white transition-colors flex items-center gap-1 button-press group shrink-0"
           >
-            <span>Start Today&apos;s Workout</span>
+            <span>Start Today</span>
             <span className="group-hover-arrow">→</span>
           </button>
         </div>
 
-        {/* 7-Day Microcycle Strip */}
-        <div className="grid grid-cols-7 gap-2 sm:gap-2.5 xl:gap-3.5">
+        {/* 7-Day Microcycle Strip (Horizontal Scroll on Mobile, Grid on Tablet/Desktop) */}
+        <div className="flex overflow-x-auto gap-2 sm:grid sm:grid-cols-7 sm:gap-2.5 xl:gap-3.5 no-scrollbar pb-1 pt-0.5 scroll-smooth">
           {weeklySchedule.map((item, idx) => (
             <div
               key={idx}
-              className={`rounded-xl p-2.5 sm:p-3 text-center border card-hover-lift button-press ${
+              className={`min-w-[74px] sm:min-w-0 flex-1 shrink-0 sm:shrink rounded-xl p-2.5 sm:p-3 text-center border card-hover-lift button-press ${
                 item.status === "today"
                   ? "border-cyan-400/70 bg-cyan-950/40 ring-1 ring-cyan-400/40 shadow-sm shadow-cyan-500/20"
                   : item.status === "completed"
@@ -3529,28 +3582,28 @@ function DashboardTab({
               }`}
             >
               <div className="flex items-center justify-center gap-1">
-                <span className="text-[11px] sm:text-xs font-bold text-white">{item.day}</span>
+                <span className="text-xs font-bold text-white">{item.day}</span>
                 {item.status === "completed" && (
-                  <span className="text-cyan-400 text-[9px] font-black animate-check-pop">✓</span>
+                  <span className="text-cyan-400 text-[10px] font-black animate-check-pop">✓</span>
                 )}
                 {item.status === "today" && (
                   <span className="flex h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#38bdf8]" />
                 )}
               </div>
-              <p className={`text-[10px] sm:text-[11px] font-bold mt-1 truncate ${item.status === "today" ? "text-cyan-300 font-extrabold" : "text-slate-400"}`}>
+              <p className={`text-[10px] sm:text-[11px] font-bold mt-1 block truncate ${item.status === "today" ? "text-cyan-300 font-extrabold" : "text-slate-400"}`}>
                 {item.title}
               </p>
             </div>
           ))}
         </div>
 
-        {/* Slim AI Cue Footer */}
-        <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-300">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="liquid-pill px-1.5 py-0.2 rounded text-[9px] font-bold text-cyan-300 uppercase shrink-0 animate-subtle-pulse">
+        {/* Responsive AI Cue Footer (Multi-line friendly for Mobile) */}
+        <div className="pt-2.5 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-300">
+          <div className="flex items-start sm:items-center gap-2 min-w-0">
+            <span className="liquid-pill px-1.5 py-0.5 rounded text-[9px] font-bold text-cyan-300 uppercase shrink-0 animate-subtle-pulse mt-0.5 sm:mt-0">
               AI Cue
             </span>
-            <p className="text-[11px] text-slate-300 truncate font-medium">
+            <p className="text-[11px] text-slate-300 font-medium leading-relaxed">
               {workouts.length > 0
                 ? "Great momentum! Target progressive overload (+2.5 lbs or +1 rep) on primary compound movements."
                 : "Welcome! Choose a quick launch blueprint below or synthesize a personalized 3-day split in AI Studio."}
@@ -3559,7 +3612,7 @@ function DashboardTab({
           <button
             type="button"
             onClick={() => onNavigateTab("ai")}
-            className="text-[10px] font-bold text-sky-400 hover:text-white shrink-0 ml-2 button-press flex items-center gap-1 group"
+            className="text-[11px] font-bold text-sky-400 hover:text-white shrink-0 self-end sm:self-auto button-press flex items-center gap-1 group"
           >
             <span>Custom Routine</span>
             <span className="group-hover-arrow">→</span>
@@ -4128,13 +4181,22 @@ export default function Home() {
 
   /* ── Tab & Form state ─────────────────── */
   const [tab, setTab] = useState<HomeTab>("dashboard");
-  const [preferredUnit, setPreferredUnit] = useState<"lbs" | "kg">("lbs");
+  const [preferredUnit, setPreferredUnitState] = useState<"lbs" | "kg">("lbs");
   const [goal, setGoal] = useState("");
   const [experience, setExperience] = useState("");
   const [equipment, setEquipment] = useState("");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<WorkoutDay[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPreferredUnitState(loadPreferredUnit());
+  }, []);
+
+  function setPreferredUnit(u: "lbs" | "kg") {
+    setPreferredUnitState(u);
+    savePreferredUnit(u);
+  }
 
   /* ── Templates state ──────────────────── */
   const [userTemplates, setUserTemplates] = useState<WorkoutTemplate[]>([]);
@@ -4789,11 +4851,11 @@ export default function Home() {
           <header className="sticky top-0 z-40 border-b border-sky-400/[0.12] bg-[#040914]/85 backdrop-blur-2xl">
             <div className="mx-auto flex h-16 w-full max-w-[100rem] items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10">
               {/* Left: Sidebar Toggle & Breadcrumb Navigation */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <button
                   type="button"
                   onClick={() => setMobileDrawerOpen(true)}
-                  className="lg:hidden liquid-pill flex h-9 w-9 items-center justify-center rounded-xl text-sky-400 hover:text-white"
+                  className="lg:hidden liquid-pill flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sky-400 hover:text-white"
                   title="Open Navigation Menu"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -4812,13 +4874,29 @@ export default function Home() {
                   </svg>
                 </button>
 
+                {/* Mobile Brand (when on Dashboard) */}
+                {tab === "dashboard" && phase === "home" ? (
+                  <div className="flex lg:hidden items-center gap-2">
+                    <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-sky-400/30 bg-sky-950/40 p-0.5">
+                      <Image
+                        src="/forma-logo.png"
+                        alt="Forma.AI"
+                        width={24}
+                        height={24}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <span className="text-sm font-black text-white tracking-tight">Forma.AI</span>
+                  </div>
+                ) : null}
+
                 {/* Breadcrumbs / Back button */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   {tab !== "dashboard" && phase === "home" ? (
                     <button
                       type="button"
                       onClick={() => navigateToTab("dashboard")}
-                      className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-sky-300 hover:text-white hover:border-sky-400/50 transition-all group"
+                      className="liquid-pill flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-sky-300 hover:text-white hover:border-sky-400/50 transition-all group shrink-0"
                       title="Return to Dashboard"
                     >
                       <svg className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -4828,9 +4906,9 @@ export default function Home() {
                     </button>
                   ) : null}
 
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 min-w-0">
                     <span className="font-semibold text-slate-500">/</span>
-                    <span className="font-bold text-white">{currentTabInfo.label}</span>
+                    <span className="font-bold text-white truncate">{currentTabInfo.label}</span>
                   </div>
                 </div>
               </div>
@@ -4886,7 +4964,7 @@ export default function Home() {
           </header>
 
           {/* Main Content Area */}
-          <main className="mx-auto w-full max-w-[100rem] flex-1 px-4 sm:px-6 lg:px-8 xl:px-10 pb-16 pt-6">
+          <main className="mx-auto w-full max-w-[100rem] flex-1 px-3 sm:px-6 lg:px-8 xl:px-10 pb-28 lg:pb-16 pt-4 sm:pt-6">
             {phase === "home" && (
               <>
                 {/* ─── TAB 0: DASHBOARD ─── */}
@@ -4900,6 +4978,7 @@ export default function Home() {
                     metrics={metrics}
                     exerciseHistory={exerciseHistory}
                     userTemplates={userTemplates}
+                    unit={preferredUnit}
                   />
                 )}
 
@@ -5241,18 +5320,25 @@ export default function Home() {
                 {/* ─── TAB 5: BODY & METRICS ─── */}
                 {tab === "metrics" && (
                   <div className="space-y-6 animate-[fadeInUp_0.3s_ease-out_both]">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => navigateToTab("ai")}
-                        className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white group"
-                      >
-                        <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-                        </svg>
-                        <span>Dashboard</span>
-                      </button>
-                      <h2 className="text-lg font-extrabold text-white">Body Progression & Measurements</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => navigateToTab("dashboard")}
+                          className="liquid-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white group shrink-0"
+                        >
+                          <svg className="h-4 w-4 text-sky-400 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                          </svg>
+                          <span>Dashboard</span>
+                        </button>
+                        <h2 className="text-base sm:text-lg font-extrabold text-white truncate">Body Progression</h2>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Display Unit:</span>
+                        <UnitTogglePill unit={preferredUnit} onChange={setPreferredUnit} size="sm" />
+                      </div>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-3">
@@ -5273,11 +5359,17 @@ export default function Home() {
                           </span>
                         </div>
                         <p className="mt-2 text-2xl font-black tracking-tight text-white">
-                          {latestMetric ? `${latestMetric.weight} lbs` : "—"}
+                          {latestMetric
+                            ? preferredUnit === "kg"
+                              ? `${Math.round((latestMetric.weight / 2.20462262) * 10) / 10} kg`
+                              : `${Math.round(latestMetric.weight * 10) / 10} lbs`
+                            : "—"}
                         </p>
                         <p className="mt-1 text-[11px] font-semibold text-sky-300">
                           {metrics.length > 1
-                            ? `${Math.round((latestMetric!.weight - metrics[0].weight) * 10) / 10} lbs overall`
+                            ? preferredUnit === "kg"
+                              ? `${Math.round(((latestMetric!.weight - metrics[0].weight) / 2.20462262) * 10) / 10} kg overall`
+                              : `${Math.round((latestMetric!.weight - metrics[0].weight) * 10) / 10} lbs overall`
                             : "Baseline set"}
                         </p>
                       </div>
@@ -5381,6 +5473,7 @@ export default function Home() {
                             metrics={metrics}
                             activeMetric={activeMetric}
                             timelineFilter={timelineFilter}
+                            unit={preferredUnit}
                             onLogClick={() => setShowLogModal(true)}
                           />
                         </div>
@@ -5403,7 +5496,11 @@ export default function Home() {
                                 <div key={m.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
                                   <span className="font-mono text-slate-400">{m.date}</span>
                                   <div className="flex items-center gap-3">
-                                    <span className="font-bold text-white">{m.weight} lbs</span>
+                                    <span className="font-bold text-white">
+                                      {preferredUnit === "kg"
+                                        ? `${Math.round((m.weight / 2.20462262) * 10) / 10} kg`
+                                        : `${Math.round(m.weight * 10) / 10} lbs`}
+                                    </span>
                                     {m.bodyFat > 0 && <span className="text-teal-300">{m.bodyFat}%</span>}
                                     {m.calories > 0 && <span className="text-cyan-300">{m.calories} kcal</span>}
                                     <button
@@ -5459,9 +5556,85 @@ export default function Home() {
 
           {/* Footer */}
           {phase === "home" && (
-            <footer className="border-t border-sky-400/[0.08] py-6 text-center text-xs text-slate-500">
+            <footer className="border-t border-sky-400/[0.08] py-6 text-center text-xs text-slate-500 mb-16 lg:mb-0">
               © {new Date().getFullYear()} Forma.AI — Intelligent Fitness Experience
             </footer>
+          )}
+
+          {/* ══════════════ MOBILE BOTTOM NAVIGATION BAR (SMARTPHONES) ══════════════ */}
+          {phase === "home" && (
+            <nav
+              aria-label="Mobile Navigation Bar"
+              className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#030814]/94 backdrop-blur-2xl border-t border-sky-400/20 px-1 py-1.5 shadow-[0_-10px_25px_rgba(0,0,0,0.7)] flex items-center justify-around"
+            >
+              {[
+                { key: "dashboard" as HomeTab, label: "Home", icon: (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                  </svg>
+                )},
+                { key: "ai" as HomeTab, label: "AI Studio", icon: (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                  </svg>
+                )},
+                { key: "quick" as HomeTab, label: "Start", isCenter: true, icon: (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                  </svg>
+                )},
+                { key: "exercises" as HomeTab, label: "Library", icon: (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                  </svg>
+                )},
+                { key: "metrics" as HomeTab, label: "Metrics", icon: (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                  </svg>
+                )},
+                { key: "history" as HomeTab, label: "History", icon: (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                )},
+              ].map((tabItem) => {
+                const active = tab === tabItem.key;
+                if (tabItem.isCenter) {
+                  return (
+                    <button
+                      key={tabItem.key}
+                      type="button"
+                      onClick={quickStart}
+                      className="flex flex-col items-center -mt-3.5 group button-press"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 via-cyan-400 to-teal-300 text-white shadow-lg shadow-cyan-500/40 ring-4 ring-[#040914] group-active:scale-95 transition-transform">
+                        {tabItem.icon}
+                      </div>
+                      <span className="text-[9px] font-extrabold text-cyan-300 mt-0.5">Start</span>
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    key={tabItem.key}
+                    type="button"
+                    onClick={() => navigateToTab(tabItem.key)}
+                    className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all button-press ${
+                      active ? "text-cyan-300" : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <div className={`transition-transform ${active ? "scale-110 drop-shadow-[0_0_8px_#38bdf8]" : ""}`}>
+                      {tabItem.icon}
+                    </div>
+                    <span className={`text-[9px] tracking-tight mt-0.5 ${active ? "font-black text-white" : "font-medium text-slate-400"}`}>
+                      {tabItem.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
           )}
         </div>
       </div>
@@ -5496,7 +5669,12 @@ export default function Home() {
 
       {/* ══════════════ LOG METRICS MODAL ══════════════ */}
       {showLogModal && (
-        <LogMetricModal onSave={addMetricEntry} onClose={() => setShowLogModal(false)} />
+        <LogMetricModal
+          onSave={addMetricEntry}
+          onClose={() => setShowLogModal(false)}
+          defaultUnit={preferredUnit}
+          onSetUnit={setPreferredUnit}
+        />
       )}
 
       {/* ══════════════ TIP JAR MODAL ══════════════ */}
